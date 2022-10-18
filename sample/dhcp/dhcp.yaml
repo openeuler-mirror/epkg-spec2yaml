@@ -1,0 +1,164 @@
+name: dhcp
+meta.summary: Dynamic host configuration protocol software
+version: 4.4.2
+release: 15
+epoch: 12
+meta.license: ISC
+meta.homepage: https://www.isc.org/dhcp/
+sources:
+    - http://ftp.isc.org/isc/dhcp/%{version}/dhcp-%{version}.tar.gz
+    - dhclient-script
+    - README.dhclient.d
+    - 11-dhclient
+    - 56dhclient
+    - dhcpd.service
+    - dhcpd6.service
+    - dhcrelay.service
+patchset:
+    - backport-0001-change-bug-url.patch
+    - backport-0002-additional-dhclient-options.patch
+    - backport-0003-Handle-releasing-interfaces-requested-by-sbin-ifup.patch
+    - backport-0004-Support-unicast-BOOTP-for-IBM-pSeries-systems-and-ma.patch
+    - backport-0005-Change-default-requested-options.patch
+    - backport-0006-Various-man-page-only-fixes.patch
+    - backport-0007-Change-paths-to-conform-to-our-standards.patch
+    - backport-0008-Make-sure-all-open-file-descriptors-are-closed-on-ex.patch
+    - backport-0009-Fix-garbage-in-format-string-error.patch
+    - backport-0010-Handle-null-timeout.patch
+    - backport-0011-Drop-unnecessary-capabilities.patch
+    - backport-0012-RFC-3442-Classless-Static-Route-Option-for-DHCPv4-51.patch
+    - backport-0013-DHCPv6-over-PPP-support-626514.patch
+    - backport-0014-IPoIB-support-660681.patch
+    - backport-0015-Add-GUID-DUID-to-dhcpd-logs-1064416.patch
+    - backport-0016-Turn-on-creating-sending-of-DUID.patch
+    - backport-0017-Send-unicast-request-release-via-correct-interface.patch
+    - backport-0018-No-subnet-declaration-for-iface-should-be-info-not-e.patch
+    - backport-0019-dhclient-write-DUID_LLT-even-in-stateless-mode-11563.patch
+    - backport-0020-Discover-all-hwaddress-for-xid-uniqueness.patch
+    - backport-0021-Load-leases-DB-in-non-replay-mode-only.patch
+    - backport-0022-dhclient-make-sure-link-local-address-is-ready-in-st.patch
+    - backport-0023-option-97-pxe-client-id.patch
+    - backport-0024-Detect-system-time-changes.patch
+    - backport-0025-bind-Detect-system-time-changes.patch
+    - backport-0026-Add-dhclient-5-B-option-description.patch
+    - backport-0027-Add-missed-sd-notify-patch-to-manage-dhcpd-with-syst.patch
+    - bugfix-dhcp-4.2.5-check-dhclient-pid.patch
+    - bugfix-reduce-getifaddr-calls.patch
+    - bugfix-dhcpd-2038-problem.patch
+    - dhcpd-coredump-infiniband.patch
+    - bugfix-dhclient-check-if-pid-was-held.patch
+    - bugfix-dhcp-64-bit-lease-parse.patch
+    - backport-CVE-2021-25217.patch
+    - fix-multiple-definition-with-gcc-10-1.patch
+    - fix-multiple-definition-with-gcc-10-2.patch
+    - fix-coredump-when-client-active-is-NULL.patch
+    - feature-lease-time-config-ipv6.patch
+    - add-a-test-case-to-parse-code93-in-option_unittest.patch
+    - bugfix-error-message-display.patch
+    - backport-Fix-CVE-2021-25214.patch
+    - backport-Fix-CVE-2021-25215.patch
+    - backport-Fix-CVE-2021-25219.patch
+    - backport-Fix-CVE-2021-25220.patch
+    - backport-Fix-CVE-2022-2928.patch
+    - backport-Fix-CVE-2022-2929.patch
+meta.description: The Dynamic Host Configuration Protocol (DHCP) is a network management protocol used on UDP/IP networks whereby a DHCP server dynamically assigns an IP address and other network configuration parameters to each device on a network so they can communicate with other IP networks.
+requires:
+    - shadow-utils coreutils grep sed systemd gawk ipcalc iproute iputils
+buildRequires:
+    - gcc autoconf automake libtool openldap-devel krb5-devel libcap-ng-devel
+    - systemd systemd-devel
+provides:
+    - %{name}-common %{name}-libs %{name}-server %{name}-relay %{name}-compat %{name}-client
+    - dhcp = %{epoch}:%{version}-%{release}
+    - dhclient = %{epoch}:%{version}-%{release}
+obsoletes:
+    - %{name}-common %{name}-libs %{name}-server %{name}-relay %{name}-compat %{name}-client
+    - dhcp < %{epoch}:%{version}-%{release}
+    - dhclient < %{epoch}:%{version}-%{release}
+files: |
+    %defattr(-,root,root)
+    %license LICENSE
+    %doc README RELNOTES doc/References.txt
+    %doc README.dhclient.d
+    %doc contrib/ldap/ contrib/dhcp-lease-list.pl
+    %{_datadir}/doc/dhcp-client/dhclient.conf.example
+    %{_datadir}/doc/dhcp-server/dhcpd.conf.example
+    %{_datadir}/doc/dhcp-client/dhclient6.conf.example
+    %{_datadir}/doc/dhcp-server/dhcpd6.conf.example
+    %{_datadir}/doc/dhcp-server/dhcpd.conf.example
+    %dir %{_sysconfdir}/openldap/schema
+    %config(noreplace) %{_sysconfdir}/openldap/schema/dhcp.schema
+    %attr(0750,root,root) %dir %{dhcpconfdir}
+    %dir %{_localstatedir}/lib/dhclient
+    %dir %{dhcpconfdir}/dhclient.d
+    %dir %{_sysconfdir}/NetworkManager
+    %dir %{_sysconfdir}/NetworkManager/dispatcher.d
+    %{_sysconfdir}/NetworkManager/dispatcher.d/11-dhclient
+    %attr(0644,root,root)   %{_unitdir}/dhcpd.service
+    %attr(0644,root,root)   %{_unitdir}/dhcpd6.service
+    %attr(0644,root,root) %{_unitdir}/dhcrelay.service
+    %attr(0755,dhcpd,dhcpd) %dir %{_localstatedir}/lib/dhcpd
+    %attr(0644,dhcpd,dhcpd) %verify(mode) %config(noreplace) %{_localstatedir}/lib/dhcpd/dhcpd.leases
+    %attr(0644,dhcpd,dhcpd) %verify(mode) %config(noreplace) %{_localstatedir}/lib/dhcpd/dhcpd6.leases
+    %config(noreplace) %{_sysconfdir}/sysconfig/dhcpd
+    %config(noreplace) %{dhcpconfdir}/dhcpd.conf
+    %config(noreplace) %{dhcpconfdir}/dhcpd6.conf
+    %{_sbindir}/dhcpd
+    %{_sbindir}/dhclient
+    %{_sbindir}/dhclient-script
+    %{_sbindir}/dhcrelay
+    %{_bindir}/omshell
+    %attr(0755,root,root) %{_libdir}/pm-utils/sleep.d/56dhclient
+    
+Pre:
+    - dhcp.sh
+Preun:
+    - dhcp.sh
+Post:
+    - dhcp.sh
+Postun:
+    - dhcp.sh
+rpmMacros:
+    - "%global nmconfdir %{_sysconfdir}/NetworkManager"
+    - "%global dhcpconfdir %{_sysconfdir}/dhcp"
+
+subpackage:
+    - name: devel
+      meta.summary: Development headers and libraries for interfacing to the DHCP server
+      meta.description: |
+          Header files for using the ISC DHCP libraries.  The
+          libdhcpctl and libomapi static libraries are also included in this package.
+      files: |
+          %defattr(-,root,root)
+          %doc doc/IANA-arp-parameters doc/api+protocol
+          %{_includedir}/dhcpctl
+          %{_includedir}/omapip
+          %{_libdir}/libdhcp*.a
+          %{_libdir}/libomapi.a
+          
+          
+
+    - name: help
+      meta.summary: Documents for %{name}
+      meta.description: Man pages and other related documents for %{name}.
+      requires:
+          - man info
+      buildArch: noarch
+      files: |
+          %defattr(644,root,root)
+          %doc doc/*
+          %{_mandir}/man1/omshell.1.gz
+          %{_mandir}/man5/dhcpd.conf.5.gz
+          %{_mandir}/man5/dhcpd.leases.5.gz
+          %{_mandir}/man8/dhcpd.8.gz
+          %{_mandir}/man5/dhcp-options.5.gz
+          %{_mandir}/man5/dhcp-eval.5.gz
+          %{_mandir}/man5/dhclient.conf.5.gz
+          %{_mandir}/man5/dhclient.leases.5.gz
+          %{_mandir}/man8/dhclient.8.gz
+          %{_mandir}/man8/dhclient-script.8.gz
+          %{_mandir}/man8/dhcrelay.8.gz
+          %{_mandir}/man3/dhcpctl.3.gz
+          %{_mandir}/man3/omapi.3.gz
+          
+

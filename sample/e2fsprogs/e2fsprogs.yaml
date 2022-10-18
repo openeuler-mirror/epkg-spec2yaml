@@ -1,0 +1,126 @@
+name: e2fsprogs
+meta.summary: Second extended file system management tools
+version: 1.46.4
+release: 16
+meta.license: GPLv2+ and LGPLv2 and MIT
+meta.homepage: http://e2fsprogs.sourceforge.net/
+sources:
+    - https://www.kernel.org/pub/linux/kernel/people/tytso/%{name}/v%{version}/%{name}-%{version}.tar.xz
+    - ext2_types-wrapper.h
+patchset:
+    - 0001-e2fsprogs-set-hugefile-from-4T-to-1T-in-hugefile-tes.patch
+    - 0002-libss-add-newer-libreadline.so.8-to-dlopen-path.patch
+    - 0003-tests-update-expect-files-for-f_mmp_garbage.patch
+    - 0004-tests-update-expect-files-for-f_large_dir-and-f_larg.patch
+    - 0005-resize2fs-resize2fs-disk-hardlinks-will-be-error.patch
+    - 0006-e2fsck-exit-journal-recovery-when-find-EIO-ENOMEM-er.patch
+    - 0007-e2fsck-exit-journal-recovery-when-jounral-superblock.patch
+    - 0008-e2fsck-add-env-param-E2FS_UNRELIABLE_IO-to-fi.patch
+    - 0009-e2mmpstatus.8.in-detele-filesystem-can-be-UUID-or-LA.patch
+    - 0010-tests-update-expect-file-for-u_direct_io.patch
+    - 0011-libext2fs-don-t-old-the-CACHE_MTX-while-doing-I-O.patch
+    - 0012-tests-fix-ACL-printing-tests.patch
+    - 0013-e2fsck-do-not-clean-up-file-acl-if-the-inode-is-trun.patch
+    - 0014-e2fsck-handle-level-is-overflow-in-ext2fs_extent_get.patch
+    - 0015-libext2fs-add-sanity-check-to-extent-manipulation.patch
+    - 0016-e2fsprogs-add-sw64.patch
+    - 0017-tune2fs-do-not-change-j_tail_sequence-in-journal-sup.patch
+    - 0018-debugfs-teach-logdump-the-n-num_trans-option.patch
+    - 0019-tune2fs-fix-tune2fs-segfault-when-ext2fs_run_ext3_jo.patch
+    - 0020-tune2fs-tune2fs_main-should-return-rc-when-some-erro.patch
+    - 0021-tune2fs-exit-directly-when-fs-freed-in-ext2fs_run_ext3_journal.patch
+meta.description: |
+    The e2fsprogs package consists of a lot of tools for users to create,
+    check, modify, and correct any inconsistencies in second extended file
+    system.
+buildRequires:
+    - gcc pkgconfig texinfo
+    - fuse-devel libblkid-devel libuuid-devel
+    - audit
+provides:
+    - e2fsprogs-libs%{?_isa} e2fsprogs-libs
+    - libcom_err%{?_isa} libcom_err
+    - libss%{?_isa} libss
+obsoletes:
+    - e2fsprogs-libs
+    - libcom_err
+    - libss
+files: |
+    %doc README RELEASE-NOTES
+    %license NOTICE
+    %config(noreplace) /etc/mke2fs.conf
+    %config(noreplace) /etc/e2scrub.conf
+    %{_bindir}/chattr
+    %{_bindir}/fuse2fs
+    %{_bindir}/lsattr
+    %{_libdir}/e2fsprogs/e2scrub_fail
+    %{_libdir}/libe2p.so.*
+    %{_libdir}/libext2fs.so.*
+    %{_libdir}/libcom_err.so.*
+    %{_libdir}/libss.so.*
+    %{_sbindir}/*
+    %{_udevrulesdir}/*.rules
+    %ifnarch i686
+    %{_unitdir}/e2scrub*
+    %endif
+    
+recommends:
+    - %{name}-help = %{version}-%{release}
+subpackage:
+    - name: devel
+      meta.summary: Second extended file system libraries and headers
+      meta.license: GPLv2 and LGPLv2 and MIT
+      meta.description: |
+          This package provides libraries and header files to develop
+          second extended file system userspace programs.
+      requires:
+          - e2fsprogs = %{version}-%{release}
+          - gawk
+          - pkgconfig
+      requiresPreUn:
+          - info
+      requiresPost:
+          - info
+      provides:
+          - libcom_err-devel%{?_isa} libcom_err-devel
+          - libss-devel%{?_isa} libss-devel
+          - e2fsprogs-static{?_isa} e2fsprogs-static
+      obsoletes:
+          - libcom_err-devel
+          - libss-devel
+          - e2fsprogs-static
+      files: |
+          %{_bindir}/compile_et
+          %{_bindir}/mk_cmds
+          %{_datadir}/et
+          %{_datadir}/ss
+          %{_infodir}/libext2fs.info*
+          %{_includedir}/e2p
+          %{_includedir}/ext2fs
+          %{_includedir}/et
+          %{_includedir}/com_err.h
+          %{_includedir}/ss
+          %{_libdir}/pkgconfig/*.pc
+          %{_libdir}/*.so
+          %{_libdir}/*.a
+          
+      filesInput: %{name}.lang
+
+      Preun:
+          - e2fsprogs.sh
+      Post:
+          - e2fsprogs.sh
+
+    - name: help
+      meta.summary: man files for e2fsprogs
+      meta.description: This packages includes man files for e2fsprogs.
+      requires:
+          - man
+      buildArch: noarch
+      files: |
+          %{_mandir}/man1/*
+          %{_mandir}/man3/*
+          %{_mandir}/man5/*
+          %{_mandir}/man8/*
+          
+

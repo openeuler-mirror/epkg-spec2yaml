@@ -1,0 +1,31 @@
+name: dosfstools
+meta.summary: FAT file system userspace tools
+version: 4.2
+release: 1
+meta.license: GPLv3+
+meta.homepage: http://www.github.com/dosfstools/dosfstools
+sources:
+    - http://www.github.com/%{name}/%{name}/releases/download/v%{version}/%{name}-%{version}.tar.gz
+meta.description: |
+    The dosfstools package contains programs mkfs.fat, fsck.fat and fatlabel to
+    create, check and label FAT family file systems.
+buildRequires:
+    - gcc autoconf automake
+files: |
+    %doc NEWS README doc/* ChangeLog
+    %license COPYING
+    %{_sbindir}/*
+    %exclude %{_docdir}/%{name}/COPYING
+    
+    
+subpackage:
+    - name: help
+      meta.summary: Documentations for dosfstools
+      meta.description: This package includes man pages for dosfstools.
+      requires:
+          - man
+      buildArch: noarch
+      files: |
+          %{_mandir}/man8/*
+          
+
