@@ -1,0 +1,4 @@
+STOREHOUSE_URL = "http://10.244.182.103/"
+STORE_FRAMEWORK_URL = "http://10.244.182.103/framework/"
+STORE_CONF_URL = "http://10.244.182.103/conf/"
+TransitionAPI = "10.244.182.103"
