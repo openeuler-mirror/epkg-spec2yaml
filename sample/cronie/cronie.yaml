@@ -1,0 +1,71 @@
+name: cronie
+meta.summary: Standard UNIX daemon crond
+version: 1.6.1
+release: 1
+meta.license: GPLv2+ and ISC
+meta.homepage: https://github.com/cronie-crond/cronie
+sources:
+    - https://github.com/cronie-crond/cronie/releases/download/cronie-%{version}/cronie-%{version}.tar.gz
+patchset:
+    - bugfix-cronie-systemd-alias.patch
+meta.description: |
+    Cronie contains the standard UNIX daemon crond that runs specified programs
+    at scheduled times and related tools. It is based on the original cron and
+    has security and configuration enhancements like the ability to use pam and SELinux.
+requires:
+    - libselinux pam crontabs
+requiresPreUn:
+    - systemd
+requiresPost:
+    - systemd coreutils sed
+requiresPostUn:
+    - systemd
+buildRequires:
+    - automake
+    - gcc systemd libselinux-devel pam-devel audit-libs-devel
+provides:
+    - dailyjobs anacron %{name}-anacron %{name}-noanacron
+obsoletes:
+    - %{name}-anacron %{name}-noanacron
+files: |
+    %defattr(-,root,root)
+    
+    %doc AUTHORS ChangeLog COPYING README
+    
+    %dir %{_sysconfdir}/cron.d
+    %dir %{_localstatedir}/spool/cron
+    %dir %{_localstatedir}/spool/anacron
+    %ghost %attr(0644,root,root) %verify(not md5 size mtime) %{_localstatedir}/spool/anacron/{cron.daily,cron.weekly,cron.monthly}
+    %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cron.d/dailyjobs
+    %attr(0755,root,root) %{_sysconfdir}/cron.hourly/0anacron
+    %config(noreplace) %{_sysconfdir}/anacrontab
+    %config(noreplace) %{_sysconfdir}/pam.d/crond
+    %config(noreplace) %{_sysconfdir}/cron.deny
+    %config(noreplace) %{_sysconfdir}/cron.d/0hourly
+    %attr(0644,root,root) /lib/systemd/system/crond.service
+    %config(noreplace) %{_sysconfdir}/sysconfig/crond
+    
+    %{_sbindir}/crond
+    %{_sbindir}/anacron
+    %attr(4755,root,root) %{_bindir}/crontab
+    %{_bindir}/cronnext
+    
+    
+Pre:
+    - cronie.sh
+Preun:
+    - cronie.sh
+Post:
+    - cronie.sh
+Postun:
+    - cronie.sh
+subpackage:
+    - name: help
+      meta.summary: Man pages and other related documents for cronie
+      meta.description: Man pages and other related documents for cronie.
+      buildArch: noarch
+      files: |
+          %{_mandir}/{man1,man5,man8}/*
+          
+          
+
