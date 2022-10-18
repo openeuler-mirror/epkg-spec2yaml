@@ -1,0 +1,139 @@
+name: lxc
+meta.summary: Linux Containers userspace tools
+version: 4.0.3
+release: %{_release}
+meta.license: LGPLv2+ and GPLv2 and GPLv3
+meta.homepage: https://github.com/lxc/lxc
+sources:
+    - https://linuxcontainers.org/downloads/lxc/lxc-4.0.3.tar.gz
+patchset:
+    - 0001-refactor-patch-code-of-utils-commands-and-so-on.patch
+    - 0002-refactor-patch-code-of-isulad-for-conf-exec-attach.patch
+    - 0003-refactor-patch-code-of-isulad-for-selinux-attach.patch
+    - 0004-refactor-patch-code-of-lxccontianer-and-so-on.patch
+    - 0005-refactor-patch-code-of-attach-and-seccomp.patch
+    - 0006-refactor-patch-about-namespace-log-terminal.patch
+    - 0007-refactor-patches-on-terminal.c-start.c-and-so-on.patch
+    - 0008-refactor-patch-code-of-json.patch
+    - 0009-fix-HOME-env-of-container-unset-error.patch
+    - 0010-check-yajl-only-when-have-isulad.patch
+    - 0011-drop-security_context_t.patch
+    - 0012-only-set-user-or-image-set-non-empty-HOME.patch
+    - 0013-return-fail-if-no-args-or-no-rootfs-path-found.patch
+    - 0014-fix-tools-using-option-give-error-message.patch
+    - 0015-fix-do-mask-pathes-after-parent-mounted.patch
+    - 0016-skip-kill-cgroup-processes-if-no-hierarchies.patch
+meta.description: |
+    Containers are insulated areas inside a system, which have their own namespace
+    for filesystem, network, PID, IPC, CPU and memory allocation and which can be
+    created using the Control Group and Namespace features included in the Linux
+    kernel.
+    
+    This package provides the lxc-* tools and libraries for running lxc
+    applications, which can be used to start a single daemon in a container, or to
+    boot an entire "containerized" system, and to manage and debug your containers.
+requires:
+    - lxc-libs = 4.0.3-%{release}
+buildRequires:
+    - systemd-units git libtool graphviz docbook2X doxygen chrpath
+    - pkgconfig(libseccomp)
+    - libcap libcap-devel libselinux-devel yajl yajl-devel
+    - pkgconfig(bash-completion)
+files: |
+    %defattr(-,root,root)
+    %{_bindir}/%{name}-*
+    %{_datadir}/%{name}/%{name}.functions
+    %dir %{_datadir}/bash-completion
+    %dir %{_datadir}/bash-completion/completions
+    %{_datadir}/bash-completion/completions/lxc
+Preun:
+    - lxc.sh
+Post:
+    - lxc.sh
+Postun:
+    - lxc.sh
+rpmMacros:
+    - "%global _release 2022101701"
+    - "%{!?_pkgdocdir: %global _pkgdocdir %{_docdir}/lxc-4.0.3}"
+
+subpackage:
+    - name: libs
+      meta.summary: Runtime library files for %{name}
+      meta.description: |
+          Linux Resource Containers provide process and resource isolation without the
+          overhead of full virtualization.
+          
+          The %{name}-libs package contains libraries for running %{name} applications.
+      requires:
+          - rsync libcap libseccomp libselinux
+      requiresPreUn:
+          - systemd
+      requiresPost:
+          - systemd
+          - /sbin/ldconfig
+      requiresPostUn:
+          - systemd
+          - /sbin/ldconfig
+      files: |
+          %defattr(-,root,root)
+          %{_libdir}/liblxc.so
+          %{_libdir}/liblxc.so.*
+          %{_libdir}/%{name}
+          %{_libexecdir}/%{name}
+          %{_sbindir}/init.%{name}
+          %{_sharedstatedir}/%{name}
+          %dir %{_sysconfdir}/%{name}
+          %config(noreplace) %{_sysconfdir}/%{name}/default.conf
+          %config(noreplace) %{_sysconfdir}/lxc/*
+          %config(noreplace) %{_sysconfdir}/sysconfig/*
+          
+          %dir %{_pkgdocdir}
+          %{_pkgdocdir}/AUTHORS
+          %{_pkgdocdir}/README
+          %license COPYING
+          %{_unitdir}/%{name}.service
+          %{_unitdir}/%{name}@.service
+          %{_unitdir}/%{name}-net.service
+          %dir %{_localstatedir}/cache/%{name}
+          
+
+    - name: devel
+      meta.summary: Development files for lxc
+      meta.description: |
+          The lxc-devel package contains header files ,library and templates needed for
+          development of the Linux containers.
+      requires:
+          - lxc = 4.0.3-%{release}
+          - pkgconfig
+      files: |
+          %defattr(-,root,root)
+          %{_includedir}/%{name}/*
+          %{_libdir}/pkgconfig/%{name}.pc
+          %dir %{_datadir}/%{name}
+          %{_datadir}/%{name}/hooks
+          %{_datadir}/%{name}/lxc-patch.py*
+          %{_datadir}/%{name}/selinux
+          %dir %{_datadir}/%{name}/templates
+          %{_datadir}/%{name}/templates/lxc-*
+          %dir %{_datadir}/%{name}/config
+          %{_datadir}/%{name}/config/*
+          %dir %{_datadir}/%{name}/__pycache__
+          %{_datadir}/%{name}/__pycache__/*
+          
+          
+
+    - name: help
+      meta.summary: Documentation and templates for lxc
+      meta.description: This package contains documentation for lxc for creating containers.
+      buildArch: noarch
+      files: |
+          %dir %{_pkgdocdir}
+          %{_pkgdocdir}/*
+          %{_mandir}/man1/%{name}*
+          %{_mandir}/*/man1/%{name}*
+          %{_mandir}/man5/%{name}*
+          %{_mandir}/man7/%{name}*
+          %{_mandir}/*/man5/%{name}*
+          %{_mandir}/*/man7/%{name}*
+          
+
