@@ -1,0 +1,160 @@
+name: binutils
+meta.summary: Binary utilities
+version: 2.37
+release: 12
+meta.license: GPLv3+
+meta.homepage: https://sourceware.org/binutils
+sources:
+    - https://ftp.gnu.org/gnu/binutils/binutils-%{version}.tar.xz
+patchset:
+    - binutils-2.20.51.0.2-libtool-lib64.patch
+    - export-demangle.h-in-devel-package.patch
+    - binutils-2.22.52.0.4-no-config-h-check.patch
+    - binutils-2.27-aarch64-ifunc.patch
+    - CVE-2019-1010204.patch
+    - Fix-a-potential-use-of-an-uninitialised-value-in-the.patch
+    - backport-CVE-2021-45078.patch
+    - backport-0001-CVE-2021-42574.patch
+    - backport-0002-CVE-2021-42574.patch
+    - backport-0003-CVE-2021-42574.patch
+    - bfd-Close-the-file-descriptor-if-there-is-no-archive.patch
+    - binutils-AArch64-EFI.patch
+    - backport-0001-PR28391-strip-objcopy-preserve-dates-.a-cannot-set-t.patch
+    - 0001-x86-Add-int1-as-one-byte-opcode-0xf1.patch
+    - 0002-x86-drop-OP_Mask.patch
+    - 0003-x86-correct-VCVT-U-SI2SD-rounding-mode-handling.patch
+    - 0004-x86-64-generalize-OP_G-s-EVEX.R-handling.patch
+    - 0005-x86-64-properly-bounds-check-bnd-N-in-OP_G.patch
+    - 0006-x86-fold-duplicate-register-printing-code.patch
+    - 0007-x86-fold-duplicate-code-in-MOVSXD_Fixup.patch
+    - 0008-x86-correct-EVEX.V-handling-outside-of-64-bit-mode.patch
+    - 0009-x86-drop-vex_mode-and-vex_scalar_mode.patch
+    - 0010-x86-fold-duplicate-vector-register-printing-code.patch
+    - 0011-x86-drop-xmm_m-b-w-d-q-_mode.patch
+    - 0012-x86-drop-vex_scalar_w_dq_mode.patch
+    - 0013-x86-drop-dq-b-d-_mode.patch
+    - 0014-x86-express-unduly-set-rounding-control-bits-in-disa.patch
+    - 0015-x86-Simplify-check-for-distinct-TMM-register-operand.patch
+    - 0016-PATCH-1-2-Enable-Intel-AVX512_FP16-instructions.patch
+    - 0017-PATCH-2-2-Add-tests-for-Intel-AVX512_FP16-instructio.patch
+    - 0018-x86-ELF-fix-.tfloat-output.patch
+    - 0019-x86-ELF-fix-.ds.x-output.patch
+    - 0020-x86-ELF-fix-.tfloat-output-with-hex-input.patch
+    - 0021-x86-introduce-.hfloat-directive.patch
+    - 0022-x86-Avoid-abort-on-invalid-broadcast.patch
+    - 0023-x86-Put-back-3-aborts-in-OP_E_memory.patch
+    - 0024-x86-Print-bad-on-invalid-broadcast-in-OP_E_memory.patch
+    - 0025-x86-Terminate-mnemonicendp-in-swap_operand.patch
+    - 0026-opcodes-Make-i386-dis.c-thread-safe.patch
+    - 0027-x86-reduce-AVX512-FP16-set-of-insns-decoded-through-.patch
+    - 0028-x86-reduce-AVX512-FP-set-of-insns-decoded-through-ve.patch
+    - 0029-x86-consistently-use-scalar_mode-for-AVX512-FP16-sca.patch
+    - backport-CVE-2022-38126.patch
+    - backport-0001-texi2pod.pl-add-no-op-no-split-option-support-PR2814.patch
+    - backport-AArch64-Add-support-for-AArch64-EFI-efi-aarch64.patch
+    - backport-Add-support-for-AArch64-EFI-efi-aarch64.patch
+    - backport-don-t-over-align-file-positions-of-PE-executable-sec.patch
+meta.description: |
+    The GNU Binutils are a collection of binary tools. The main ones are:
+    ld - the GNU linker.
+    as - the GNU assembler.
+    addr2line - Converts addresses into filenames and line numbers.
+    ar - A utility for creating, modifying and extracting from archives.
+    c++filt - Filter to demangle encoded C++ symbols.
+    dlltool - Creates files for building and using DLLs.
+    gold - A new, faster, ELF only linker, still in beta test.
+    gprof - Displays profiling information.
+    nlmconv - Converts object code into an NLM.
+    nm - Lists symbols from object files.
+    objcopy - Copies and translates object files.
+    objdump - Displays information from object files.
+    ranlib - Generates an index to the contents of an archive.
+    readelf - Displays information from any ELF format object file.
+    size - Lists the section sizes of an object or archive file.
+    strings - Lists printable strings from files.
+    trip - Discards symbols.
+    windmc - A Windows compatible message compiler.
+    windres - A compiler for Windows resource files.
+requiresPreUn:
+    - info chkconfig
+requiresPost:
+    - info coreutils chkconfig
+buildRequires:
+    - gcc, perl, sed, coreutils, dejagnu, zlib-devel, glibc-static, sharutils, bc, libstdc++-static
+    - bison, m4, gcc-c++, gettext, flex, zlib-devel, texinfo >= 4.0, perl-podlators chrpath
+provides:
+    - bundled(libiberty)
+files: |
+    %doc README
+    %license COPYING3 COPYING COPYING3.LIB COPYING.LIB
+    %{_bindir}/[!l]*
+    %{_bindir}/ld.*
+    %ghost %{_bindir}/ld
+    %{_libdir}/lib*.so
+    %{_libdir}/libctf*
+    %{_libdir}/bfd-plugins/libdep.so
+    %exclude %{_libdir}/libctf.a
+    %exclude %{_libdir}/libctf-nobfd.a
+    %exclude %{_libdir}/libbfd.so
+    %exclude %{_libdir}/libopcodes.so
+    %config(noreplace) /etc/ld.so.conf.d/*
+    
+Preun:
+    - binutils.sh
+Post:
+    - binutils.sh
+Postun:
+    - binutils.sh
+buildRoot:
+    - %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+rpmMacros:
+    - "%bcond_without gold %ifnarch riscv64"
+    - "%bcond_with gold %else %ifnarch riscv64"
+    - "%define _gnu %{nil}"
+    - "%{!?ld_bfd_priority: %global ld_bfd_priority    50}"
+    - "%{!?ld_gold_priority:%global ld_gold_priority   30} %if %{with gold}"
+
+subpackage:
+    - name: devel
+      meta.summary: devel package including header files and libraries.
+      meta.description: |
+          The devel package contains BFD and opcodes static and dynamic libraries.
+          The static libraries are used by the dynamic libraries which are linkier
+          scripts imported from glibc/Makerules.
+      requires:
+          - zlib-devel, binutils = %{version}-%{release}, coreutils
+      requiresPreUn:
+          - info
+      requiresPost:
+          - info
+      provides:
+          - binutils-static = %{version}-%{release}
+      files: |
+          %{_prefix}/include/*
+          %{_libdir}/lib*.a
+          %{_libdir}/libbfd.so
+          %{_libdir}/libopcodes.so
+          
+
+    - name: help
+      meta.summary: binutils help
+      meta.description: The help package contains man files.
+      files: |
+          %{_mandir}/man1/*
+          %{_infodir}/as.info.gz
+          %{_infodir}/binutils.info.gz
+          %{_infodir}/gprof.info.gz
+          %{_infodir}/ld.info.gz
+          %{_infodir}/[^b]*info*
+          %{_infodir}/binutils*info*
+          %{_infodir}/bfd*info*
+          
+      filesInput: binutils.lang
+
+      Preun:
+          - binutils.sh
+      Post:
+          - binutils.sh
+      Postun:
+          - binutils.sh
+
