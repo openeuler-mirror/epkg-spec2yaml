@@ -1,0 +1,70 @@
+name: libnl3
+meta.summary: Providing APIs to netlink protocol based Linux kernel interfaces
+version: 3.5.0
+release: 6
+meta.license: LGPLv2
+meta.homepage: http://www.infradead.org/~tgr/libnl/
+sources:
+    - https://github.com/thom311/libnl/releases/download/libnl3_5_0/libnl-3.5.0.tar.gz
+patchset:
+    - backport-lib-add-include-netlink-private-nl-auto-h-header.patch
+    - backport-lib-use-proper-int-type-for-id-attributes-in-nl_object_identical.patch
+    - backport-route-link-add-RTNL_LINK_REASM_OVERLAPS-stat.patch
+    - backport-route-link-Check-for-null-pointer-in-macvlan.patch
+    - backport-rtnl-link-fix-leaking-rtnl_link_af_ops-in-link_msg_parser.patch
+    - backport-rtnl-route-fix-NLE_NOMEM-handling-in-parse_multipath.patch
+    - solve-redefinition-of-struct-ipv6_mreq.patch
+    - add-a-test-test-add-route.patch
+    - add-some-tests-about-addr-class-rule-neigh-qdisc.patch
+meta.description: |
+    This package contains a collection of libraries providing
+    APIs to netlink based Linux kernel sockets interfaces.
+requires:
+    - %{name} = %{version}-%{release}
+buildRequires:
+    - flex bison libtool autoconf automake swig
+provides:
+    - %{name}-cli
+obsoletes:
+    - %{name}-cli
+files: |
+    %doc COPYING
+    %{_libdir}/libnl-*.so.*
+    %config(noreplace) %{_sysconfdir}/*
+    %{_libdir}/libnl/
+    %{_bindir}/*
+    
+subpackage:
+    - name: devel
+      meta.summary: Libraries and headers for libnl3
+      meta.description: This package provides various libraries and headers for using libnl3
+      requires:
+          - %{name} = %{version}-%{release} kernel-headers
+      files: |
+          %{_includedir}/libnl3/netlink/
+          %{_libdir}/*.so
+          %{_libdir}/pkgconfig/*.pc
+          
+
+    - name: help
+      meta.summary: Document for libnl3
+      meta.description: This package contains libnl3 related documentations
+      provides:
+          - %{name}-doc = %{version}-%{release}
+      obsoletes:
+          - %{name}-doc < %{version}-%{release}
+      files: |
+          %{_mandir}/man8/*
+          
+
+    - name: python3-libnl3
+      meta.summary: Python3 binding for libnl3
+      meta.description: Python3 bindings for libnl3
+      buildRequires:
+          - python3-devel
+      files: |
+          %{python3_sitearch}/netlink
+          %{python3_sitearch}/netlink-*.egg-info
+          
+      AsWholeName: yes
+
