@@ -1,0 +1,131 @@
+name: glib2
+meta.summary: The core library that forms the basis for projects such as GTK+ and GNOME
+version: 2.72.2
+release: 3
+meta.license: LGPLv2+
+meta.homepage: http://www.gtk.org
+sources:
+    - https://download.gnome.org/sources/glib/2.71/glib-%{version}.tar.xz
+patchset:
+    - backport-add-version-macros-for-GLib-2.74.patch
+    - backport-gtype-Add-G_TYPE_FLAG_NONE.patch
+    - backport-gioenums-Add-G_TLS_CERTIFICATE_FLAGS_NONE.patch
+    - backport-gtestutils-Add-G_TEST_SUBPROCESS_DEFAULT.patch
+    - backport-gsignal-Add-G_CONNECT_DEFAULT.patch
+    - backport-giomodule-test-Dont-pass-a-magic-number-to-g_test_trap_subprocess.patch
+    - backport-giochannel-Add-G_IO_FLAG_NONE.patch
+    - backport-gmarkup-Add-G_MARKUP_PARSE_FLAGS_NONE.patch
+    - backport-gregex-Add-G_REGEX_DEFAULT-G_REGEX_MATCH_DEFAULT.patch
+    - backport-replace-pcre1-with-pcre2.patch
+    - backport-gregex-format-specifier-for-localized-error-message.patch
+    - backport-gregex-ensure-we-translate-the-errcode.patch
+    - backport-gregex-Free-match-info-if-offset-matching-recalc-failed.patch
+    - backport-gregex-use-G_REGEX_OPTIMIZE-flag-to-enable-JIT-compilation.patch
+    - backport-gregex-use-g_debug-instead-of-g_warning-in-case-JIT-is-not-available.patch
+    - backport-gregex-do-not-set-match-and-recursion-limits-on-match-context.patch
+    - backport-gregex-add-original-test-case.patch
+    - backport-gregex-use-correct-size-for-pcre2_pattern_info.patch
+meta.description: |
+    GLib is a bundle of three (formerly five) low-level system libraries
+    written in C and developed mainly by GNOME. GLib's code was separated
+    from GTK, so it can be used by software other than GNOME and has been
+    developed in parallel ever since.
+buildRequires:
+    - chrpath gcc gcc-c++ gettext perl-interpreter
+    - glibc-devel libattr-devel libselinux-devel meson
+    - systemtap-sdt-devel pkgconfig(libelf) pkgconfig(libffi)
+    - pkgconfig(libpcre) pkgconfig(mount) pkgconfig(zlib)
+    - python3-devel
+    - desktop-file-utils shared-mime-info gtk-doc %ifnarch i686
+    - pkgconfig(sysprof-capture-4) %ifnarch i686 %if %{?openEuler:1}0
+provides:
+    - %{name}-fam = %{version}-%{release}
+    - bundled(gnulib)
+    - bundled(gvdb)
+    - bundled(libcharset)
+    - bundled(xdgmime)
+obsoletes:
+    - %{name}-fam < %{version}-%{release}
+conflicts:
+    - gcr < 3.28.1
+files: |
+    %defattr(-,root,root)
+    %doc AUTHORS NEWS README
+    %license COPYING
+    %{_libdir}/*.so.*
+    %dir %{_libdir}/gio
+    %ghost %{_libdir}/gio/modules/giomodule.cache
+    
+    %dir %{_datadir}/glib-2.0
+    %dir %{_datadir}/bash-completion
+    %{_datadir}/bash-completion/completions/gapplication
+    %{_datadir}/bash-completion/completions/gdbus
+    %{_datadir}/bash-completion/completions/gio
+    %{_datadir}/bash-completion/completions/gsettings
+    
+    %{_bindir}/gio
+    %{_bindir}/gio-querymodules*
+    %{_bindir}/glib-compile-schemas
+    %{_bindir}/gsettings
+    %{_bindir}/gdbus
+    %{_bindir}/gapplication
+    
+filesInput: glib20.lang
+
+recommends:
+    - shared-mime-info
+subpackage:
+    - name: devel
+      meta.summary: Development and test files for the GLib library
+      meta.description: Development and test files for the GLib library.
+      requires:
+          - gdb-headless
+      provides:
+          - %{name}-static = %{version}-%{release}
+          - %{name}-tests = %{version}-%{release}
+      obsoletes:
+          - %{name}-static < %{version}-%{release}
+          - %{name}-tests < %{version}-%{release}
+      files: |
+          %{_libdir}/lib*.so
+          %{_libdir}/glib-2.0
+          %{_libdir}/pkgconfig/*
+          %{_libdir}/*.a
+          %{_includedir}/*
+          %{_libexecdir}/installed-tests
+          %exclude %{_libexecdir}/installed-tests/glib/cert-tests
+          %exclude %{_libexecdir}/installed-tests/glib/tls-certificate
+          
+          %{_datadir}/aclocal/*
+          %{_datadir}/glib-2.0/*
+          %{_datadir}/bash-completion/completions/gresource
+          %{_datadir}/gdb/auto-load/%{_libdir}/*-gdb.py
+          %{_datadir}/gettext/
+          %{_datadir}/systemtap/
+          %{_datadir}/installed-tests
+          %exclude %{_datadir}/installed-tests/glib/tls-certificate.test
+          
+          %{_bindir}/glib-genmarshal
+          %{_bindir}/glib-gettextize
+          %{_bindir}/glib-mkenums
+          %{_bindir}/gobject-query
+          %{_bindir}/gtester
+          %{_bindir}/gdbus-codegen
+          %{_bindir}/glib-compile-resources
+          %{_bindir}/gresource
+          %attr (0755, root, root) %{_bindir}/gtester-report
+          
+
+    - name: help %ifnarch i686
+      meta.summary: help document for the glib2 package 
+      meta.description: help document for the glib2 package.
+      provides:
+          - %{name}-doc = %{version}-%{release} 
+      obsoletes:
+          - %{name}-doc < %{version}-%{release} 
+      buildArch: noarch 
+      files: |
+          %defattr(-,root,root)
+          %{_mandir}/man1/*
+          %doc %{_datadir}/gtk-doc/html/*
+
