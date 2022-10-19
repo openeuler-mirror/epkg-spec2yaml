@@ -103,14 +103,6 @@ requires:
     - gdb-headless = %{version}-%{release}
 conflicts:
     - gdb-headless < 7.12-29
-files: |
-    %license COPYING3 COPYING COPYING.LIB COPYING3.LIB
-    %doc README NEWS
-    %{_bindir}/gdb
-    %{_bindir}/gcore
-    %{_bindir}/gstack
-    %{_bindir}/pstack
-    %{_includedir}/gdb
     
 recommends:
     - gcc-gdb-plugin
@@ -123,7 +115,7 @@ rpmMacros:
     - "%global librpmso librpm.so.9"
 
 subpackage:
-    - name: headless
+    headless:
       meta.summary: The GNU Project debugger for C, C++, Fortran, Go and other languages
       meta.description: |
           GDB, the GNU Project debugger, allows you to see what is going on inside
@@ -144,18 +136,12 @@ subpackage:
           - bundled(md5-gcc) = 20180828
       conflicts:
           - elfutils < 0.149
-      files: |
-          %{_prefix}/libexec/gdb
-          %config(noreplace) %{_sysconfdir}/gdbinit
-          %{_sysconfdir}/gdbinit.d
-          %{_bindir}/gdb-add-index
-          %{_datadir}/gdb
           
       recommends:
           - default-yama-scope
           - %{librpmso}()(64bit)
 
-    - name: gdbserver
+    gdbserver:
       meta.summary: A standalone server for GDB (the GNU source-level debugger)
       meta.description: |
           GDB, the GNU Project debugger, allows you to see what is going on inside
@@ -164,14 +150,9 @@ subpackage:
           
           This package provides a program that allows you to run GDB on a different
           machine than the one which is running the program being debugged.
-      files: |
-          %{_bindir}/gdbserver
-          %ifnarch riscv64
-          %{_libdir}/libinproctrace.so
-          %endif
           
 
-    - name: help
+    help:
       meta.summary: Documentation for GDB (the GNU Project debugger)
       meta.license: GFDL
       meta.description: |
@@ -181,16 +162,30 @@ subpackage:
           
           This package provides INFO, HTML and PDF user manual for GDB.
       buildArch: noarch
-      files: |
-          %{_mandir}/*/gcore.1*
-          %{_mandir}/*/gstack.1*
-          %{_mandir}/*/pstack.1*
-          %{_mandir}/*/gdb.1*
-          %{_mandir}/*/gdbinit.5*
-          %{_mandir}/*/gdb-add-index.1*
-          %{_mandir}/*/gdbserver.1*
-          %doc %{gdb_build}/gdb/doc/{gdb,annotate}.{html,pdf}
-          %{_infodir}/annotate.info*
-          %{_infodir}/gdb.info*
           
-
+env.configureFlags: |
+    --with-system-gdbinit=%{_sysconfdir}/gdbinit
+    --with-gdb-datadir=%{_datadir}/gdb
+    --enable-gdb-build-warnings=,-Wno-unused
+    --enable-build-with-cxx
+    --enable-werror
+    --with-separate-debug-dir=/usr/lib/debug
+    --disable-sim
+    --disable-rpath
+    --without-stage1-ldflags
+    --disable-libmcheck
+    --with-babeltrace
+    --with-guile
+    --with-system-readline
+    --with-expat
+    --without-libexpat-prefix
+    --enable-tui
+    --with-python=%{__python3}
+    --with-rpm=%{librpmso}
+    --with-lzma
+    --without-libunwind
+    --enable-64-bit-bfd
+    --with-mpfr
+    --with-auto-load-dir='$debugdir:$datadir/auto-load'
+    --with-auto-load-safe-path='$debugdir:$datadir/auto-load'
+    --enable-targets=aarch64-linux-gnu %{_target_platform}

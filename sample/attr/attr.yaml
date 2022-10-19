@@ -23,18 +23,12 @@ obsoletes:
 conflicts:
     - xfsdump < 3.1.8
     - filesystem < 3
-files: |
-    %doc doc/CHANGES
-    %license doc/COPYING*
-    %{_bindir}/*
-    %{_libdir}/libattr.so.*
-    %config(noreplace) %{_sysconfdir}/xattr.conf
     
 rpmMacros:
     - "%{!?_licensedir:%global license %%doc}"
 
 subpackage:
-    - name: libattr-devel
+    libattr-devel:
       meta.summary: Header files for libattr
       meta.license: LGPLv2+
       meta.description: |
@@ -47,26 +41,17 @@ subpackage:
           - glibc-headers
       obsoletes:
           - libattr
-      files: |
-          %{_libdir}/libattr.so
-          %{_libdir}/pkgconfig/*.pc
-          %{_libdir}/libattr.a
-          %{_libdir}/libattr.la
-          %{_includedir}/attr
           
       AsWholeName: yes
 
-    - name: help
+    help:
       meta.summary: Including man files for attr
       meta.description: This contains man files for the using of attr
       requires:
           - man
-      files: |
-          %{_mandir}/man1/*
-          %{_mandir}/man3/*
           
 
-    - name: %{name}
+    %{name}:
       filesInput: %{name}.lang
 
       AsWholeName: yes
@@ -75,3 +60,5 @@ subpackage:
       Postun:
           - attr.sh
 
+env.configureFlags: |
+    --disable-silent-rules

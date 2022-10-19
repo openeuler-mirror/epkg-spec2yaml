@@ -14,21 +14,14 @@ meta.description: |
     standard 17 functions for manipulating access control lists.
 buildRequires:
     - libattr-devel gawk libtool gettext
-files: |
-    %defattr(-,root,root)
-    %{!?_licensedir:%global license %%doc}
-    %license doc/COPYING*
-    %{_bindir}/*acl
     
 subpackage:
-    - name: libacl
+    libacl:
       meta.summary: Library for supporting access control list
       meta.license: LGPLv2+
       meta.description: This package contains the library for manipulating access control list.
       conflicts:
           - filesystem < 3
-      files: |
-          %{_libdir}/libacl.so.*
           
       filesInput: %{name}.lang
 
@@ -38,7 +31,7 @@ subpackage:
       Postun:
           - acl.sh
 
-    - name: libacl-devel
+    libacl-devel:
       meta.summary: Files necessary to develop applications with libacl
       meta.license: LGPLv2+
       meta.description: This package contains header files for the POSIX ACL library.
@@ -46,12 +39,6 @@ subpackage:
           - libacl = %{version}-%{release}, libattr-devel
       obsoletes:
           - acl-devel < %{version}-%{release}
-      files: |
-          %defattr(-,root,root)
-          %{_includedir}/acl/libacl.h
-          %{_includedir}/sys/acl.h
-          %{_libdir}/libacl.so
-          %{_libdir}/pkgconfig/libacl.pc
           
       AsWholeName: yes
 
@@ -61,10 +48,3 @@ subpackage:
       requires:
           - man info
       buildArch: noarch
-      files: |
-          %defattr(-,root,root)
-          %{_mandir}/man1/*
-          %{_mandir}/man3/*
-          %{_mandir}/man5/*
-          
-

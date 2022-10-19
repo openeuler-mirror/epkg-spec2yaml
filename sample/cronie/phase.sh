@@ -6,14 +6,7 @@ prep() {
 }
 
 build() {
-%configure \
---with-pam \
---with-selinux \
---with-audit \
---with-inotify \
---enable-anacron \
---enable-pie \
---enable-relro
+%configure %%{env.configureFlags}
 
 %make_build
 

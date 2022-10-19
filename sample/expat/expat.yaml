@@ -15,37 +15,19 @@ meta.description: |
     performance and flexibility are crucial.
 buildRequires:
     - sed,autoconf,automake,gcc-c++,libtool,xmlto
-files: |
-    %defattr(-,root,root)
-    %license COPYING AUTHORS
-    %{_bindir}/*
-    %{_libdir}/libexpat.so.1*
-    %exclude %{_docdir}/%{name}/AUTHORS
     
 rpmMacros:
     - "%define Rversion %(echo %{version} | sed -e 's/\\\\./_/g' -e 's/^/R_/')"
 
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Development files
       meta.description: This package provides with static libraries and  header files for developing with expat.
-      files: |
-          %defattr(-,root,root)
-          %{_includedir}/*
-          %{_libdir}/{libexpat.*a,libexpat.so}
-          %{_libdir}/cmake/expat-%{version}
-          %{_libdir}/pkgconfig/expat.pc
           
 
-    - name: help
+    help:
       meta.summary: Documents for %{name}
       meta.description: Man pages and other related documents for %{name}.
       requires:
           - man info
       buildArch: noarch
-      files: |
-          %defattr(-,root,root)
-          %doc README.md
-          %{_mandir}/man1/*
-          
-

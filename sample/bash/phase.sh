@@ -7,7 +7,7 @@ prep() {
 
 build() {
 autoconf
-%configure --with-bash-malloc=no --with-afs
+%configure %%{env.configureFlags}
 MFLAGS="CPPFLAGS=-D_GNU_SOURCE -DRECYCLES_PIDS -DDEFAULT_PATH_VALUE='\"/usr/local/bin:/usr/bin\"' `getconf LFS_CFLAGS`"
 make "$MFLAGS" version.h
 make "$MFLAGS" -C builtins

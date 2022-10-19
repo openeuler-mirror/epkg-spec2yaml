@@ -67,41 +67,21 @@ requires:
     - bc make gcc patch bison flex openssl-devel
 buildRequires:
     - gcc elfutils-libelf-devel kernel-devel git
-files: |
-    %defattr(-,root,root)
-    %doc COPYING README.md
-    %{_bindir}/*
-    %{_prefix}/lib/systemd/system/*
-    %{_libexecdir}/kpatch
-    %{_prefix}/sbin/kpatch
-    %{_datadir}/%{name}/*
-    %{_sysconfdir}/init/*
-    /opt/patch_workspace/*
-    %exclude %{_bindir}/livepatch
-    %exclude %{_bindir}/os_hotpatch
     
 recommends:
     - %{name}-help = %{version}-%{release}
 subpackage:
-    - name: runtime
+    runtime:
       meta.summary: Dynamic kernel patching
       meta.description: Dynamic kernel patching
       requires:
           - tar bash kmod
       buildArch: noarch
-      files: |
-          %defattr(-,root,root)
-          %{_bindir}/livepatch
-          %{_bindir}/os_hotpatch
           
 
-    - name: help
+    help:
       meta.summary: Documents for %{name}
       meta.description: Man pages and other related documents for %{name}.
       requires:
           - man info
       buildArch: noarch
-      files: |
-          %{_mandir}/man1/*.1.gz
-          
-

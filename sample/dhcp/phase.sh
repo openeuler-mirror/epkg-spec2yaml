@@ -16,17 +16,7 @@ build() {
 autoreconf --verbose --force --install
 
 CFLAGS="%{optflags} -fno-strict-aliasing" \
-%configure --with-srv-lease-file=%{_localstatedir}/lib/dhcpd/dhcpd.leases \
-    --with-srv6-lease-file=%{_localstatedir}/lib/dhcpd/dhcpd6.leases \
-    --with-cli-lease-file=%{_localstatedir}/lib/dhclient/dhclient.leases \
-    --with-cli6-lease-file=%{_localstatedir}/lib/dhclient/dhclient6.leases \
-    --with-srv-pid-file=%{_localstatedir}/run/dhcpd.pid \
-    --with-srv6-pid-file=%{_localstatedir}/run/dhcpd6.pid \
-    --with-cli-pid-file=%{_localstatedir}/run/dhclient.pid \
-    --with-cli6-pid-file=%{_localstatedir}/run/dhclient6.pid \
-    --with-relay-pid-file=%{_localstatedir}/run/dhcrelay.pid \
-    --with-ldap --with-ldapcrypto --with-ldap-gssapi --disable-static  --enable-log-pid --enable-paranoia --enable-early-chroot \
-    --enable-binary-leases --with-systemd
+%configure %%{env.configureFlags}
 
 make
 

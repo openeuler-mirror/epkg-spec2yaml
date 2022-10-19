@@ -40,23 +40,6 @@ buildRequires:
     - pkgconfig(libcurl) >= 7.29.0
     - pkgconfig(sqlite3) >= 3.7.17
     - pkgconfig(libarchive) >= 3.1.2
-files: |
-    %license COPYING COPYING-GPLV2 COPYING-LGPLV3
-    %doc README TODO CONTRIBUTING
-    %{_bindir}/eu-elfcompress
-    %{_bindir}/eu-strip
-    %attr(750,root,root) %{_bindir}/eu-addr2line
-    %attr(750,root,root) %{_bindir}/eu-ar
-    %attr(750,root,root) %{_bindir}/eu-elfclassify
-    %attr(750,root,root) %{_bindir}/eu-elfcmp
-    %attr(750,root,root) %{_bindir}/eu-elflint
-    %attr(750,root,root) %{_bindir}/eu-findtextrel
-    %attr(750,root,root) %{_bindir}/eu-make-debug-archive
-    %attr(750,root,root) %{_bindir}/eu-ranlib
-    %attr(750,root,root) %{_bindir}/eu-size
-    %attr(750,root,root) %{_bindir}/eu-stack
-    %attr(750,root,root) %{_bindir}/eu-strings
-    %attr(750,root,root) %{_bindir}/eu-unstrip
     
 recommends:
     - elfutils-extra
@@ -67,7 +50,7 @@ rpmMacros:
     - "%define _programprefix eu-"
 
 subpackage:
-    - name: extra
+    extra:
       meta.summary: extra package including debug tools
       meta.description: |
           The extra package contains debug tools.
@@ -76,13 +59,9 @@ subpackage:
           - elfutils = %{version}-%{release}
       provides:
           - elfutils-extra
-      files: |
-          %{_bindir}/eu-objdump
-          %{_bindir}/eu-readelf
-          %{_bindir}/eu-nm
           
 
-    - name: libs
+    libs:
       meta.summary: Libraries to handle compiled objects
       meta.license: GPLv2+ or LGPLv3+
       meta.description: |
@@ -94,19 +73,13 @@ subpackage:
       requires:
           - elfutils-libelf = %{version}-%{release}
           - default-yama-scope
-      files: |
-          %license COPYING-GPLV2 COPYING-LGPLV3
-          %{_libdir}/libasm-%{version}.so
-          %{_libdir}/libdw-%{version}.so
-          %{_libdir}/libasm.so.*
-          %{_libdir}/libdw.so.*
           
       Post:
           - elfutils.sh
       Postun:
           - elfutils.sh
 
-    - name: devel
+    devel:
       meta.summary: Development libraries to handle compiled objects.
       meta.license: GPLv2+ or LGPLv3+
       meta.description: |
@@ -124,26 +97,9 @@ subpackage:
           - elfutils-libelf-devel-static elfutils-devel-static
       obsoletes:
           - elfutils-libelf-devel-static < %{version}-%{release} elfutils-devel-static < %{version}-%{release}
-      files: |
-          %defattr(-,root,root)
-          %{_includedir}/dwarf.h
-          %dir %{_includedir}/elfutils
-          %{_includedir}/elfutils/elf-knowledge.h
-          %{_includedir}/elfutils/known-dwarf.h
-          %{_includedir}/elfutils/libasm.h
-          %{_includedir}/elfutils/libdw.h
-          %{_includedir}/elfutils/libdwelf.h
-          %{_includedir}/elfutils/libdwfl.h
-          %{_includedir}/elfutils/version.h
-          %{_libdir}/libasm.a
-          %{_libdir}/libasm.so
-          %{_libdir}/libdw.a
-          %{_libdir}/libdw.so
-          %{_libdir}/libelf.a
-          %{_libdir}/pkgconfig/libdw.pc
           
 
-    - name: libelf
+    libelf:
       meta.summary: Library to read and write ELF files
       meta.license: GPLv2+ or LGPLv3+
       meta.description: |
@@ -151,18 +107,13 @@ subpackage:
           writing ELF files on a high level.  Third party programs depend on
           this package to read internals of ELF files.  The programs of the
           elfutils package use it also to generate new ELF files.
-      files: |
-          %license COPYING-GPLV2 COPYING-LGPLV3
-          %{_libdir}/libelf-%{version}.so
-          %{_libdir}/libelf.so.*
-          %{_datadir}/locale/*/LC_MESSAGES/elfutils.mo
           
       Post:
           - elfutils.sh
       Postun:
           - elfutils.sh
 
-    - name: libelf-devel
+    libelf-devel:
       meta.summary: Development support for libelf
       meta.license: GPLv2+ or LGPLv3+
       meta.description: |
@@ -174,15 +125,9 @@ subpackage:
           - elfutils-libelf = %{version}-%{release}
       conflicts:
           - libelf-devel
-      files: |
-          %{_includedir}/libelf.h
-          %{_includedir}/gelf.h
-          %{_includedir}/nlist.h
-          %{_libdir}/libelf.so
-          %{_libdir}/pkgconfig/libelf.pc
           
 
-    - name: default-yama-scope
+    default-yama-scope:
       meta.summary: Default yama attach scope sysctl setting
       meta.license: GPLv2+ or LGPLv3+
       meta.description: |
@@ -196,25 +141,16 @@ subpackage:
       provides:
           - default-yama-scope
       buildArch: noarch
-      files: |
-          %{_sysctldir}/10-default-yama-scope.conf
           
       Post:
           - elfutils.sh
 
-    - name: help
+    help:
       meta.summary: Help documents for elfutils
       meta.description: This package contains help documents for elfutils
-      files: |
-          %{_mandir}/man1/eu-*.1*
-          %{_mandir}/man1/debuginfod-find.1*
-          %{_mandir}/man3/debuginfod_*.3*
-          %{_mandir}/man3/elf_*.3*
-          %{_mandir}/man7/debuginfod*.7.*
-          %{_mandir}/man8/debuginfod.8*
           
 
-    - name: debuginfod-client
+    debuginfod-client:
       meta.summary: Library and command line client for build-id HTTP ELF/DWARF server
       meta.license: GPLv3+ and (GPLv2+ or LGPLv3+)
       meta.description: |
@@ -222,31 +158,21 @@ subpackage:
           dynamically loaded from -ldw, which use a debuginfod service
           to look up debuginfo and associated data. Also includes a
           command-line frontend.
-      files: |
-          %defattr(-,root,root)
-          %{_libdir}/libdebuginfod-%{version}.so
-          %{_bindir}/debuginfod-find
-          %{_libdir}/libdebuginfod.so.*
           
       Post:
           - elfutils.sh
       Postun:
           - elfutils.sh
 
-    - name: debuginfod-client-devel
+    debuginfod-client-devel:
       meta.summary: Libraries and headers to build debuginfod client applications
       meta.license: GPLv2+ or LGPLv3+
       meta.description: |
           The elfutils-debuginfod-client-devel package contains the libraries
           to create applications to use the debuginfod service.
-      files: |
-          %defattr(-,root,root)
-          %{_libdir}/pkgconfig/libdebuginfod.pc
-          %{_includedir}/elfutils/debuginfod.h
-          %{_libdir}/libdebuginfod.so
           
 
-    - name: debuginfod
+    debuginfod:
       meta.summary: HTTP ELF/DWARF file server addressed by build-id
       meta.license: GPLv3+
       meta.description: |
@@ -267,20 +193,9 @@ subpackage:
           - systemd
       buildRequires:
           - systemd
-      files: |
-          %defattr(-,root,root)
-          %{_bindir}/debuginfod
-          %config(noreplace) %verify(not md5 size mtime) %{_sysconfdir}/sysconfig/debuginfod
-          %{_unitdir}/debuginfod.service
-          %{_sysconfdir}/sysconfig/debuginfod
-          
-          %dir %attr(0700,debuginfod,debuginfod) %{_localstatedir}/cache/debuginfod
-          %verify(not md5 size mtime) %attr(0600,debuginfod,debuginfod) %{_localstatedir}/cache/debuginfod/debuginfod.sqlite
-          
       Pre:
           - elfutils.sh
       Post:
           - elfutils.sh
       Postun:
           - elfutils.sh
-

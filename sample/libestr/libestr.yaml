@@ -11,24 +11,18 @@ meta.description: |
     used by the Rsyslog daemon.
 buildRequires:
     - gcc
-files: |
-    %license COPYING
-    %doc README AUTHORS ChangeLog
-    %{_libdir}/lib*.so.*
     
 Post:
     - libestr.sh
 Postun:
     - libestr.sh
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Development files for %{name}
       meta.description: |
           The %{name}-devel package contains libraries and header files for
           developing applications that use %{name}.
-      files: |
-          %{_includedir}/libestr.h
-          %{_libdir}/*.so
-          %{_libdir}/pkgconfig/libestr.pc
           
-
+env.configureFlags: |
+    --disable-static
+    --with-pic

@@ -7,10 +7,7 @@ prep() {
 }
 
 build() {
-%configure CFLAGS="$RPM_OPT_FLAGS -fno-strict-aliasing" \
-           --enable-elf-shlibs --enable-nls --disable-uuidd --disable-fsck \
-           --disable-e2initrd-helper --disable-libblkid --disable-libuuid \
-           --enable-quota --with-root-prefix=/usr
+%configure CFLAGS="$RPM_OPT_FLAGS -fno-strict-aliasing" %%{env.configureFlags}
 %make_build V=1
 
 }

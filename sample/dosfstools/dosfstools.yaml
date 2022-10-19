@@ -11,21 +11,15 @@ meta.description: |
     create, check and label FAT family file systems.
 buildRequires:
     - gcc autoconf automake
-files: |
-    %doc NEWS README doc/* ChangeLog
-    %license COPYING
-    %{_sbindir}/*
-    %exclude %{_docdir}/%{name}/COPYING
     
     
 subpackage:
-    - name: help
+    help:
       meta.summary: Documentations for dosfstools
       meta.description: This package includes man pages for dosfstools.
       requires:
           - man
       buildArch: noarch
-      files: |
-          %{_mandir}/man8/*
           
-
+env.configureFlags: |
+    --enable-compat-symlinks

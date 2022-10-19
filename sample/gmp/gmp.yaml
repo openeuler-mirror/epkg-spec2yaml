@@ -16,44 +16,31 @@ meta.description: |
     precision than is directly supported by the basic C types.
 buildRequires:
     - autoconf automake libtool gcc gcc-c++ perl-Carp
-files: |
-    %license COPYING COPYING.LESSERv3 COPYINGv2 COPYINGv3
-    %doc NEWS README
-    %{_libdir}/libgmp.so.*
-    %{_libdir}/pkgconfig/gmp.pc
     
 Post:
     - gmp.sh
 Postun:
     - gmp.sh
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Development library package for GMP.
       meta.description: Devel package include header files, documentation and libraries for GMP
       requires:
           - %{name}%{?_isa} = %{epoch}:%{version}-%{release}
           - %{name}-c++%{?_isa} = %{epoch}:%{version}-%{release}
           - %{name}-devel = %{epoch}:%{version}-%{release}
-      files: |
-          %{_libdir}/libgmpxx.so
-          %{_libdir}/libgmp.so
-          %{_includedir}/*.h
-          %{_infodir}/gmp.info*
-          %{_libdir}/libgmpxx.a
-          %{_libdir}/libgmp.a
           
 
-    - name: c++
+    c++:
       meta.summary: C++ development library package for GMP.
       meta.description: GMP dependent library for C++ applications.
       requires:
           - %{name}%{?_isa} = %{epoch}:%{version}-%{release}
-      files: |
-          %{_libdir}/libgmpxx.so.*
-          %{_libdir}/pkgconfig/gmpxx.pc
           
       Post:
           - gmp.sh
       Postun:
           - gmp.sh
 
+env.configureFlags: |
+    --enable-cxx

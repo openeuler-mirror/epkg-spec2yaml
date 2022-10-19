@@ -45,29 +45,11 @@ obsoletes:
     - e2fsprogs-libs
     - libcom_err
     - libss
-files: |
-    %doc README RELEASE-NOTES
-    %license NOTICE
-    %config(noreplace) /etc/mke2fs.conf
-    %config(noreplace) /etc/e2scrub.conf
-    %{_bindir}/chattr
-    %{_bindir}/fuse2fs
-    %{_bindir}/lsattr
-    %{_libdir}/e2fsprogs/e2scrub_fail
-    %{_libdir}/libe2p.so.*
-    %{_libdir}/libext2fs.so.*
-    %{_libdir}/libcom_err.so.*
-    %{_libdir}/libss.so.*
-    %{_sbindir}/*
-    %{_udevrulesdir}/*.rules
-    %ifnarch i686
-    %{_unitdir}/e2scrub*
-    %endif
     
 recommends:
     - %{name}-help = %{version}-%{release}
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Second extended file system libraries and headers
       meta.license: GPLv2 and LGPLv2 and MIT
       meta.description: |
@@ -89,20 +71,6 @@ subpackage:
           - libcom_err-devel
           - libss-devel
           - e2fsprogs-static
-      files: |
-          %{_bindir}/compile_et
-          %{_bindir}/mk_cmds
-          %{_datadir}/et
-          %{_datadir}/ss
-          %{_infodir}/libext2fs.info*
-          %{_includedir}/e2p
-          %{_includedir}/ext2fs
-          %{_includedir}/et
-          %{_includedir}/com_err.h
-          %{_includedir}/ss
-          %{_libdir}/pkgconfig/*.pc
-          %{_libdir}/*.so
-          %{_libdir}/*.a
           
       filesInput: %{name}.lang
 
@@ -117,10 +85,14 @@ subpackage:
       requires:
           - man
       buildArch: noarch
-      files: |
-          %{_mandir}/man1/*
-          %{_mandir}/man3/*
-          %{_mandir}/man5/*
-          %{_mandir}/man8/*
           
-
+env.configureFlags: |
+    --enable-elf-shlibs
+    --enable-nls
+    --disable-uuidd
+    --disable-fsck
+    --disable-e2initrd-helper
+    --disable-libblkid
+    --disable-libuuid
+    --enable-quota
+    --with-root-prefix=/usr

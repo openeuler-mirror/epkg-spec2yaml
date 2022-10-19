@@ -29,14 +29,7 @@ export common_configure_opts="--cache-file=../config.cache \
 
 (
 cd build-full
-%configure $common_configure_opts \
-        --enable-ldap \
-        --enable-ldaps \
-        --enable-manual \
-        --with-brotli \
-        --with-libidn2 \
-        --with-libpsl \
-        --with-libssh
+%configure $common_configure_opts %%{env.configureFlags}
 )
 
 sed -e 's/^runpath_var=.*/runpath_var=/' \

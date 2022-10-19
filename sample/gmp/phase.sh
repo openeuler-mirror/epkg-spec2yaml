@@ -16,7 +16,7 @@ export CFLAGS=$(echo %{optflags} | sed -e "s/-mtune=[^ ]*//g" | sed -e "s/-march
 export CXXFLAGS=$(echo %{optflags} | sed -e "s/-mtune=[^ ]*//g" | sed -e "s/-march=[^ ]*/-march=i686/g")
 %endif
 
-%configure --enable-cxx
+%configure %%{env.configureFlags}
 
 sed -e 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' \
     -e 's|-lstdc++ -lm|-lstdc++|' \

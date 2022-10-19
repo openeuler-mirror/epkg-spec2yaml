@@ -6,7 +6,7 @@ prep() {
 }
 
 build() {
-%configure --disable-dependency-tracking --disable-static
+%configure %%{env.configureFlags}
 %make_build
 
 }

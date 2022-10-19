@@ -24,37 +24,21 @@ provides:
     - pam_cifscreds
 obsoletes:
     - pam_cifscreds
-files: |
-    %defattr(-,root,root,-)
-    %doc
-    %{_bindir}/*
-    %{_sbindir}/*
-    %dir %{_libdir}/%{name}
-    %{_libdir}/%{name}/idmapwb.so
-    %{_libdir}/security/pam_cifscreds.so
-    %dir %{_sysconfdir}/cifs-utils
-    %config(noreplace) %{_sysconfdir}/request-key.d/cifs.idmap.conf
-    %config(noreplace) %{_sysconfdir}/request-key.d/cifs.spnego.conf
-    %ghost  %config(noreplace) %{_sysconfdir}/cifs-utils/idmap-plugin
     
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Files needed for building plugins for cifs-utils
       meta.description: |
           The SMB/CIFS protocol is a standard file sharing protocol widely deployed
           on Microsoft Windows machines. This package contains the header file
           necessary for building ID mapping plugins for cifs-utils.
-      files: |
-          %{_includedir}/cifsidmap.h
           
 
-    - name: help
+    help:
       meta.summary: Including man files for cifs-utils
       meta.description: This contains man files for the using of cifs-utils.
       requires:
           - man
-      files: |
-          %{_mandir}/man1/*
-          %{_mandir}/man8/*
           
-
+env.configureFlags: |
+    --with-pamdir=%{_libdir}/security
