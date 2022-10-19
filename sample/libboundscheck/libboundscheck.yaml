@@ -13,13 +13,6 @@ requires:
     - glibc
 buildRequires:
     - gcc make rpm-build
-files: |
-    %defattr(-,root,root)
-    %{_libdir}/libboundscheck.so
-    %{_includedir}/securec.h
-    %{_includedir}/securectype.h
-    %doc README.md
-    %license LICENSE
     
 Post:
     - libboundscheck.sh
@@ -27,4 +20,3 @@ Postun:
     - libboundscheck.sh
 rpmMacros:
     - "%define debug_package %{nil}"
-

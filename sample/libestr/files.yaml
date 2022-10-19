@@ -1,0 +1,9 @@
+files: |
+    %license COPYING
+    %doc README AUTHORS ChangeLog
+    %{_libdir}/lib*.so.*
+
+subpackage.devel.files: |
+    %{_includedir}/libestr.h
+    %{_libdir}/*.so
+    %{_libdir}/pkgconfig/libestr.pc

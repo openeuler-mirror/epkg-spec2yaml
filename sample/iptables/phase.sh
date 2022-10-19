@@ -7,7 +7,7 @@ prep() {
 
 build() {
 ./autogen.sh
-%configure --enable-devel --enable-bpf-compiler --with-kernel=/usr --with-kbuild=/usr --with-ksource=/usr
+%configure %%{env.configureFlags}
 
 %disable_rpath
 

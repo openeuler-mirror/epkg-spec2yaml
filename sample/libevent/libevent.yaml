@@ -17,36 +17,14 @@ meta.description: |
     Libevent includes support for several useful protocols, including DNS, HTTP, and a minimal RPC framewor.
 buildRequires:
     - gcc doxygen openssl-devel
-files: |
-    %doc ChangeLog
-    %license LICENSE
-    %{_libdir}/libevent-2.1.so.*
-    %{_libdir}/libevent_core-2.1.so.*
-    %{_libdir}/libevent_extra-2.1.so.*
-    %{_libdir}/libevent_openssl-2.1.so.*
-    %{_libdir}/libevent_pthreads-2.1.so.*
     
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Development files for %{name}
       meta.description: |
           This package contains the header files and libraries for developing
           with %{name}.
-      files: |
-          %{_includedir}/*.h
-          %dir %{_includedir}/event2
-          %{_includedir}/event2/*.h
-          %{_libdir}/libevent.so
-          %{_libdir}/libevent_core.so
-          %{_libdir}/libevent_extra.so
-          %{_libdir}/libevent_openssl.so
-          %{_libdir}/libevent_pthreads.so
-          %{_libdir}/pkgconfig/libevent.pc
-          %{_libdir}/pkgconfig/libevent_core.pc
-          %{_libdir}/pkgconfig/libevent_extra.pc
-          %{_libdir}/pkgconfig/libevent_openssl.pc
-          %{_libdir}/pkgconfig/libevent_pthreads.pc
-          %{_bindir}/event_rpcgen.*
           
-          
-
+env.configureFlags: |
+    --disable-dependency-tracking
+    --disable-static

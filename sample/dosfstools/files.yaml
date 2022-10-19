@@ -1,0 +1,8 @@
+files: |
+    %doc NEWS README doc/* ChangeLog
+    %license COPYING
+    %{_sbindir}/*
+    %exclude %{_docdir}/%{name}/COPYING
+
+subpackage.help.files: |
+    %{_mandir}/man8/*

@@ -74,15 +74,7 @@ cp -frp contrib/dlz/modules build/contrib/dlz/modules
 pushd build
 LIBDIR_SUFFIX=
 export LIBDIR_SUFFIX
-%configure \
-  --with-python=%{__python3} \
-  --with-libtool \
-  --localstatedir=%{_var} \
-  --with-pic \
-  --disable-static \
-  --includedir=%{_includedir}/bind9 \
-  --with-tuning=large \
-  --with-libidn2 \
+%configure %%{env.configureFlags} --localstatedir=%{_var} --disable-static --includedir=%{_includedir}/bind9 \
 %if %{with GEOIP2}
 --with-maxminddb \
 %endif
@@ -90,7 +82,6 @@ export LIBDIR_SUFFIX
 --enable-native-pkcs11 \
   --with-pkcs11=%{_libdir}/pkcs11/libsofthsm2.so \
 %endif
---with-dlopen=yes \
 %if %{with GSSTSIG}
 --with-gssapi=yes \
 %endif
@@ -108,8 +99,6 @@ export LIBDIR_SUFFIX
 %if %{with UNITTEST}
 --with-cmocka \
 %endif
---enable-fixed-rrset \
-  --enable-full-report \
 ;
 %if %{with DNSTAP}
 pushd lib

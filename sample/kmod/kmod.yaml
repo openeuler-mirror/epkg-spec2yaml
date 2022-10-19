@@ -19,48 +19,30 @@ buildRequires:
 provides:
     - module-init-tools = 4.0-1
     - /sbin/modprobe
-files: |
-    %exclude %{_libdir}/*.la
-    
-    %dir %{_sysconfdir}/*.d
-    %dir %{_prefix}/lib/modprobe.d
-    
-    %{_bindir}/kmod
-    %{_sbindir}/*
-    %{_datadir}/bash-completion/
-    %{_sysconfdir}/depmod.d/dist.conf
     
 Post:
     - kmod.sh
 Postun:
     - kmod.sh
 subpackage:
-    - name: libs
+    libs:
       meta.summary: Libraries to handle kernel module loading and unloading
       meta.license: LGPLv2+
       meta.description: |
           The kmod-libs package provides runtime libraries for any application that
           wishes to load or unload Linux kernel modules from the running system.
-      files: |
-          %{!?_licensedir:%global license %%doc}
-          %license COPYING
-          %{_libdir}/libkmod.so.*
           
 
-    - name: devel
+    devel:
       meta.summary: Header files for kmod development
       meta.description: |
           The kmod-devel package provides header files used for loading or unloading
           kernel modules.
       requires:
           - %{name} = %{version}-%{release} %{name}-libs
-      files: |
-          %{_includedir}/libkmod.h
-          %{_libdir}/pkgconfig/libkmod.pc
-          %{_libdir}/libkmod.so
           
 
-    - name: python3-kmod
+    python3-kmod:
       meta.summary: Python3 bindings for kmod/libkmod.
       meta.description: |
           python3-kmod is a Python3 wrapper module for libkmod, exposing common
@@ -69,22 +51,19 @@ subpackage:
           - python3
       buildRequires:
           - python3 python3-devel python3-Cython kmod-devel kmod-libs
-      files: |
-          %{python3_sitearch}/kmod/
           
       AsWholeName: yes
 
-    - name: help
+    help:
       meta.summary: Documents and man pages for the kmod
       meta.description: |
           The kmod-help package provides several documents and the man pages to help
           developers to understand the kmod.
       requires:
           - man info
-      files: |
-          %attr(0644,root,root) %{_mandir}/man5/*.5*
-          %attr(0644,root,root) %{_mandir}/man8/*.8*
           
-          %doc TODO NEWS README.md
-          
-
+env.configureFlags: |
+    --with-openssl
+    --with-zlib
+    --with-xz
+    --enable-python

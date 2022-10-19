@@ -8,14 +8,10 @@ autoreconf -f -i
 }
 
 build() {
-%configure --sbindir=/sbin --libdir=/%{_lib} --with-python=no \
-           --with-python3=yes \
-           --enable-gssapi-krb5=yes --with-arm --with-aarch64 \
-           --with-libcap-ng=yes --enable-zos-remote \
+%configure %%{env.configureFlags} --sbindir=/sbin --libdir=/%{_lib} \
 %ifarch %{golang_arches}
 --with-golang \
 %endif
---enable-systemd
 
 make CFLAGS="%{optflags}" %{?_smp_mflags}
 

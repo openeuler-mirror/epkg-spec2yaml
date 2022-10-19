@@ -7,7 +7,7 @@ prep() {
 
 build() {
 autoreconf -vif
-%configure  --prefix=/usr --with-pamdir=%{_libdir}/security  ROOTSBINDIR=%{_sbindir}
+%configure  --prefix=/usr %%{env.configureFlags} ROOTSBINDIR=%{_sbindir}
 make %{?_smp_mflags}
 
 }

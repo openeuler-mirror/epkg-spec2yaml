@@ -33,10 +33,6 @@ provides:
     - libisula_libutils.so()(64bit) %ifarch x86_64
     - liblcr.so()(64bit) %ifarch aarch64
     - libisula_libutils.so()(64bit) %ifarch aarch64
-files: |
-    %defattr(-,root,root,-)
-    %{_libdir}/*
-    %{_libdir}/pkgconfig/lcr.pc
     
 Pre:
     - lcr.sh
@@ -53,15 +49,9 @@ rpmMacros:
     - "%define lxcver 4.0.3-2021112501"
 
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Huawei container runtime, json and log C Library
       group: Libraries
       meta.description: the %{name}-libs package contains libraries for running iSula applications.
       exclusiveArch:
           - x86_64 aarch64
-      files: |
-          %defattr(-,root,root,-)
-          %{_includedir}/lcr/lcrcontainer.h
-          %{_includedir}/%{_inner_name}/*.h
-          
-

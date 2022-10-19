@@ -22,18 +22,10 @@ meta.description: |
     require the Linux-native async I/O API.
 buildRequires:
     - gcc
-files: |
-    %license COPYING
-    %attr(0755,root,root) %{_libdir}/libaio.so.*
     
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Files for libaio development
       meta.description: Files for libaio development
       requires:
           - %{name}%{?_isa} = %{version}-%{release}
-      files: |
-          %attr(0644,root,root) %{_includedir}/*
-          %attr(0755,root,root) %{_libdir}/libaio.so
-          
-

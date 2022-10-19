@@ -6,7 +6,7 @@ prep() {
 }
 
 build() {
-%configure --with-openssl --with-zlib --with-xz --enable-python
+%configure %%{env.configureFlags}
 %make_build
 
 }
