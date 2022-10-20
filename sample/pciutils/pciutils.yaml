@@ -62,9 +62,5 @@ subpackage:
 
     %{name}:
       AsWholeName: yes
-      Post:
-          - pciutils.sh
-      Postun:
-          - pciutils.sh
 
 env.configureFlags: |

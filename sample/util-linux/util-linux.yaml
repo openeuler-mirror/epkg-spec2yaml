@@ -99,10 +99,6 @@ subpackage:
       meta.description: This package contains the library for fdisk-like programs.
           
       AsWholeName: yes
-      Post:
-          - util-linux.sh
-      Postun:
-          - util-linux.sh
 
     libsmartcols:
       meta.summary: Library for column based text sort engine.
@@ -110,10 +106,6 @@ subpackage:
       meta.description: This package contains the library for column based text sort engine.
        
       AsWholeName: yes
-      Post:
-          - util-linux.sh
-      Postun:
-          - util-linux.sh
 
     libmount:
       meta.summary: Library for device mounting
@@ -126,10 +118,6 @@ subpackage:
           - filesystem < 3
          
       AsWholeName: yes
-      Post:
-          - util-linux.sh
-      Postun:
-          - util-linux.sh
 
     libblkid:
       meta.summary: Library for block device id.
@@ -143,10 +131,6 @@ subpackage:
           - filesystem < 3
          
       AsWholeName: yes
-      Post:
-          - util-linux.sh
-      Postun:
-          - util-linux.sh
 
     uuidd:
       meta.summary: UUID generation daemon
@@ -169,14 +153,6 @@ subpackage:
       filesInput: %{name}.files
 
       AsWholeName: yes
-      Pre:
-          - util-linux.sh
-      Preun:
-          - util-linux.sh
-      Post:
-          - util-linux.sh
-      Postun:
-          - util-linux.sh
 
     libuuid:
       meta.summary: Universally unique ID library
@@ -186,10 +162,6 @@ subpackage:
           - filesystem < 3
 
       AsWholeName: yes
-      Post:
-          - util-linux.sh
-      Postun:
-          - util-linux.sh
 
     user:
       meta.summary: libuser based util-linux utilities

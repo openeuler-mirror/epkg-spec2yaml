@@ -76,10 +76,6 @@ subpackage:
           
       recommends:
           - openssl-pkcs11%{?_isa}
-      Post:
-          - openssl.sh
-      Postun:
-          - openssl.sh
 
     perl:
       meta.summary: Perl scripts provided with OpenSSL

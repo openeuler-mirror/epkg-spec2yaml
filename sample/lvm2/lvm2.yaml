@@ -163,12 +163,6 @@ subpackage:
           %%attr(555, -, -) %{_sbindir}/lvmlockctl
           %{_unitdir}/lvmlockd.service
           %{_unitdir}/lvmlocks.service
-      Preun:
-          - lvm2.sh
-      Post:
-          - lvm2.sh
-      Postun:
-          - lvm2.sh
 
     cluster %if %{use_cluster}:
       meta.summary: cluster LVM daemon tools
@@ -193,12 +187,6 @@ subpackage:
           %defattr(444,root,root,-)
           %{_unitdir}/lvm2-clvmd.service
           %{_unitdir}/lvm2-cluster-activation.service
-      Preun:
-          - lvm2.sh
-      Post:
-          - lvm2.sh
-      Postun:
-          - lvm2.sh
 
     cmirror %if %{use_cluster} && %{use_cmirror}:
       meta.summary: cluster mirror log daemon
@@ -217,12 +205,6 @@ subpackage:
           %{_sbindir}/cmirrord
           %{_unitdir}/lvm2-cmirrord.service
       AsWholeName: yes
-      Preun:
-          - lvm2.sh
-      Post:
-          - lvm2.sh
-      Postun:
-          - lvm2.sh
 
     dbusd:
       meta.summary: LVM2 D-Bus daemon
@@ -240,12 +222,6 @@ subpackage:
           - systemd-units >= %{systemd_version}
       requiresPostUn:
           - systemd-units >= %{systemd_version}
-      Preun:
-          - lvm2.sh
-      Post:
-          - lvm2.sh
-      Postun:
-          - lvm2.sh
 
     test:
       meta.summary: Testsuite for lvm2
@@ -269,12 +245,8 @@ subpackage:
           - device-mapper-event-libs = %{?epoch}:%{device_mapper_version}-%{release}
       obsoletes:
           - device-mapper-event-libs
-      AsWun:
-          - lvm2.sh
-      Post:
-          - lvm2.sh
-      Postun:
-          - lvm2.sh
+
+      AsWholeName: yes
 
 env.configureFlags: |
     --with-default-dm-run-dir=/run

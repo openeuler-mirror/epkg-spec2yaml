@@ -52,10 +52,6 @@ subpackage:
           - info
       buildArch: noarch
           
-      Preun:
-          - libffi.sh
-      Post:
-          - libffi.sh
 
 env.configureFlags: |
     --disable-static

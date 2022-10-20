@@ -25,10 +25,6 @@ subpackage:
           - pkgconfig
           - man-db
           
-      Post:
-          - libtirpc.sh
-      Postun:
-          - libtirpc.sh
 
     help:
       meta.summary: Documents for %{name}

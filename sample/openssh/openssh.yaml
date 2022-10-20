@@ -151,14 +151,6 @@ subpackage:
       requiresPre:
           - shadow
 
-      Pre:
-          - openssh.sh
-      Preun:
-          - openssh.sh
-      Post:
-          - openssh.sh
-      Postun:
-          - openssh.sh
 
     keycat:
       meta.summary: A mls keycat backend for openssh
@@ -184,7 +176,6 @@ subpackage:
           - 4.%{openssh_release}
       meta.license: BSD
       meta.description:
-      files: |
       AsWholeName: yes
 
     help:
