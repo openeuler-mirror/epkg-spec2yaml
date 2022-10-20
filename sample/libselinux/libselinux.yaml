@@ -32,16 +32,8 @@ provides:
 obsoletes:
     - %{name}-utils < %{version}-%{release}
 conflicts:
-    - filesystem < 3, selinux-policy-base < 3.13.1-138
-files: |
-    %license LICENSE
-    %{_libdir}/libselinux.so.*
-    %{_sbindir}/{selabel_lookup_best_match,selabel_partial_match,selinux_check_access}
-    %{_sbindir}/{avcstat,getenforce,getsebool,matchpathcon,sefcontext_compile,selinuxconlist}
-    %{_sbindir}/{selinuxdefcon,selinuxexeccon,selinuxenabled,setenforce,selabel_digest,selabel_lookup}
-    %{_sbindir}/{selabel_get_digests_all_partial_matches,validatetrans}
-    %dir %{_rundir}/setrans/
-    %{_tmpfilesdir}/libselinux.conf
+    - filesystem < 3
+    - selinux-policy-base < 3.13.1-138
     
 rpmMacros:
     - "%global ruby_inc %(pkg-config --cflags ruby)"
