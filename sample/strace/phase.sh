@@ -21,7 +21,7 @@ printf 'kernel-headers %%s.%%s.%%s\n' $(($kver/65536)) $(($kver/256%%256)) $(($k
 echo 'END OF BUILD ENVIRONMENT INFORMATION'
 
 CFLAGS_FOR_BUILD="$RPM_OPT_FLAGS"; export CFLAGS_FOR_BUILD
-%configure --enable-mpers=check
+%configure %%{env.configureFlags}
 make %{?_smp_mflags}
 
 }

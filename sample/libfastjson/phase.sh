@@ -9,7 +9,7 @@ prep() {
 build() {
 autoreconf -iv
 export CFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -Wl,-z,relro,-z,now -fstack-protector-strong"
-%configure --enable-shared --disable-static
+%configure %%{env.configureFlags}
 
 }
 

@@ -6,7 +6,7 @@ prep() {
 }
 
 build() {
-%configure --without-included-regex
+%configure %%{env.configureFlags}
 make %{?_smp_mflags}
 
 }

@@ -36,7 +36,8 @@ requiresPostUn:
 buildRequires:
     - gcc
     - gcc-c++
-    - libselinux-devel >= %{libselinux_version}, libsepol-devel
+    - libselinux-devel >= %{libselinux_version}
+    - libsepol-devel
     - libblkid-devel >= %{util_linux_version}
     - ncurses-devel
     - readline-devel
@@ -60,64 +61,7 @@ obsoletes:
     - %{name}-libs
 conflicts:
     - dracut < %{dracut_version}
-files: |
-    
-    %defattr(555,root,root,-)
-    %{_sbindir}/fsadm
-    %{_sbindir}/lvm
-    %{_sbindir}/lvmconfig
-    %{_sbindir}/lvmdump
-    %{_sbindir}/lvmpolld
-    %{_libdir}/liblvm2cmd.so.*
-    %{_libdir}/libdevmapper-event-lvm2.so.*
-    
-    %defattr(444,root,root,-)
-    %{_sbindir}/lvchange
-    %{_sbindir}/lvconvert
-    %{_sbindir}/lvcreate
-    %{_sbindir}/lvdisplay
-    %{_sbindir}/lvextend
-    %{_sbindir}/lvmdiskscan
-    %{_sbindir}/lvmsadc
-    %{_sbindir}/lvmsar
-    %{_sbindir}/lvreduce
-    %{_sbindir}/lvremove
-    %{_sbindir}/lvrename
-    %{_sbindir}/lvresize
-    %{_sbindir}/lvs
-    %{_sbindir}/lvscan
-    %{_sbindir}/pv*
-    %{_sbindir}/vg*
-    %{_sbindir}/lvmdevices
-    %{_sbindir}/lvm_import_vdo
-    
-    %{_prefix}/lib/udev/rules.d/69-dm-lvm.rules
-    %{_prefix}/lib/udev/rules.d/11-dm-lvm.rules
-    
-    %dir %{_sysconfdir}/lvm
-    %ghost %{_sysconfdir}/lvm/cache/.cache
-    %attr(644, -, -) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/lvm/lvm.conf
-    %attr(644, -, -) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/lvm/lvmlocal.conf
-    %dir %{_sysconfdir}/lvm/profile
-    %{_sysconfdir}/lvm/profile/*
-    %dir %{_sysconfdir}/lvm/backup
-    %dir %{_sysconfdir}/lvm/cache
-    %dir %{_sysconfdir}/lvm/archive
-    %ghost %dir /run/lock/lvm
-    %ghost %dir /run/lvm
-    %dir %{_libdir}/device-mapper
-    %{_libdir}/device-mapper/*
-    %{_libdir}/libdevmapper-event-lvm2mirror.so
-    %{_libdir}/libdevmapper-event-lvm2snapshot.so
-    %{_libdir}/libdevmapper-event-lvm2raid.so
-    %{_libdir}/libdevmapper-event-lvm2thin.so
-    %{_libdir}/libdevmapper-event-lvm2vdo.so
-    %{_tmpfilesdir}/%{name}.conf
-    %{_unitdir}/blk-availability.service
-    %{_unitdir}/lvm2-monitor.service
-    %{_unitdir}/lvm2-lvmpolld.socket
-    %{_unitdir}/lvm2-lvmpolld.service
-    
+
 recommends:
     - %{name}-help = %{epoch}:%{version}-%{release}
 package:
@@ -165,7 +109,7 @@ rpmMacros:
     - "%{?python_provide:%python_provide python3-lvm}"
 
 subpackage:
-    - name: devel
+    devel:
       meta.summary: lvm2 devel files
       meta.license: LGPLv2
       meta.description: This package contains all include files, libraries files needed to develop programs that use lvm2.
@@ -179,32 +123,15 @@ subpackage:
       obsoletes:
           - device-mapper-devel
           - device-mapper-event-devel
-      files: |
-          %defattr(444,root,root,-)
-          %{_libdir}/liblvm2cmd.so
-          %{_libdir}/libdevmapper-event-lvm2.so
-          %{_libdir}/libdevmapper.so
-          %{_libdir}/libdevmapper-event.so
-          %{_includedir}/lvm2cmd.h
-          %{_includedir}/libdevmapper.h
-          %{_includedir}/libdevmapper-event.h
-          %{_libdir}/pkgconfig/devmapper.pc
-          %{_libdir}/pkgconfig/devmapper-event.pc
-          
 
-    - name: help
+    help:
       meta.summary: Including man files for lvm2
       meta.description: This contains man files for the using of lvm2.
       requires:
           - man
       buildArch: noarch
-      files: |
-          %{_mandir}/man5/*
-          %{_mandir}/man7/*
-          %{_mandir}/man8/*
-          
 
-    - name: python3-lvm-deprecated
+    python3-lvm-deprecated:
       meta.summary: Python 3 api to lvm
       meta.license: LGPLv2
       meta.description: Support python 3 to use lvm.
@@ -217,19 +144,19 @@ subpackage:
           - %{name}-python3-libs < %{?epoch}:%{version}-%{release}
       AsWholeName: yes
 
-    - name: lockd %if %{use_lockd_dlm} || %{use_lockd_sanlock}
-      meta.summary: LVM locking daemon 
+    lockd %if %{use_lockd_dlm} || %{use_lockd_sanlock}:
+      meta.summary: LVM locking daemon
       meta.description: LVM commands use lvmlockd to coordinate access to shared storage.
       requires:
-          - lvm2 = %{?epoch}:%{version}-%{release} 
+          - lvm2 = %{?epoch}:%{version}-%{release}
           - sanlock-lib >= %{sanlock_version}  %if %{use_lockd_sanlock}
           - dlm-lib >= %{dlm_version}  %if %{use_lockd_dlm}
       requiresPreUn:
-          - systemd-units >= %{systemd_version} 
+          - systemd-units >= %{systemd_version}
       requiresPost:
-          - systemd-units >= %{systemd_version} 
+          - systemd-units >= %{systemd_version}
       requiresPostUn:
-          - systemd-units >= %{systemd_version} 
+          - systemd-units >= %{systemd_version}
       files: |
           %defattr(444,root,root,-)
           %%attr(555, -, -) %{_sbindir}/lvmlockd
@@ -243,22 +170,22 @@ subpackage:
       Postun:
           - lvm2.sh
 
-    - name: cluster %if %{use_cluster}
-      meta.summary: cluster LVM daemon tools 
-      meta.license: GPLv2 
+    cluster %if %{use_cluster}:
+      meta.summary: cluster LVM daemon tools
+      meta.license: GPLv2
       meta.description: cluster distributes LVM metadata updates  around  a  cluster.
       requires:
-          - lvm2 = %{?epoch}:%{version}-%{release} 
-          - corosync >= %{corosync_version} 
-          - dlm >= %{dlm_version} 
-          - resource-agents >= %{resource_agents_version} 
+          - lvm2 = %{?epoch}:%{version}-%{release}
+          - corosync >= %{corosync_version}
+          - dlm >= %{dlm_version}
+          - resource-agents >= %{resource_agents_version}
       requiresPreUn:
-          - device-mapper >= %{?epoch}:%{device_mapper_version} 
-          - lvm2 >= 2.02 
+          - device-mapper >= %{?epoch}:%{device_mapper_version}
+          - lvm2 >= 2.02
       provides:
-          - cluster-standalone 
+          - cluster-standalone
       obsoletes:
-          - cluster-standalone 
+          - cluster-standalone
       files: |
           %defattr(555,root,root,-)
           %{_sbindir}/clvmd
@@ -273,18 +200,18 @@ subpackage:
       Postun:
           - lvm2.sh
 
-    - name: cmirror %if %{use_cluster} && %{use_cmirror}
-      meta.summary: cluster mirror log daemon 
-      meta.license: GPLv2 
+    cmirror %if %{use_cluster} && %{use_cmirror}:
+      meta.summary: cluster mirror log daemon
+      meta.license: GPLv2
       meta.description: cmirror tracks mirror log information in a cluster.
       requires:
-          - corosync >= %{corosync_version} 
-          - device-mapper = %{?epoch}:%{device_mapper_version}-%{release} 
-          - resource-agents >= %{resource_agents_version} 
+          - corosync >= %{corosync_version}
+          - device-mapper = %{?epoch}:%{device_mapper_version}-%{release}
+          - resource-agents >= %{resource_agents_version}
       provides:
-          - cmirror-standalone 
+          - cmirror-standalone
       obsoletes:
-          - cmirror-standalone 
+          - cmirror-standalone
       files: |
           %defattr(555,root,root,-)
           %{_sbindir}/cmirrord
@@ -297,7 +224,7 @@ subpackage:
       Postun:
           - lvm2.sh
 
-    - name: dbusd
+    dbusd:
       meta.summary: LVM2 D-Bus daemon
       meta.license: GPLv2
       meta.description: dbusd is a service which provides a D-Bus API to the logical volume manager.
@@ -313,15 +240,6 @@ subpackage:
           - systemd-units >= %{systemd_version}
       requiresPostUn:
           - systemd-units >= %{systemd_version}
-      files: |
-          %defattr(555,root,root,-)
-          %{_sbindir}/lvmdbusd
-          %defattr(444,root,root,-)
-          %{_sysconfdir}/dbus-1/system.d/com.redhat.lvmdbus1.conf
-          %{_datadir}/dbus-1/system-services/com.redhat.lvmdbus1.service
-          %{_unitdir}/lvm2-lvmdbusd.service
-          %{python3_sitelib}/lvmdbusd/*
-          
       Preun:
           - lvm2.sh
       Post:
@@ -329,7 +247,7 @@ subpackage:
       Postun:
           - lvm2.sh
 
-    - name: test
+    test:
       meta.summary: Testsuite for lvm2
       meta.license: LGPLv2 and GPLv2 and BSD-2-Clause
       meta.description: An extensive functional testsuite for LVM2.
@@ -337,15 +255,8 @@ subpackage:
           - %{name}-testsuite
       obsoletes:
           - %{name}-testsuite
-      files: |
-          %license COPYING COPYING.LIB COPYING.BSD
-          %{_datadir}/lvm2-testsuite/
-          %{_libexecdir}/lvm2-testsuite/
-          %{_bindir}/lvm2-testsuite
-          
-          
 
-    - name: device-mapper-event
+    device-mapper-event:
       meta.summary: Handle device-mapper events
       version: %{device_mapper_version}
       meta.description: |
@@ -358,20 +269,36 @@ subpackage:
           - device-mapper-event-libs = %{?epoch}:%{device_mapper_version}-%{release}
       obsoletes:
           - device-mapper-event-libs
-      files: |
-          %license COPYING.LIB
-          %defattr(555,root,root,-)
-          %{_sbindir}/dmeventd
-          %{_libdir}/libdevmapper-event.so.*
-          %defattr(444,root,root,-)
-          %{_unitdir}/dm-event.socket
-          %{_unitdir}/dm-event.service
-          
-      AsWholeName: yes
-      Preun:
+      AsWun:
           - lvm2.sh
       Post:
           - lvm2.sh
       Postun:
           - lvm2.sh
 
+env.configureFlags: |
+    --with-default-dm-run-dir=/run
+    --with-default-run-dir=/run/lvm
+    --with-default-pid-dir=/run
+    --with-default-locking-dir=/run/lock/lvm
+    --with-usrlibdir=%{_libdir}
+    --enable-fsadm
+    --enable-write_install
+    --with-user=
+    --with-group=
+    --with-device-uid=0
+    --with-device-gid=6
+    --with-device-mode=0660
+    --enable-pkgconfig
+    --enable-applib
+    --enable-cmdlib
+    --enable-dmeventd
+    --enable-blkid_wiping
+    --with-udevdir=%{_prefix}/lib/udev/rules.d
+    --enable-udev_sync
+    --with-thin=internal
+    --with-thin=internal
+    --enable-lvmpolld
+    --enable-dbus-service
+    --enable-notify-dbus
+    --enable-dmfilemapd

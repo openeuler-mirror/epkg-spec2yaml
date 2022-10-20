@@ -10,7 +10,7 @@ build() {
 %ifarch riscv64
 --disable-multi-os-directory \
 %endif
---disable-static --disable-exec-static-tramp
+%%{env.configureFlags}
 
 %make_build
 

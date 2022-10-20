@@ -7,9 +7,7 @@ prep() {
 
 build() {
 autoreconf -fisv
-%configure  --enable-warmstarts  --with-statedir="%rpcbind_state_dir" \
-    --with-rpcuser="%rpcbind_user_group"  --with-nss-modules="files altfiles" \
-    --sbindir=%{_bindir}  --enable-debug --enable-rmtcalls
+%configure --sbindir=%{_bindir} %%{env.configureFlags}
 
 make all
 

@@ -33,34 +33,30 @@ meta.description: |
     fully featured foreign function interface. A layer must exist above libffi that handles type
     conversions for values passed between the two languages.
 buildRequires:
-    - gcc gcc-c++ dejagnu
-files: |
-    %{_libdir}/*.so.*
+    - gcc
+    - gcc-c++
+    - dejagnu
     
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Development files for libffi
       meta.description: The devel package with header files and libraries is for developing apps which needs libffi.
       requires:
           - pkgconfig
-      files: |
-          %{_libdir}/pkgconfig/*.pc
-          %{_includedir}/ffi*.h
-          %{_libdir}/*.so
           
 
-    - name: help
+    help:
       meta.summary: libffi help
       meta.description: The help package contains man files.
       requires:
           - info
       buildArch: noarch
-      files: |
-          %{_mandir}/man3/*.gz
-          %{_infodir}/libffi.info.gz
           
       Preun:
           - libffi.sh
       Post:
           - libffi.sh
 
+env.configureFlags: |
+    --disable-static
+    --disable-exec-static-tramp

@@ -11,19 +11,20 @@ meta.description: |
     with sysfs, a virtual filesystem in Linux kernel versions 2.5+ that
     provides a tree of system devices.
 buildRequires:
-    - gcc chrpath autoconf automake make libtool
+    - gcc
+    - chrpath
+    - autoconf
+    - automake
+    - make
+    - libtool
 provides:
-    - libsysfs libsysfs%{?_isa}
+    - libsysfs
+    - libsysfs%{?_isa}
 obsoletes:
     - libsysfs
-files: |
-    %license COPYING cmd/GPL lib/LGPL
-    %doc README
-    %{_bindir}/systool
-    /%{_lib}/libsysfs.so.*
     
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Including header files and library for the developing of sysfsutils
       meta.license: LGPLv2+
       meta.description: This contains dynamic libraries and header files for the developing of sysfsutils.
@@ -33,23 +34,12 @@ subpackage:
           - libsysfs-devel
       obsoletes:
           - libsysfs-devel
-      files: |
-          %dir %{_includedir}/sysfs
-          %{_includedir}/sysfs/libsysfs.h
-          %{_includedir}/sysfs/dlist.h
-          /%{_lib}/libsysfs.so
-          /%{_lib}/pkgconfig/libsysfs.pc
-          
 
-    - name: help
+    help:
       meta.summary: Including man files for sysfsutils
       meta.description: This contains man files for the using of sysfsutils.
       requires:
           - man
       buildArch: noarch
-      files: |
-          %{_mandir}/man1/systool.1.gz
-          
-          
-          
-
+env.configureFlags: |
+    --disable-static

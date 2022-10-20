@@ -14,9 +14,7 @@ autoreconf -vif
 %else
 --enable-jit \
 %endif
---enable-pcretest-libreadline --enable-utf \
-	--enable-unicode-properties --enable-pcre8 --enable-pcre16 \
-	--enable-pcre32 --disable-silent-rules
+%%{env.configureFlags}
 %make_build
 
 }

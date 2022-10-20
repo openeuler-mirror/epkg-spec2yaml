@@ -6,7 +6,7 @@ prep() {
 }
 
 build() {
-%configure --prefix=%{_prefix} --enable-selinux
+%configure --prefix=%{_prefix} %%{env.configureFlags}
 %make_build
 
 }

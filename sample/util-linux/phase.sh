@@ -10,23 +10,7 @@ build() {
 %define _build_arg1__ SUID_LDFLAGS="-pie -Wl,-z,relro -Wl,-z,now" DAEMON_CFLAGS="$SUID_CFLAGS" DAEMON_LDFLAGS="$SUID_LDFLAGS"
 
 unset LINGUAS || :
-%configure \
-  --with-systemdsystemunitdir=%{_unitdir} \
-  --disable-silent-rules \
-  --disable-bfs \
-  --disable-pg \
-  --enable-chfn-chsh \
-  --enable-usrdir-path \
-  --enable-write \
-  --enable-raw \
-  --enable-hardlink \
-  --with-python=3 \
-  --with-systemd \
-  --with-udev \
-  --with-selinux \
-  --with-audit \
-  --with-utempter \
-  --disable-makeinstall-chown
+%configure %%{env.configureFlags}
 
 %make_build %{_build_arg0__} %{_build_arg1__}
 

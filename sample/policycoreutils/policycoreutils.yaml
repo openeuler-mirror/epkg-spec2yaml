@@ -16,12 +16,31 @@ patchset:
     - fix-fixfiles-N-date-function-two.patch
 meta.description: It contains the selinux policy core utilities
 requires:
-    - libsepol >= 3.3 libselinux-utils util-linux grep gawk diffutils rpm sed coreutils
+    - libsepol >= 3.3
+    - libselinux-utils
+    - util-linux
+    - grep
+    - gawk
+    - diffutils
+    - rpm
+    - sed
+    - coreutils
 buildRequires:
     - gcc
-    - pam-devel libsepol-static >= 3.3 libsemanage-static >= 3.3 libselinux-devel >= 3.3  libcap-devel audit-libs-devel  gettext
-    - desktop-file-utils dbus-devel dbus-glib-devel python3-devel libcap-ng-devel
-    - systemd systemd-units
+    - pam-devel
+    - libsepol-static >= 3.3
+    - libsemanage-static >= 3.3
+    - libselinux-devel >= 3.3
+    - libcap-devel
+    - audit-libs-devel
+    - gettext
+    - desktop-file-utils
+    - dbus-devel
+    - dbus-glib-devel
+    - python3-devel
+    - libcap-ng-devel
+    - systemd
+    - systemd-units
 provides:
     - %{name}-restorecond = %{version}-%{release}
     - %{name}-newrole = %{version}-%{release}
@@ -31,34 +50,6 @@ obsoletes:
     - %{name}-restorecond < %{version}-%{release}
     - %{name}-newrole < %{version}-%{release}
     - python2-policycoreutils
-files: |
-    %license policycoreutils/COPYING
-    %doc %{_usr}/share/doc/%{name}
-    %config(noreplace) %{_sysconfdir}/sestatus.conf
-    %config(noreplace) %{_sysconfdir}/pam.d/newrole
-    %config(noreplace) %{_sysconfdir}/selinux/restorecond.conf
-    %config(noreplace) %{_sysconfdir}/selinux/restorecond_user.conf
-    %{_sbindir}/*
-    %exclude %{_sbindir}/{seunshare,semanage}
-    %{_bindir}/secon
-    %{_bindir}/semodule_expand
-    %{_bindir}/semodule_link
-    %{_bindir}/semodule_package
-    %{_bindir}/semodule_unpackage
-    %{_bindir}/sestatus
-    %{_libexecdir}/selinux/hll
-    %dir %{_datadir}/bash-completion
-    %{_datadir}/bash-completion/completions/setsebool
-    %{_unitdir}/restorecond.service
-    %{_userunitdir}/restorecond_user.service
-    %{_sysconfdir}/xdg/autostart/restorecond.desktop
-    %{_datadir}/dbus-1/services/org.selinux.Restorecond.service
-    %attr(0755,root,root) %caps(cap_dac_read_search,cap_setpcap,cap_audit_write,cap_sys_admin,cap_fowner,cap_chown,cap_dac_override=pe) %{_bindir}/newrole
-    %{_libexecdir}/selinux/selinux-autorelabel
-    %{_unitdir}/selinux-autorelabel-mark.service
-    %{_unitdir}/selinux-autorelabel.service
-    %{_unitdir}/selinux-autorelabel.target
-    %{_systemdgeneratordir}/selinux-autorelabel-generator.sh
     
 filesInput: %{name}.lang
 
@@ -77,7 +68,7 @@ rpmMacros:
     - "%{?python_provide:%python_provide python3-policycoreutils}"
 
 subpackage:
-    - name: python3-policycoreutils
+    python3-policycoreutils:
       meta.summary: python3 utilities for seLinux policy core
       meta.description: It contains the python3 policy core utilities for selinux
       requires:
@@ -92,31 +83,12 @@ subpackage:
       obsoletes:
           - %{name}-python3 < %{version}-%{release}
       buildArch: noarch
-      files: |
-          %{python3_sitelib}/__pycache__
-          %{python3_sitelib}/sepolgen
-          %dir %{python3_sitelib}/sepolicy
-          %{python3_sitelib}/sepolicy/templates
-          %dir %{python3_sitelib}/sepolicy/help
-          %{python3_sitelib}/sepolicy/help/*
-          %{python3_sitelib}/sepolicy/__init__.py*
-          %{python3_sitelib}/sepolicy/__pycache__
-          %{python3_sitelib}/sepolicy/manpage.py*
-          %{python3_sitelib}/sepolicy/network.py*
-          %{python3_sitelib}/sepolicy/transition.py*
-          %{python3_sitelib}/sepolicy/sedbus.py*
-          %{python3_sitelib}/sepolicy*.egg-info
-          %{python3_sitelib}/sepolicy/booleans.py*
-          %{python3_sitelib}/sepolicy/communicate.py*
-          %{python3_sitelib}/sepolicy/generate.py*
-          %{python3_sitelib}/sepolicy/interface.py*
-          %{python3_sitelib}/seobject.py*
           
       filesJudgement:
           - %if %{with sandbox}
       AsWholeName: yes
 
-    - name: python-utils
+    python-utils:
       meta.summary: Policy core python utilities for selinux
       meta.description: It contains the python utilities for selinux
       requires:
@@ -124,56 +96,32 @@ subpackage:
       obsoletes:
           - policycoreutils-python <= 2.4-4
       buildArch: noarch
-      files: |
-          %{_bindir}/audit2allow
-          %{_bindir}/audit2why
-          %{_sbindir}/semanage
-          %{_bindir}/chcat
-          %if %{with sandbox}
-          %{_bindir}/sandbox
-          %endif
-          %{_sysconfdir}/dbus-1/system.d/org.selinux.conf
-          %{_datadir}/bash-completion/completions/semanage
           
       filesJudgement:
           - %if %{with sandbox}
 
-    - name: dbus
+    dbus:
       meta.summary: Policy core DBUS for selinux
       meta.description: It contains policy core DBUS for selinux
       requires:
           - python3-policycoreutils = %{version}-%{release} python3-slip-dbus
       buildArch: noarch
-      files: |
-          %{_datadir}/system-config-selinux/selinux_server.py
-          %{_datadir}/polkit-1/actions/org.selinux.policy
-          %{_sysconfdir}/dbus-1/system.d/org.selinux.conf
-          %{_datadir}/dbus-1/system-services/org.selinux.service
-          %dir %{_datadir}/system-config-selinux/__pycache__
-          %{_datadir}/system-config-selinux/__pycache__/selinux_server.*
           
       filesJudgement:
           - %if %{with sandbox}
 
-    - name: devel
+    devel:
       meta.summary: Policy core devel utilities for selinux
       meta.description: It contains policy core devel utilities for selinux
       requires:
           - policycoreutils-python-utils = %{version}-%{release}
           - /usr/bin/make
           - selinux-policy-devel
-      files: |
-          %{_bindir}/sepolicy
-          %{_bindir}/sepolgen
-          %{_bindir}/sepolgen-*
-          %{_usr}/share/bash-completion/completions/sepolicy
-          %dir  /var/lib/sepolgen
-          /var/lib/sepolgen/perm_map
           
       filesJudgement:
           - %if %{with sandbox}
 
-    - name: sandbox %if %{with sandbox}
+    sandbox %if %{with sandbox}:
       meta.summary: Sandbox utilities for selinux 
       meta.description: It contains sandbox utilities for selinux
       requires:
@@ -185,14 +133,13 @@ subpackage:
           %{_datadir}/sandbox/{start,sandboxX.sh}
           %caps(cap_setpcap,cap_setuid,cap_fowner,cap_dac_override,cap_sys_admin,cap_sys_nice=pe) %{_sbindir}/seunshare
 
-    - name: help
+    help:
       meta.summary: Including man files for selinux
       meta.description: This contains man files for the using of selinux.
       requires:
           - man
-      files: |
-          %{_mandir}/*
           
       filesJudgement:
           - %if %{with sandbox}
 
+env.configureFlags: |

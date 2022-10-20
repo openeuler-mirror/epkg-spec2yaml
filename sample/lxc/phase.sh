@@ -6,11 +6,7 @@ prep() {
 }
 
 build() {
-%configure --enable-doc --enable-api-docs \
-           --disable-silent-rules --docdir=%{_pkgdocdir} --disable-rpath \
-           --disable-static --disable-apparmor --enable-selinux \
-           --enable-seccomp \
-           --with-init-script=systemd --disable-werror
+%configure %%{env.configureFlags} --docdir=%{_pkgdocdir}
 
 %{make_build}
 

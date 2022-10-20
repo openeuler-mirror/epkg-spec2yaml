@@ -19,8 +19,14 @@ meta.description: |
 requires:
     - libsepol >= %{libsepol_version} pcre2
 buildRequires:
-    - gcc python3-devel systemd swig pcre2-devel xz-devel
-    - ruby-devel libsepol-static
+    - gcc
+    - python3-devel
+    - systemd
+    - swig
+    - pcre2-devel
+    - xz-devel
+    - ruby-devel
+    - libsepol-static
 provides:
     - %{name}-utils = %{version}-%{release}
 obsoletes:
@@ -42,7 +48,7 @@ rpmMacros:
     - "%global libsepol_version 3.3"
 
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Header files and libraries used to build SELinux
       meta.description: |
           libselinux provides an interface to get and set process and file
@@ -53,14 +59,8 @@ subpackage:
           - %{name}-static = %{version}-%{release}
       obsoletes:
           - %{name}-static < %{version}-%{release}
-      files: |
-          %{_libdir}/libselinux.a
-          %{_libdir}/libselinux.so
-          %{_libdir}/pkgconfig/libselinux.pc
-          %{_includedir}/selinux/
-          
 
-    - name: python3-libselinux
+    python3-libselinux:
       meta.summary: SELinux python3 bindings for libselinux
       meta.description: |
           The libselinux-python3 package contains the python bindings for developing
@@ -69,35 +69,24 @@ subpackage:
           - %{name}-python3 = %{version}-%{release}
       obsoletes:
           - %{name}-python3 < %{version}-%{release}
-      files: |
-          %{python3_sitearch}/selinux/
-          %{python3_sitearch}/selinux-%{version}-*
-          %{python3_sitearch}/_selinux.*.so
           
       AsWholeName: yes
 
-    - name: ruby
+    ruby:
       meta.summary: SELinux ruby bindings for libselinux
       meta.description: |
           The libselinux-ruby package contains the ruby bindings for developing
           SELinux applications.
       provides:
           - ruby(selinux)
-      files: |
-          %{ruby_vendorarchdir}/selinux.so
           
 
-    - name: help
+    help:
       meta.summary: Documents for %{name}
       meta.description: Man pages and other related documents for %{name}.
       requires:
           - man info
       buildArch: noarch
-      files: |
-          %{_mandir}/man3/*
-          %{_mandir}/man5/*
-          %{_mandir}/man8/*
-          %{_mandir}/ru/man5/*
-          %{_mandir}/ru/man8/*
           
 
+env.configureFlags: |

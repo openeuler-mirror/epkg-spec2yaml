@@ -28,14 +28,6 @@ buildRequires:
     - pkgconfig
     - xz-devel
     - libtool
-files: |
-    %defattr(-, root, root)
-    
-    %doc %{_datadir}/doc/libxml2
-    
-    %{_libdir}/lib*.so.*
-    %{_bindir}/xmllint
-    %{_bindir}/xmlcatalog
     
 Post:
     - libxml2.sh
@@ -44,7 +36,7 @@ Postun:
 buildRoot:
     - %{_tmppath}/%{name}-%{version}-root
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Libraries, includes, etc. to develop XML and HTML applications
       group: Development/Libraries
       meta.description: |
@@ -67,31 +59,8 @@ subpackage:
           - %{name}-static
       obsoletes:
           - %{name}-static < %{version}-%{release}
-      files: |
-          %defattr(-, root, root)
-          
-          %doc NEWS README.md Copyright
-          %doc doc/*.html doc/html doc/*.gif doc/*.png
-          %doc doc/tutorial doc/libxml2-api.xml.gz
-          %doc doc/examples
-          %doc %dir %{_datadir}/gtk-doc/html/libxml2
-          %doc %{_datadir}/gtk-doc/html/libxml2/*.devhelp2
-          %doc %{_datadir}/gtk-doc/html/libxml2/*.html
-          %doc %{_datadir}/gtk-doc/html/libxml2/*.png
-          %doc %{_datadir}/gtk-doc/html/libxml2/*.css
-          
-          %{_libdir}/lib*.so
-          %{_libdir}/*.sh
-          %{_includedir}/*
-          %{_bindir}/xml2-config
-          %{_datadir}/aclocal/libxml.m4
-          %{_libdir}/pkgconfig/libxml-2.0.pc
-          %{_libdir}/cmake/libxml2/libxml2-config.cmake
-          
-          %{_libdir}/*a
-          
 
-    - name: python3-%{name}
+    python3-%{name}:
       meta.summary: Python 3 bindings for the libxml2 library
       group: Development/Libraries
       meta.description: |
@@ -109,29 +78,12 @@ subpackage:
           - %{name}-python3 = %{version}-%{release}
       obsoletes:
           - %{name}-python3 < %{version}-%{release}
-      files: |
-          %defattr(-, root, root)
-          
-          %{_libdir}/python3*/site-packages/libxml2.py*
-          %{_libdir}/python3*/site-packages/drv_libxml2.py*
-          %{_libdir}/python3*/site-packages/__pycache__/*py*
-          %{_libdir}/python3*/site-packages/libxml2mod*
-          %doc python/TODO
-          %doc python/libxml2class.txt
-          %doc py3doc/*.py
-          %doc doc/python.html
           
       AsWholeName: yes
 
-    - name: help
+    help:
       meta.summary: Man page for libxml2
       meta.description: %{summary}.
       buildArch: noarch
-      files: |
-          %doc %{_mandir}/man1/xml2-config.1*
-          %doc %{_mandir}/man1/xmllint.1*
-          %doc %{_mandir}/man1/xmlcatalog.1*
-          %doc %{_mandir}/man3/libxml.3*
-          
-          
 
+env.configureFlags: |

@@ -22,7 +22,10 @@ requires:
     - %{name}-base = %{version}-%{release}
     - %{name}-libs = %{version}-%{release}
 buildRequires:
-    - gcc gcc-c++ gpm-devel pkgconfig
+    - gcc
+    - gcc-c++
+    - gpm-devel
+    - pkgconfig
 provides:
     - %{name}-c++-libs = %{version}-%{release}
     - %{name}-term = %{version}-%{release}
@@ -30,41 +33,27 @@ obsoletes:
     - rxvt-unicode-terminfo < 9.22-18
     - %{name}-c++-libs < %{version}-%{release}
     - %{name}-term < %{version}-%{release}
-files: |
-    %doc ANNOUNCE AUTHORS
-    %doc c++/README*
-    %{!?_licensedir:%global license %%doc}
-    %license COPYING
-    %{_bindir}/[cirt]*
-    %{_libdir}/libncurses++*.so.6*
-    
+
 filesInput: terms.term
 
 subpackage:
-    - name: base
+    base:
       meta.summary: Descriptions of common terminals
       meta.description: This package contains descriptions of common terminals.
       buildArch: noarch
-      files: |
-          %dir %{_sysconfdir}/terminfo
-          %{_datadir}/tabset
-          %dir %{_datadir}/terminfo
-          
+
       filesInput: |
           terms.base
-           
 
-    - name: libs
+
+    libs:
       meta.summary: Libraries for %{name}
       meta.description: Libraries for %{name}.
       requires:
           - %{name}-base = %{version}-%{release}
-      files: |
-          %{_libdir}/lib*.so.6*
-          %exclude %{_libdir}/libncurses++*.so.6*
-          
 
-    - name: devel
+
+    devel:
       meta.summary: Development files for the ncurses library
       meta.description: |
           The header files and libraries for developing applications that use
@@ -80,17 +69,9 @@ subpackage:
       obsoletes:
           - %{name}-static < %{version}-%{release}
           - libtermcap-devel < 2.0.8-48
-      files: |
-          %{_bindir}/ncurses*-config
-          %{_libdir}/lib*.so
-          %{_libdir}/lib*.a
-          %{_libdir}/pkgconfig/*.pc
-          %{_includedir}/ncurses/*.h
-          %{_includedir}/ncursesw/*.h
-          %{_includedir}/*.h
-          
 
-    - name: compat-libs
+
+    compat-libs:
       meta.summary: Ncurses compatibility libraries
       group: System Environment/Libraries
       meta.description: |
@@ -98,29 +79,31 @@ subpackage:
           updating character screens with reasonable optimization.  The ncurses
           (new curses) library is a freely distributable replacement for the
           discontinued 4.4 BSD classic curses library.
-          
+
           This package contains the ABI version 5 of the ncurses libraries for
           compatibility.
       requires:
           - %{name}-base = %{version}-%{release}
-      files: |
-          %{_libdir}/lib*.so.5*
-          
 
-    - name: help
+
+    help:
       meta.summary: Ncurse help document
       meta.description: |
           This package contains development documentation, manuals
           for interface function, and related documents.
-      files: |
-          %doc NEWS.xz README TO-DO
-          %doc doc/html/hackguide.html
-          %doc doc/html/ncurses-intro.html
-          %doc misc/ncurses.supp
-          %{_mandir}/man1/ncurses*-config*
-          %{_mandir}/man3/*
-          %{_mandir}/man1/[cirt]*
-          %{_mandir}/man5/*
-          %{_mandir}/man7/*
-          
-
+env.configureFlags: |
+    --enable-colorfgbg
+    --enable-hard-tabs
+    --enable-overwrite
+    --enable-pc-files
+    --enable-xmc-glitch
+    --disable-wattr-macros
+    --with-cxx-shared
+    --with-ospeed=unsigned
+    --with-pkg-config-libdir=%{_libdir}/pkgconfig
+    --with-shared
+    --with-terminfo-dirs=%{_sysconfdir}/terminfo:%{_datadir}/terminfo
+    --with-termlib=tinfo
+    --with-ticlib=tic
+    --with-xterm-kbs=DEL
+    --without-ada

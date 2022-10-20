@@ -6,10 +6,7 @@ prep() {
 }
 
 build() {
-%configure --with-securedir=%{_moduledir} \
-	   --with-pythonsitedir=%{python3_sitearch} \
-	   --with-python-binary=%{__python3} \
-	   --disable-static
+%configure %%{env.configureFlags}
 
 %make_build
 

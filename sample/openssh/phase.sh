@@ -104,12 +104,8 @@ fi
 
 %configure \
     --sysconfdir=%{_sysconfdir}/ssh --libexecdir=%{_libexecdir}/openssh \
-    --datadir=%{_datadir}/openssh --with-default-path=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin \
-    --with-superuser-path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin \
-    --with-privsep-path=%{_var}/empty/sshd --disable-strip \
-    --without-zlib-version-check --with-ssl-engine --with-ipaddr-display \
-    --with-pie=no --without-hardening --with-systemd --with-default-pkcs11-provider=yes \
-    --with-pam --with-selinux --with-audit=linux --with-security-key-buildin=yes \
+    --datadir=%{_datadir}/openssh \
+    %%{env.configureFlags}
 %ifnarch riscv64
 --with-sandbox=seccomp_filter \
 %endif

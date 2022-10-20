@@ -11,18 +11,15 @@ meta.description: |
     
     libusb is abstracted internally in such a way that it can hopefully be ported to other operating systems. Please see the PORTING file for more information.
 buildRequires:
-    - systemd-devel doxygen libtool
-files: |
-    %doc AUTHORS README ChangeLog
-    %license COPYING
-    %{_libdir}/*.so.*
-    %exclude %{_libdir}/*.la
+    - systemd-devel
+    - doxygen
+    - libtool
     
 rpmMacros:
     - "%global source  libusb"
 
 subpackage:
-    - name: devel
+    devel:
       meta.summary: %{name} libs and docs files for development
       meta.description: The %{name}-devel package contains libraries and header files.
       requires:
@@ -35,10 +32,8 @@ subpackage:
           - libusb1-devel <= 1.0.9
           - libusb1-devel-doc <= 1.0.22-1
           - libusbx-devel-doc
-      files: |
-          %doc examples/*.c
-          %{_includedir}/libusb-1.0
-          %{_libdir}/*.so
-          %{_libdir}/pkgconfig/libusb-1.0.pc
           
 
+env.configureFlags: |
+    --disable-static
+    --enable-examples-build

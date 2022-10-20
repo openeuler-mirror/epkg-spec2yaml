@@ -1,0 +1,16 @@
+files: |
+    %defattr(-,root,root)
+    %license LICENSE
+    %{_libdir}/libpcap.so.*
+
+subpackage.devel.files: |
+    %defattr(-,root,root)
+    %{_bindir}/pcap-config
+    %{_includedir}/*
+    %{_libdir}/libpcap.so
+    %{_libdir}/pkgconfig/libpcap.pc
+
+subpackage.devel.files: |
+    %defattr(-,root,root)
+    %doc README.md CHANGES CREDITS
+    %{_mandir}/man*
