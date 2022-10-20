@@ -189,3 +189,4 @@ env.configureFlags: |
     --with-auto-load-dir='$debugdir:$datadir/auto-load'
     --with-auto-load-safe-path='$debugdir:$datadir/auto-load'
     --enable-targets=aarch64-linux-gnu %{_target_platform}
+    --with-system-zlib

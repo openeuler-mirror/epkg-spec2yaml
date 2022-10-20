@@ -55,10 +55,6 @@ subpackage:
       filesInput: %{name}.lang
 
       AsWholeName: yes
-      Post:
-          - attr.sh
-      Postun:
-          - attr.sh
 
 env.configureFlags: |
     --disable-silent-rules

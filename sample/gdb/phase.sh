@@ -46,7 +46,6 @@ export CXXFLAGS="$CFLAGS"
 %ifnarch riscv64
 --enable-inprocess-agent				\
 %endif
---with-system-zlib					\
 %ifarch %{ix86} x86_64
 --with-intel-pt						\
 %else
