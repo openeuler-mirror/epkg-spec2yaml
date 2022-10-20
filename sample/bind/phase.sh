@@ -74,7 +74,7 @@ cp -frp contrib/dlz/modules build/contrib/dlz/modules
 pushd build
 LIBDIR_SUFFIX=
 export LIBDIR_SUFFIX
-%configure %%{env.configureFlags} --localstatedir=%{_var} --disable-static --includedir=%{_includedir}/bind9 \
+%configure %%{env.configureFlags} --localstatedir=%{_var} --includedir=%{_includedir}/bind9 \
 %if %{with GEOIP2}
 --with-maxminddb \
 %endif
