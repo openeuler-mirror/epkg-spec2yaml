@@ -9,7 +9,7 @@ autoreconf -i
 
 build() {
 %configure \
-	%%{env.configureFlags}
+	%%{env.configureFlags} \
 	--libdir=%{_pamlibdir} \
 	--includedir=%{_includedir}/security \
 

@@ -105,7 +105,7 @@ fi
 %configure \
     --sysconfdir=%{_sysconfdir}/ssh --libexecdir=%{_libexecdir}/openssh \
     --datadir=%{_datadir}/openssh \
-    %%{env.configureFlags}
+    %%{env.configureFlags} \
 %ifnarch riscv64
 --with-sandbox=seccomp_filter \
 %endif
