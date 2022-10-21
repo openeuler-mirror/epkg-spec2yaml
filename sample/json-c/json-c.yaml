@@ -13,8 +13,6 @@ meta.description: |
     of JSON objects.  It aims to conform to RFC 7159.
 buildRequires:
     - cmake gcc ninja-build
-files: |
-    %{_libdir}/lib%{name}.so.%{so_ver}*
     
 rpmMacros:
     - "%{!?_pkgdocdir:%global _pkgdocdir %{_docdir}/json-c-0.15}"
@@ -22,7 +20,7 @@ rpmMacros:
     - "%global reldate     20200726"
 
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Development files for %{name}
       patchset:
           - backport-json-escape-str-avoid-harmless-unsigned-integer-overflow.patch
@@ -31,16 +29,11 @@ subpackage:
           developing applications that use %{name}.
       requires:
           - %{name}%{?_isa} == %{version}-%{release}
-      files: |
-          %{_includedir}/%{name}
-          %{_libdir}/cmake/%{name}
-          %{_libdir}/lib%{name}.so
-          %{_libdir}/pkgconfig/%{name}.pc
           
       Pretrans:
           - json-c.sh
 
-    - name: help
+    help:
       meta.summary: Reference manual for json-c
       meta.description: This package contains the reference manual for %{name}.
       buildRequires:
@@ -50,7 +43,3 @@ subpackage:
       obsoletes:
           - %{name}-doc = %{version}-%{release}
       buildArch: noarch
-      files: |
-          %doc %{_pkgdocdir}
-          
-

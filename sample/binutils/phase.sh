@@ -39,22 +39,13 @@ esac
 export CFLAGS="$RPM_OPT_FLAGS"
 export LDFLAGS=$RPM_LD_FLAGS
 
-%configure \
+%configure %%{env.configureFlags} $CARGS \
   --quiet \
   --build=%{_target_platform} --host=%{_target_platform} \
   --target=%{_target_platform} \
-  --enable-ld \
 %if %{with gold}
 --enable-gold=default \
 %endif
---with-sysroot=/ \
-  --enable-deterministic-archives=no \
-  --enable-lto \
-  --enable-compressed-debug-sections=none \
-  --enable-generate-build-notes=no \
-  $CARGS \
-  --enable-plugins \
-  --enable-shared
 
 %make_build %{_smp_mflags} tooldir=%{_prefix} all
 %make_build %{_smp_mflags} tooldir=%{_prefix} info

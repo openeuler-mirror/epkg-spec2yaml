@@ -24,9 +24,6 @@ buildRequires:
     - libsepol-devel libselinux-static libsepol-static
 provides:
     - bundled(md5-drepper2)
-files: |
-    %doc LICENSE README
-    /sbin/busybox
     
 buildRoot:
     - %_topdir/BUILDROOT
@@ -35,23 +32,15 @@ rpmMacros:
     - "%define RELEASE 17 %if \"%{!?RELEASE:1}\""
 
 subpackage:
-    - name: petitboot
+    petitboot:
       meta.summary: Configure the busybox version with petitboot
       meta.description: |
           The Petitboot bootloader provides a boot menu and boots the chosen boot
           option using the Linux kernel's kexec functionality. And for use with the
           Petitboot bootloader used on PlayStation 3, the version of the contained
           in this package is minimal configured.
-      files: |
-          %doc LICENSE README
-          /sbin/busybox.petitboot
           
 
-    - name: help
+    help:
       meta.summary: Documentation for busybox
       meta.description: This package contains help documentation for busybox
-      files: |
-          %{_mandir}/man1/busybox.1.gz
-          %{_mandir}/man1/busybox.petitboot.1.gz
-          
-

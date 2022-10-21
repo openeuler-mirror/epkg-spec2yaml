@@ -7,7 +7,7 @@ prep() {
 
 build() {
 autoreconf -ifv
-%configure --disable-rpath --disable-static LT_SYS_LIBRARY_PATH=%_libdir
+%configure %%{env.configureFlags} LT_SYS_LIBRARY_PATH=%_libdir
 %disable_rpath
 
 %make_build

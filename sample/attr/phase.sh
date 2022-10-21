@@ -6,7 +6,7 @@ prep() {
 }
 
 build() {
-%configure --disable-silent-rules
+%configure %%{env.configureFlags}
 make %{?_smp_mflags}
 
 }

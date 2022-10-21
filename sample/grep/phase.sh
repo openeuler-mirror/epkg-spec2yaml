@@ -6,7 +6,7 @@ prep() {
 }
 
 build() {
-%configure --disable-silent-rules \
+%configure %%{env.configureFlags} \
 CPPFLAGS="-I%{_includedir}/pcre2" CFLAGS="$RPM_OPT_FLAGS -fsigned-char"
 %make_build
 

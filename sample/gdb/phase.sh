@@ -42,40 +42,15 @@ export CXXFLAGS="$CFLAGS"
 	--sysconfdir=%{_sysconfdir}				\
 	--mandir=%{_mandir}					\
 	--infodir=%{_infodir}					\
-	--with-system-gdbinit=%{_sysconfdir}/gdbinit		\
-	--with-gdb-datadir=%{_datadir}/gdb			\
-	--enable-gdb-build-warnings=,-Wno-unused		\
-	--enable-build-with-cxx					\
-	--enable-werror						\
-	--with-separate-debug-dir=/usr/lib/debug		\
-	--disable-sim						\
-	--disable-rpath						\
-	--without-stage1-ldflags				\
-	--disable-libmcheck					\
-	--with-babeltrace					\
-	--with-guile						\
-	--with-system-readline					\
-	--with-expat						\
-	--without-libexpat-prefix				\
-	--enable-tui						\
-	--with-python=%{__python3}				\
-	--with-rpm=%{librpmso}			\
-	--with-lzma						\
-	--without-libunwind					\
-	--enable-64-bit-bfd					\
+	%%{env.configureFlags}					\
 %ifnarch riscv64
 --enable-inprocess-agent				\
 %endif
---with-system-zlib					\
 %ifarch %{ix86} x86_64
 --with-intel-pt						\
 %else
 --without-intel-pt					\
 %endif
---with-mpfr						\
-	--with-auto-load-dir='$debugdir:$datadir/auto-load'	\
-	--with-auto-load-safe-path='$debugdir:$datadir/auto-load'	\
-	--enable-targets=aarch64-linux-gnu %{_target_platform}
 
 make %{?_smp_mflags} CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" V=1 maybe-configure-gdb
 perl -i.relocatable -pe 's/^(D\[".*_RELOCATABLE"\]=" )1(")$/${1}0$2/' gdb/config.status

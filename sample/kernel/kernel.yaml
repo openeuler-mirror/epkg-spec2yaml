@@ -57,22 +57,6 @@ conflicts:
     - udev < 063-6 util-linux < 2.12 wireless-tools < 29-3 xfsprogs < 2.6.13-4
 exclusiveArch:
     - noarch aarch64 i686 x86_64
-files: |
-    %doc
-    /boot/config-*
-    %ifarch aarch64
-    /boot/dtb-*
-    %endif
-    /boot/symvers-*
-    /boot/System.map-*
-    /boot/vmlinuz-*
-    %ghost /boot/initramfs-%{KernelVer}.img
-    /boot/.vmlinuz-*.hmac
-    /etc/ld.so.conf.d/*
-    /lib/modules/%{KernelVer}/
-    %exclude /lib/modules/%{KernelVer}/source
-    %exclude /lib/modules/%{KernelVer}/build
-    %{_sbindir}/mkgrub-menu*.sh
     
 Exclusiveos:
     - Linux
@@ -114,7 +98,7 @@ rpmMacros:
     - "%define debuginfo_template(n:) \\{os.linesep}%package -n %{-n*}-debuginfo\\{os.linesep}Summary: Debug information for package %{-n*}\\{os.linesep}Group: Development/Debug\\{os.linesep}AutoReq: 0\\{os.linesep}AutoProv: 1\\{os.linesep}%description -n %{-n*}-debuginfo\\{os.linesep}This package provides debug information for package %{-n*}.\\{os.linesep}Debug information is useful when developing applications that use this\\{os.linesep}package or when debugging this package.\\{os.linesep}%{nil} %if 0%{?with_debuginfo}"
 
 subpackage:
-    - name: headers
+    headers:
       meta.summary: Header files for the Linux kernel for use by glibc
       meta.description: |
           Kernel-headers includes the C header files that specify the interface
@@ -126,12 +110,9 @@ subpackage:
           - glibc-kernheaders = 3.0-46
       obsoletes:
           - glibc-kernheaders < 3.0-46
-      files: |
-          %defattr (-, root, root)
-          /usr/include/*
           
 
-    - name: devel
+    devel:
       meta.summary: Development package for building kernel modules to match the %{KernelVer} kernel
       meta.description: |
           This package provides kernel headers and makefiles sufficient to build modules
@@ -141,17 +122,11 @@ subpackage:
       provides:
           - kernel-devel-uname-r = %{KernelVer}
           - kernel-devel-%{_target_cpu} = %{version}-%{release}
-      files: |
-          %defattr (-, root, root)
-          %doc
-          /lib/modules/%{KernelVer}/source
-          /lib/modules/%{KernelVer}/build
-          /usr/src/kernels/%{KernelVer}
           
       Post:
           - kernel.sh
 
-    - name: tools
+    tools:
       meta.summary: Assortment of tools for the Linux kernel
       meta.description: |
           This package contains the tools/ directory from the kernel source
@@ -165,35 +140,6 @@ subpackage:
           - cpufreq-utils < 1:009-0.6.p1
           - cpufrequtils < 1:009-0.6.p1
           - cpuspeed < 1:1.5-16
-      files: |
-          %{_bindir}/cpupower
-          %ifarch %{ix86} x86_64
-          %{_bindir}/centrino-decode
-          %{_bindir}/powernow-k8-decode
-          %endif
-          %{_unitdir}/cpupower.service
-          %{_datadir}/bash-completion/completions/cpupower
-          %{_mandir}/man[1-8]/cpupower*
-          %config(noreplace) %{_sysconfdir}/sysconfig/cpupower
-          %ifarch %{ix86} x86_64
-          %{_bindir}/x86_energy_perf_policy
-          %{_mandir}/man8/x86_energy_perf_policy*
-          %{_bindir}/turbostat
-          %{_mandir}/man8/turbostat*
-          %endif
-          %{_bindir}/tmon
-          %{_bindir}/iio_event_monitor
-          %{_bindir}/iio_generic_buffer
-          %{_bindir}/lsiio
-          %{_bindir}/lsgpio
-          %{_bindir}/gpio-hammer
-          %{_bindir}/gpio-event-mon
-          %{_bindir}/gpio-watch
-          %{_mandir}/man1/kvm_stat*
-          %{_bindir}/kvm_stat
-          %{_libdir}/libcpupower.so.0
-          %{_libdir}/libcpupower.so.0.0.1
-          %license linux-%{KernelVer}/COPYING
           
       Preun:
           - kernel.sh
@@ -202,7 +148,7 @@ subpackage:
       Postun:
           - kernel.sh
 
-    - name: tools-devel
+    tools-devel:
       meta.summary: Assortment of tools for the Linux kernel
       meta.description: |
           This package contains the development files for the tools/ directory from
@@ -214,34 +160,17 @@ subpackage:
           - %{name}-tools-libs-devel = %{version}-%{release}
       obsoletes:
           - %{name}-tools-libs-devel
-      files: |
-          %{_libdir}/libcpupower.so
-          %{_includedir}/cpufreq.h
-          %{_includedir}/cpuidle.h
           
 
-    - name: perf %if %{with_perf}
+    perf rpmWhen %if %{with_perf}:
       meta.summary: Performance monitoring for the Linux kernel 
       meta.description: |
           This package contains the perf tool, which enables performance monitoring
           of the Linux kernel.
-      files: |
-          %{_bindir}/perf
-          %{_libdir}/libperf-jvmti.so
-          %dir %{_libdir}/traceevent
-          %{_libdir}/traceevent/plugins/
-          %{_libexecdir}/perf-core
-          %{_datadir}/perf-core/
-          %{_mandir}/man[1-8]/perf*
-          %{_sysconfdir}/bash_completion.d/perf
-          %doc linux-%{KernelVer}/tools/perf/Documentation/examples.txt
-          %dir %{_datadir}/doc/perf-tip
-          %{_datadir}/doc/perf-tip/*
-          %license linux-%{KernelVer}/COPYING
           
       AsWholeName: yes
 
-    - name: python2-perf %if %{with_perf} %if 0%{?with_python2}
+    python2-perf rpmWhen %if %{with_perf} %if 0%{?with_python2}:
       meta.summary: Python bindings for apps which will manipulate perf events 
       meta.description: |
           A Python module that permits applications written in the Python programming
@@ -249,55 +178,26 @@ subpackage:
       provides:
           - python-perf = %{version}-%{release} 
       obsoletes:
-          - python-perf 
-      files: |
-          %license linux-%{KernelVer}/COPYING
-          %{python2_sitearch}/*
+          - python-perf
       AsWholeName: yes
 
-    - name: python3-perf %if %{with_perf}
+    python3-perf rpmWhen %if %{with_perf}:
       meta.summary: Python bindings for apps which will manipulate perf events 
       meta.description: |
           A Python module that permits applications written in the Python programming
           language to use the interface to manipulate perf events.
-      files: |
-          %license linux-%{KernelVer}/COPYING
-          %{python3_sitearch}/*
       AsWholeName: yes
 
-    - name: bpftool
+    bpftool:
       meta.summary: Inspection and simple manipulation of eBPF programs and maps
       meta.description: |
           This package contains the bpftool, which allows inspection and simple
           manipulation of eBPF programs and maps.
-      files: |
-          %{_sbindir}/bpftool
-          %{_sysconfdir}/bash_completion.d/bpftool
-          %{_mandir}/man8/bpftool-cgroup.8.gz
-          %{_mandir}/man8/bpftool-map.8.gz
-          %{_mandir}/man8/bpftool-prog.8.gz
-          %{_mandir}/man8/bpftool-perf.8.gz
-          %{_mandir}/man8/bpftool.8.gz
-          %{_mandir}/man8/bpftool-btf.8.gz
-          %{_mandir}/man8/bpftool-feature.8.gz
-          %{_mandir}/man8/bpftool-gen.8.gz
-          %{_mandir}/man8/bpftool-iter.8.gz
-          %{_mandir}/man8/bpftool-link.8.gz
-          %{_mandir}/man8/bpftool-net.8.gz
-          %{_mandir}/man8/bpftool-struct_ops.8.gz
-          %{_mandir}/man7/bpf-helpers.7.gz
-          %license linux-%{KernelVer}/COPYING
           
       AsWholeName: yes
 
-    - name: source
+    source:
       meta.summary: the kernel source
       meta.description: This package contains vaious source files from the kernel.
-      files: |
-          %defattr(-,root,root)
-          /usr/src/linux-%{KernelVer}/*
-          /usr/src/linux-%{KernelVer}/.config
-          /usr/src/linux-%{KernelVer}/.scmversion
       filesJudgement:
           - %if 0%{?with_source}
-

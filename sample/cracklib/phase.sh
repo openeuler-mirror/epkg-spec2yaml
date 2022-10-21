@@ -22,10 +22,7 @@ abiflags=`python3-config --abiflags`
 py_version="%{python3_version}$abiflags"
 %configure \
     am_cv_python_version="$py_version" \
-    --disable-static \
-    --with-pic \
-    --with-python \
-    --with-default-dict=%{dictpath}
+    %%{env.configureFlags}
 make -C po update-gmo
 make
 %endif

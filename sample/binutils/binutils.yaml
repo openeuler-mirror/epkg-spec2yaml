@@ -84,20 +84,6 @@ buildRequires:
     - bison, m4, gcc-c++, gettext, flex, zlib-devel, texinfo >= 4.0, perl-podlators chrpath
 provides:
     - bundled(libiberty)
-files: |
-    %doc README
-    %license COPYING3 COPYING COPYING3.LIB COPYING.LIB
-    %{_bindir}/[!l]*
-    %{_bindir}/ld.*
-    %ghost %{_bindir}/ld
-    %{_libdir}/lib*.so
-    %{_libdir}/libctf*
-    %{_libdir}/bfd-plugins/libdep.so
-    %exclude %{_libdir}/libctf.a
-    %exclude %{_libdir}/libctf-nobfd.a
-    %exclude %{_libdir}/libbfd.so
-    %exclude %{_libdir}/libopcodes.so
-    %config(noreplace) /etc/ld.so.conf.d/*
     
 Preun:
     - binutils.sh
@@ -115,7 +101,7 @@ rpmMacros:
     - "%{!?ld_gold_priority:%global ld_gold_priority   30} %if %{with gold}"
 
 subpackage:
-    - name: devel
+    devel:
       meta.summary: devel package including header files and libraries.
       meta.description: |
           The devel package contains BFD and opcodes static and dynamic libraries.
@@ -129,25 +115,11 @@ subpackage:
           - info
       provides:
           - binutils-static = %{version}-%{release}
-      files: |
-          %{_prefix}/include/*
-          %{_libdir}/lib*.a
-          %{_libdir}/libbfd.so
-          %{_libdir}/libopcodes.so
           
 
-    - name: help
+    help:
       meta.summary: binutils help
       meta.description: The help package contains man files.
-      files: |
-          %{_mandir}/man1/*
-          %{_infodir}/as.info.gz
-          %{_infodir}/binutils.info.gz
-          %{_infodir}/gprof.info.gz
-          %{_infodir}/ld.info.gz
-          %{_infodir}/[^b]*info*
-          %{_infodir}/binutils*info*
-          %{_infodir}/bfd*info*
           
       filesInput: binutils.lang
 
@@ -158,3 +130,12 @@ subpackage:
       Postun:
           - binutils.sh
 
+env.configureFlags: |
+    --enable-ld
+    --with-sysroot=/
+    --enable-deterministic-archives=no
+    --enable-lto
+    --enable-compressed-debug-sections=none
+    --enable-generate-build-notes=no
+    --enable-plugins
+    --enable-shared

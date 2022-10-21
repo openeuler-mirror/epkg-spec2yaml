@@ -6,7 +6,7 @@ prep() {
 }
 
 build() {
-%configure --enable-compat-symlinks
+%configure %%{env.configureFlags}
 %make_build CFLAGS="%{optflags} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -fno-strict-aliasing"
 
 }

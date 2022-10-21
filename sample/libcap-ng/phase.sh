@@ -6,7 +6,7 @@ prep() {
 }
 
 build() {
-%configure --libdir=/%{_lib} --with-python=no --with-python3
+%configure --libdir=/%{_lib} %%{env.configureFlags}
 make CFLAGS="%{optflags}" %{?_smp_mflags}
 
 }

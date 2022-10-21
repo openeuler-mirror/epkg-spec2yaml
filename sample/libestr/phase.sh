@@ -6,7 +6,7 @@ prep() {
 }
 
 build() {
-%configure --disable-static --with-pic
+%configure %%{env.configureFlags}
 
 %make_build
 
