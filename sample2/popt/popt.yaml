@@ -1,0 +1,59 @@
+name: popt
+meta.summary: C library for parsing command line parameters
+version: 1.18
+release: 3
+meta.license: MIT
+meta.homepage: https://github.com/rpm-software-management/popt/
+sources:
+    - http://ftp.rpm.org/%{name}/releases/%{name}-1.x/%{name}-%{version}.tar.gz
+patchset:
+    - fix-obscure-iconv-mis-call-error-path-could-lead-to-.patch
+    - fix-handle-newly-added-asset-.-call-like-elsewhere.patch
+    - fix-permit-reading-aliases-remove-left-over-goto-exi.patch
+    - fix-coverity-CID-1057440-Unused-pointer-value-UNUSED.patch
+    - backport-Consider-POPT_CONTEXT_KEEP_FIRST-during-reset.patch
+    - backport-Fix-incorrect-handling-of-leftovers-with-poptStuffAr.patch
+meta.description: |
+    The popt library exists essentially for parsing command line options. Some
+    specific advantages of popt are no global variables (allowing multiple passes
+    in parsing argv), parsing an arbitrary array of argv-style elements (allowing
+    parsing of command-line-strings from any source), a standard method of option
+    aliasing, ability to exec external option filters, and automatic generation
+    of help and usage messages.
+buildRequires:
+    - "gcc git gettext"
+files: |
+    %license COPYING
+    %{_sysconfdir}/%{name}.d
+    %{_libdir}/lib%{name}.so*
+    
+filesInput: %{name}.lang
+
+subpackage:
+    - name: devel
+      meta.summary: Development files for %{name}
+      meta.description: |
+          The %{name}-devel package contains libraries and header files for
+          developing applications that use %{name}.
+      requires:
+          - "%{name} = %{version}-%{release}"
+          - "pkgconfig"
+      provides:
+          - "%{name}-static = %{version}-%{release}"
+      obsoletes:
+          - "%{name}-static < %{version}-%{release}"
+      files: |
+          %{_includedir}/%{name}.h
+          %{_libdir}/pkgconfig/%{name}.pc
+          %{_libdir}/lib%{name}.a
+          
+
+    - name: help
+      meta.summary: Doc files for %{name}
+      meta.description: The %{name}-help package contains doc files for %{name}.
+      buildArch: noarch
+      files: |
+          %doc CHANGES README
+          %{_mandir}/man3/%{name}.3.gz
+          
+
