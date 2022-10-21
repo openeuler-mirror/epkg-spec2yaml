@@ -1,0 +1,269 @@
+name: util-linux
+meta.summary: A random collection of Linux utilities
+version: 2.37.2
+release: 5
+meta.license: GPLv2 and GPLv2+ and LGPLv2+ and BSD with advertising and Public Domain
+meta.homepage: https://git.kernel.org/pub/scm/utils/util-linux/util-linux.git
+sources:
+    - https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v%{upstream_major}/%{name}-%{version}.tar.xz
+    - util-linux-login.pamd
+    - util-linux-remote.pamd
+    - util-linux-chsh-chfn.pamd
+    - util-linux-60-raw.rules
+    - adjtime
+    - util-linux-su.pamd
+    - util-linux-su-l.pamd
+    - util-linux-runuser.pamd
+    - util-linux-runuser-l.pamd
+patchset:
+    - 2.36-login-lastlog-create.patch
+    - Add-check-to-resolve-uname26-version-test-failed.patch
+    - SKIPPED-no-root-permissions-test.patch
+    - backport-su-bash-completion-offer-usernames-rather-than-files.patch
+    - backport-Fix-memory-leaks-in-the-chcpu.patch
+    - backport-logger-fix-prio-prefix-doesn-t-use-priority-default.patch
+    - backport-vipw-flush-stdout-before-getting-answer.patch
+    - backport-login-Restore-tty-size-after-calling-vhangup.patch
+    - backport-Forward-value-of-sector_size-instead-of-its-address.patch
+    - backport-libfdisk-dereference-of-possibly-NULL-gcc-analyzer.patch
+    - backport-libfdisk-check-calloc-return-gcc-analyzer.patch
+    - backport-mcookie-fix-infinite-loop-when-use-f.patch
+    - backport-sfdisk-write-empty-label-also-when-only-ignored-part.patch
+meta.description: |
+    The util-linux package contains a random collection of files that
+    implements some low-level basic linux utilities.
+requires:
+    - "pam >= 1.1.3-7, /etc/pam.d/system-auth audit-libs >= 1.0.6"
+    - "libblkid = %{version}-%{release} libmount = %{version}-%{release} libsmartcols = %{version}-%{release}"
+    - "libfdisk = %{version}-%{release} libuuid = %{version}-%{release}"
+requiresPost:
+    - "coreutils"
+buildRequires:
+    - "audit-libs-devel >= 1.0.6 gettext-devel libselinux-devel ncurses-devel pam-devel zlib-devel popt-devel"
+    - "libutempter-devel systemd-devel systemd libuser-devel libcap-ng-devel python3-devel gcc"
+provides:
+    - "eject = 2.1.6 rfkill = 0.5"
+    - "util-linux-ng = %{version}-%{release} hardlink = 1:1.3-9"
+    - "/bin/dmesg /bin/kill /bin/more /bin/mount /bin/umount /sbin/blkid"
+    - "/sbin/blockdev /sbin/findfs /sbin/fsck /sbin/nologin"
+obsoletes:
+    - "eject <= 2.1.5 rfkill <= 0.5 util-linux-ng < 2.19 hardlink <= 1:1.3-9"
+conflicts:
+    - "initscripts < 9.79-4 bash-completion < 1:2.1-1 coreutils < 8.20 sysvinit-tools < 2.88-14"
+    - "e2fsprogs < 1.41.8-5 filesystem < 3"
+files: |
+    %exclude %{compldir}/{mount,umount}
+    %{!?_licensedir:%global license %%doc}
+    %license Documentation/licenses/* AUTHORS
+    %config(noreplace) %{_sysconfdir}/pam.d/{login,remote,su,su-l,runuser,runuser-l}
+    %config(noreplace) %{_prefix}/lib/udev/rules.d/60-raw.rules
+    %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/adjtime
+    %attr(4755,root,root) %{_bindir}/mount
+    %attr(4755,root,root) %{_bindir}/umount
+    %attr(4755,root,root) %{_bindir}/su
+    %attr(755,root,root) %{_bindir}/login
+    %attr(2755,root,tty) %{_bindir}/write
+    %attr(2555,root,tty) %{_bindir}/wall
+    %ghost %attr(0644,root,root) %verify(not md5 size mtime) /var/log/lastlog
+    %ghost %verify(not md5 size mtime) %config(noreplace,missingok) /etc/mtab
+    %{_unitdir}/fstrim.*
+    %{_bindir}/{cal,chrt,col,colcrt,colrm,column,chmem,dmesg,eject,fallocate,fincore,findmnt,choom,uclampset}
+    %{_bindir}/{flock,getopt,hexdump,ionice,ipcmk,ipcrm,ipcs,isosize,kill,last,lastb,logger,hardlink}
+    %{_bindir}/{look,lsblk,lscpu,lsipc,lslocks,lslogins,lsmem,lsns,mcookie,mesg,more,mountpoint}
+    %{_bindir}/{namei,nsenter,prlimit,raw,rename,renice,rev,script,scriptreplay,setarch,setpriv}
+    %{_bindir}/{setsid,setterm,taskset,ul,unshare,utmpdump,uuidgen,uuidparse,wdctl,whereis,scriptlive,irqtop,lsirq}
+    %{_sbindir}/{addpart,agetty,blkdiscard,blkid,blkzone,blockdev,chcpu,ctrlaltdel,delpart,fdisk}
+    %{_sbindir}/{findfs,fsck,fsck.cramfs,fsck.minix,fsfreeze,fstrim,ldattach,losetup,mkfs,mkfs.cramfs}
+    %{_sbindir}/{mkfs.minix,mkswap,nologin,partx,pivot_root,readprofile,resizepart,rfkill,rtcwake}
+    %{_sbindir}/{runuser,sulogin,swaplabel,swapoff,swapon,switch_root,wipefs,zramctl}
+    %{_sbindir}/{clock,fdformat,hwclock,cfdisk,sfdisk}
+    %{compldir}/{addpart,blkdiscard,blkid,blkzone,blockdev,cal,chcpu,chmem,chrt,col}
+    %{compldir}/{colcrt,colrm,column,ctrlaltdel,delpart,dmesg,eject,fallocate,fdisk}
+    %{compldir}/{fincore,findfs,findmnt,flock,fsck,fsck.cramfs,fsck.minix,fsfreeze}
+    %{compldir}/{fstrim,getopt,hexdump,ionice,ipcmk,ipcrm,ipcs,isosize,last,ldattach}
+    %{compldir}/{logger,look,losetup,lsblk,lscpu,lsipc,lslocks,lslogins,lsmem,lsns}
+    %{compldir}/{mcookie,mesg,mkfs,mkfs.cramfs,mkfs.minix,mkswap,more,mountpoint}
+    %{compldir}/{namei,nsenter,partx,pivot_root,prlimit,raw,readprofile,rename,renice}
+    %{compldir}/{resizepart,rev,rfkill,rtcwake,runuser,script,scriptreplay,setarch}
+    %{compldir}/{setpriv,setsid,setterm,su,swaplabel,swapoff,swapon,taskset,ul,unshare}
+    %{compldir}/{utmpdump,uuidgen,uuidparse,wall,wdctl,whereis,wipefs,write,zramctl}
+    %{compldir}/{fdformat,hwclock,cfdisk,sfdisk,scriptlive,irqtop,lsirq,hardlink,uclampset}
+    
+rpmMacros:
+    - "%define compldir %{_datadir}/bash-completion/completions/"
+    - "%global upstream_major 2.37"
+
+subpackage:
+    - name: libfdisk
+      meta.summary: Library for fdisk-like programs.
+      meta.license: LGPLv2+
+      meta.description: This package contains the library for fdisk-like programs.
+      files: |
+          %license Documentation/licenses/COPYING.LGPL-2.1* libfdisk/COPYING
+          %{_libdir}/libfdisk.so.*
+          
+      AsWholeName: yes
+
+    - name: libsmartcols
+      meta.summary: Library for column based text sort engine.
+      meta.license: LGPLv2+
+      meta.description: This package contains the library for column based text sort engine.
+      files: |
+          %license Documentation/licenses/COPYING.LGPL-2.1* libsmartcols/COPYING
+          %{_libdir}/libsmartcols.so.*
+          
+      AsWholeName: yes
+
+    - name: libmount
+      meta.summary: Library for device mounting
+      meta.license: LGPLv2+
+      meta.description: This package is the library for device mounting.
+      requires:
+          - "libblkid = %{version}-%{release}"
+          - "libuuid = %{version}-%{release}"
+      conflicts:
+          - "filesystem < 3"
+      files: |
+          %license Documentation/licenses/COPYING.LGPL-2.1* libmount/COPYING
+          %{_libdir}/libmount.so.*
+          
+      AsWholeName: yes
+
+    - name: libblkid
+      meta.summary: Library for block device id.
+      meta.license: LGPLv2+
+      meta.description: This package is le library for block device id.
+      requires:
+          - "libuuid = %{version}-%{release}"
+      requiresPost:
+          - "coreutils"
+      conflicts:
+          - "filesystem < 3"
+      files: |
+          %doc libblkid/COPYING
+          %{_libdir}/libblkid.so.*
+          
+      AsWholeName: yes
+
+    - name: uuidd
+      meta.summary: UUID generation daemon
+      meta.license: GPLv2
+      meta.description: |
+          The uuidd daemon is used by the UUID library to generate universally
+          unique identifiers (UUIDs), especially time-based UUIDs, in a secure
+          and guaranteed-unique fashion, even in the face of large numbers of
+          threads running on different CPUs trying to grab UUIDs.
+      requires:
+          - "libuuid = %{version}-%{release}"
+          - "systemd"
+      requiresPre:
+          - "shadow"
+      requiresPreUn:
+          - "systemd-units"
+      requiresPost:
+          - "systemd-units"
+      files: |
+          %license Documentation/licenses/COPYING.GPL-2.0*
+          %{_sbindir}/uuidd
+          %{_unitdir}/uuidd.*
+          %dir %attr(2775, uuidd, uuidd) /var/lib/libuuid
+          %dir %attr(2775, uuidd, uuidd) /run/uuidd
+          %{compldir}/uuidd
+          
+      filesInput: %{name}.files
+
+      AsWholeName: yes
+
+    - name: libuuid
+      meta.summary: Universally unique ID library
+      meta.license: BSD
+      meta.description: This package is the universally unique ID library.
+      conflicts:
+          - "filesystem < 3"
+      files: |
+          %license Documentation/licenses/COPYING.BSD-3* libuuid/COPYING
+          %{_libdir}/libuuid.so.*
+          
+      AsWholeName: yes
+
+    - name: user
+      meta.summary: libuser based util-linux utilities
+      meta.license: GPLv2
+      meta.description: chfn and chsh utilities with dependence on libuser
+      requires:
+          - "util-linux = %{version}-%{release}"
+      files: |
+          %config(noreplace)	%{_sysconfdir}/pam.d/chfn
+          %config(noreplace)	%{_sysconfdir}/pam.d/chsh
+          %attr(4711,root,root)	%{_bindir}/chfn
+          %attr(4711,root,root)	%{_bindir}/chsh
+          %{compldir}/chfn
+          %{compldir}/chsh
+          
+
+    - name: python3-libmount
+      meta.summary: Python Package for the libmount library pack
+      meta.license: LGPLv2+
+      meta.description: |
+          This package provides python support for users to use the libmount library
+          to work with mount tables and mount filesystems.
+      requires:
+          - "libmount = %{version}-%{release}"
+      files: |
+          %{!?_licensedir:%global license %%doc}
+          %license libmount/COPYING
+          %{_libdir}/python*/site-packages/libmount/
+          
+      AsWholeName: yes
+
+    - name: devel
+      meta.summary: Development package for ${name}
+      meta.license: LGPLv2+ and BSD
+      meta.description: |
+          This package contains some library and other necessary files for the
+          development of %{name}.
+      requires:
+          - "%{name} = %{version}-%{release} pkgconfig"
+      provides:
+          - "libfdisk-devel libsmartcols-devel libmount-devel libblkid-devel libuuid-devel"
+      obsoletes:
+          - "libfdisk-devel libsmartcols-devel libmount-devel libblkid-devel libuuid-devel"
+      files: |
+          %{_includedir}/{libfdisk,libsmartcols,uuid,blkid,libmount}
+          %{_libdir}/{libfdisk.so,libsmartcols.so,libuuid.so,libblkid.so,libmount.so}
+          %{_libdir}/pkgconfig/{fdisk.pc,smartcols.pc,uuid.pc,blkid.pc,mount.pc}
+          
+
+    - name: help
+      meta.summary: Help package for ${name}
+      meta.description: This package contains some doc and man help files for %{name}.
+      requires:
+          - "%{name} = %{version}-%{release}"
+      provides:
+          - "hardlink-help = 1:1.3-9"
+      obsoletes:
+          - "hardlink-help <= 1:1.3-9"
+      buildArch: noarch
+      files: |
+          %exclude %{_datadir}/doc/util-linux/getopt/*
+          %{_docdir}/%{name}/getopt-example.*
+          %doc README NEWS Documentation/deprecated.txt
+          %doc %attr(0644,-,-) misc-utils/getopt-*.{bash,tcsh}
+          %{_mandir}/man1/{chfn.1*,chsh.1*,cal.1*,chrt.1*,col.1*,colcrt.1*,colrm.1*,column.1*,dmesg.1*,eject.1*,uclampset.1*}
+          %{_mandir}/man1/{fallocate.1*,fincore.1*,flock.1*,getopt.1*,hexdump.1*,ionice.1*,ipcmk.1*,ipcrm.1*,ipcs.1*}
+          %{_mandir}/man1/{kill.1*,last.1*,lastb.1*,logger.1*,login.1*,look.1*,lscpu.1*,lsipc.1*,lslogins.1*,lsmem.1*}
+          %{_mandir}/man1/{mcookie.1*,mesg.1*,more.1*,mountpoint.1*,namei.1*,nsenter.1*,prlimit.1*,rename.1*,renice.1*}
+          %{_mandir}/man1/{rev.1*,runuser.1*,script.1*,scriptreplay.1*,setpriv.1*,setsid.1*,setterm.1*,su.1*,taskset.1*}
+          %{_mandir}/man1/{ul.1*,unshare.1*,utmpdump.1.gz,uuidgen.1*,uuidparse.1*,wall.1*,whereis.1*,write.1*,choom.1*,scriptlive*,hardlink.1*,irqtop.1*,lsirq.1*}
+          %{_mandir}/man3/{libblkid.3*,uuid.3*,uuid_clear.3*,uuid_compare.3*,uuid_copy.3*,uuid_generate.3*,uuid_generate_random.3*}
+          %{_mandir}/man3/{uuid_generate_time_safe.3*,uuid_is_null.3*,uuid_parse.3*,uuid_time.3*,uuid_unparse.3*,uuid_generate_time.3*}
+          %{_mandir}/man5/{fstab.5*,terminal-colors.d.5*,adjtime_config.5.*}
+          %{_mandir}/man8/{uuidd.8*,fdformat.8*,hwclock.8*,clock.8*,cfdisk.8*,sfdisk.8*,addpart.8*,agetty.8*}
+          %{_mandir}/man8/{blkdiscard.8*,blkid.8*,blkzone.8*,blockdev.8*,chcpu.8*,chmem.8*,ctrlaltdel.8*,delpart.8*}
+          %{_mandir}/man8/{fdisk.8*,findfs.8*,findmnt.8*,fsck.8*,fsck.cramfs.8*,fsck.minix.8*,fsfreeze.8*,fstrim.8*}
+          %{_mandir}/man8/{isosize.8*,ldattach.8*,losetup.8*,lsblk.8*,lslocks.8*,lsns.8*,mkfs.8*,mkfs.cramfs.8*}
+          %{_mandir}/man8/{mkfs.minix.8*,mkswap.8*,mount.8*,nologin.8*,partx.8*,pivot_root.8*,raw.8*,rawdevices.8*}
+          %{_mandir}/man8/{readprofile.8*,resizepart.8*,rfkill.8*,rtcwake.8*,setarch.8*,sulogin.8.gz,swaplabel.8*}
+          %{_mandir}/man8/{swapoff.8*,swapon.8*,switch_root.8*,umount.8*,wdctl.8.gz,wipefs.8*,zramctl.8*}
+          
+
