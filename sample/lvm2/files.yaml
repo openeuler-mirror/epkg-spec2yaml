@@ -75,11 +75,25 @@ subpackage.help.files: |
 subpackage.python3-lvm-deprecated.files:
 
 
-# subpackage.lockd %if %{use_lockd_dlm} || %{use_lockd_sanlock}.files: |
+subpackage.lockd.files: |
+    %defattr(444,root,root,-)
+    %%attr(555, -, -) %{_sbindir}/lvmlockd
+    %%attr(555, -, -) %{_sbindir}/lvmlockctl
+    %{_unitdir}/lvmlockd.service
+    %{_unitdir}/lvmlocks.service
 
-# subpackage.cluster %if %{use_cluster}.files: |
+subpackage.cluster.files: |
+    %defattr(555,root,root,-)
+    %{_sbindir}/clvmd
+    %{_prefix}/lib/systemd/lvm2-cluster-activation
+    %defattr(444,root,root,-)
+    %{_unitdir}/lvm2-clvmd.service
+    %{_unitdir}/lvm2-cluster-activation.service
 
-#subpackage.cmirror %if %{use_cluster} && %{use_cmirror}.files: |
+subpackage.cmirror.files: |
+    %defattr(555,root,root,-)
+    %{_sbindir}/cmirrord
+    %{_unitdir}/lvm2-cmirrord.service
 
 subpackage.dbusd.files: |
     %defattr(555,root,root,-)

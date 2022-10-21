@@ -144,7 +144,7 @@ subpackage:
           - %{name}-python3-libs < %{?epoch}:%{version}-%{release}
       AsWholeName: yes
 
-    lockd %if %{use_lockd_dlm} || %{use_lockd_sanlock}:
+    lockd rpmWhen %if %{use_lockd_dlm} || %{use_lockd_sanlock}:
       meta.summary: LVM locking daemon
       meta.description: LVM commands use lvmlockd to coordinate access to shared storage.
       requires:
@@ -157,14 +157,8 @@ subpackage:
           - systemd-units >= %{systemd_version}
       requiresPostUn:
           - systemd-units >= %{systemd_version}
-      files: |
-          %defattr(444,root,root,-)
-          %%attr(555, -, -) %{_sbindir}/lvmlockd
-          %%attr(555, -, -) %{_sbindir}/lvmlockctl
-          %{_unitdir}/lvmlockd.service
-          %{_unitdir}/lvmlocks.service
 
-    cluster %if %{use_cluster}:
+    cluster rpmWhen %if %{use_cluster}:
       meta.summary: cluster LVM daemon tools
       meta.license: GPLv2
       meta.description: cluster distributes LVM metadata updates  around  a  cluster.
@@ -180,15 +174,8 @@ subpackage:
           - cluster-standalone
       obsoletes:
           - cluster-standalone
-      files: |
-          %defattr(555,root,root,-)
-          %{_sbindir}/clvmd
-          %{_prefix}/lib/systemd/lvm2-cluster-activation
-          %defattr(444,root,root,-)
-          %{_unitdir}/lvm2-clvmd.service
-          %{_unitdir}/lvm2-cluster-activation.service
 
-    cmirror %if %{use_cluster} && %{use_cmirror}:
+    cmirror rpmWhen %if %{use_cluster} && %{use_cmirror}:
       meta.summary: cluster mirror log daemon
       meta.license: GPLv2
       meta.description: cmirror tracks mirror log information in a cluster.
@@ -200,10 +187,6 @@ subpackage:
           - cmirror-standalone
       obsoletes:
           - cmirror-standalone
-      files: |
-          %defattr(555,root,root,-)
-          %{_sbindir}/cmirrord
-          %{_unitdir}/lvm2-cmirrord.service
       AsWholeName: yes
 
     dbusd:

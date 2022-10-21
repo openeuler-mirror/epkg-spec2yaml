@@ -121,17 +121,13 @@ subpackage:
       filesJudgement:
           - %if %{with sandbox}
 
-    sandbox %if %{with sandbox}:
+    sandbox rpmWhen %if %{with sandbox}:
       meta.summary: Sandbox utilities for selinux 
       meta.description: It contains sandbox utilities for selinux
       requires:
           - python3-policycoreutils = %{version}-%{release} 
           - xorg-x11-server-Xephyr >= 1.14.1-2 /usr/bin/rsync /usr/bin/xmodmap 
           - openbox 
-      files: |
-          %config(noreplace) %{_sysconfdir}/sysconfig/sandbox
-          %{_datadir}/sandbox/{start,sandboxX.sh}
-          %caps(cap_setpcap,cap_setuid,cap_fowner,cap_dac_override,cap_sys_admin,cap_sys_nice=pe) %{_sbindir}/seunshare
 
     help:
       meta.summary: Including man files for selinux
