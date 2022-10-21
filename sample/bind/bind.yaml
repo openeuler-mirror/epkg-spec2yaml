@@ -130,7 +130,7 @@ rpmMacros:
     - "%define chroot_fix_devices() \\{os.linesep}if [ $1 -gt 1 ]; then \\{os.linesep}  for DEV in \"%{1}/dev\"/{null,random,zero}; do \\{os.linesep}    if [ -e \"$DEV\" -a \"$(/bin/stat --printf=\"%G %a\" \"$DEV\")\" = \"root 644\" ]; \\{os.linesep}    then \\{os.linesep}      /bin/chmod 0664 \"$DEV\" \\{os.linesep}      /bin/chgrp named \"$DEV\" \\{os.linesep}    fi \\{os.linesep}  done \\{os.linesep}fi"
 
 subpackage:
-    - name: pkcs11 %if %{with PKCS11}
+    pkcs11 rpmWhen %if %{with PKCS11}:
       meta.summary: Bind with native PKCS#11 functionality for crypto 
       meta.description: |
           This is a version of BIND server built with native PKCS#11 functionality.
@@ -139,12 +139,7 @@ subpackage:
       requires:
           - bind%{?_isa} = %{epoch}:%{version}-%{release} 
           - bind-libs%{?_isa} = %{epoch}:%{version}-%{release} 
-          - bind-pkcs11-libs%{?_isa} = %{epoch}:%{version}-%{release} 
-      files: |
-          %{_sbindir}/named-pkcs11
-          %{_unitdir}/named-pkcs11.service
-          %{_mandir}/man8/named-pkcs11.8*
-          %{_libexecdir}/setup-named-softhsm.sh
+          - bind-pkcs11-libs%{?_isa} = %{epoch}:%{version}-%{release}
           
       recommends:
           - softhsm 
@@ -155,7 +150,7 @@ subpackage:
       Postun:
           - bind.sh
 
-    - name: pkcs11-utils %if %{with PKCS11}
+    pkcs11-utils rpmWhen %if %{with PKCS11}:
       meta.summary: Bind tools with native PKCS#11 for using DNSSEC 
       meta.description: |
           This is a set of PKCS#11 utilities that when used together create rsa
@@ -165,44 +160,27 @@ subpackage:
           - bind-pkcs11-libs%{?_isa} = %{epoch}:%{version}-%{release} 
           - bind-dnssec-doc = %{epoch}:%{version}-%{release} 
       obsoletes:
-          - bind-pkcs11 < 32:9.9.4-16.P2 
-      files: |
-          %{_sbindir}/dnssec*pkcs11
-          %{_sbindir}/pkcs11-destroy
-          %{_sbindir}/pkcs11-keygen
-          %{_sbindir}/pkcs11-list
-          %{_sbindir}/pkcs11-tokens
-          %{_mandir}/man8/pkcs11*.8*
-          %{_mandir}/man8/dnssec*-pkcs11.8*
+          - bind-pkcs11 < 32:9.9.4-16.P2
           
 
-    - name: pkcs11-libs %if %{with PKCS11}
+    pkcs11-libs rpmWhen %if %{with PKCS11}:
       meta.summary: Bind libraries compiled with native PKCS#11 
       meta.description: |
           This is a set of BIND libraries (dns, isc) compiled with native PKCS#11
           functionality.
       requires:
           - bind-license = %{epoch}:%{version}-%{release} 
-          - bind-libs%{?_isa} = %{epoch}:%{version}-%{release} 
-      files: |
-          %{_libdir}/libdns-pkcs11-%{version}*.so
-          %{_libdir}/libns-pkcs11-%{version}*.so
+          - bind-libs%{?_isa} = %{epoch}:%{version}-%{release}
           
 
-    - name: pkcs11-devel %if %{with PKCS11}
+    pkcs11-devel rpmWhen %if %{with PKCS11}:
       meta.summary: Development files for Bind libraries compiled with native PKCS#11 
       meta.description: |
           This a set of development files for BIND libraries (dns, isc) compiled
           with native PKCS#11 functionality.
       requires:
           - bind-pkcs11-libs%{?_isa} = %{epoch}:%{version}-%{release} 
-          - bind-devel%{?_isa} = %{epoch}:%{version}-%{release} 
-      files: |
-          %{_includedir}/bind9/pk11/*.h
-          %exclude %{_includedir}/bind9/pk11/site.h
-          %{_includedir}/bind9/pkcs11
-          %{_libdir}/libdns-pkcs11.so
-          %{_libdir}/libns-pkcs11.so
+          - bind-devel%{?_isa} = %{epoch}:%{version}-%{release}
 
     libs:
       meta.summary: Libraries used by the BIND DNS packages
@@ -300,26 +278,21 @@ subpackage:
       Posttrans:
           - bind.sh
 
-    - name: dlz-filesystem %if %{with DLZ}
+    dlz-filesystem rpmWhen %if %{with DLZ}:
       meta.summary: BIND server filesystem DLZ module 
       meta.description: Dynamic Loadable Zones filesystem module for BIND server.
       requires:
-          - bind%{?_isa} = %{epoch}:%{version}-%{release} 
-      files: |
-          %{_libdir}/{named,bind}/dlz_filesystem_dynamic.so
+          - bind%{?_isa} = %{epoch}:%{version}-%{release}
           
 
-    - name: dlz-ldap %if %{with DLZ}
+    dlz-ldap rpmWhen %if %{with DLZ}:
       meta.summary: BIND server ldap DLZ module 
       meta.description: Dynamic Loadable Zones LDAP module for BIND server.
       requires:
-          - bind%{?_isa} = %{epoch}:%{version}-%{release} 
-      files: |
-          %{_libdir}/{named,bind}/dlz_ldap_dynamic.so
-          %doc contrib/dlz/modules/ldap/testing/*
+          - bind%{?_isa} = %{epoch}:%{version}-%{release}
           
 
-    - name: dlz-mysql %if %{with DLZ}
+    dlz-mysql rpmWhen %if %{with DLZ}:
       meta.summary: BIND server mysql and mysqldyn DLZ modules 
       meta.description: |
           Dynamic Loadable Zones MySQL module for BIND server.
@@ -329,22 +302,14 @@ subpackage:
       provides:
           - %{name}-dlz-mysqldyn = %{epoch}:%{version}-%{release} 
       obsoletes:
-          - %{name}-dlz-mysqldyn < 32:9.16.6-3 
-      files: |
-          %{_libdir}/{named,bind}/dlz_mysql_dynamic.so
-          %doc build/contrib/dlz/modules/doc/mysql
-          %{_libdir}/{named,bind}/dlz_mysqldyn_mod.so
-          %doc build/contrib/dlz/modules/doc/mysqldyn
+          - %{name}-dlz-mysqldyn < 32:9.16.6-3
           
 
-    - name: dlz-sqlite3 %if %{with DLZ}
+    dlz-sqlite3 rpmWhen %if %{with DLZ}:
       meta.summary: BIND server sqlite3 DLZ module 
       meta.description: Dynamic Loadable Zones sqlite3 module for BIND server.
       requires:
-          - bind%{?_isa} = %{epoch}:%{version}-%{release} 
-      files: |
-          %{_libdir}/{named,bind}/dlz_sqlite3_dynamic.so
-          %doc contrib/dlz/modules/sqlite3/testing/*
+          - bind%{?_isa} = %{epoch}:%{version}-%{release}
           
 
     python3-bind:
@@ -357,7 +322,7 @@ subpackage:
           
       AsWholeName: yes
 
-    - name: doc %if %{with DOC}
+    doc rpmWhen %if %{with DOC}:
       meta.summary: BIND 9 Administrator Reference Manual 
       meta.description: |
           BIND (Berkeley Internet Name Domain) is an implementation of the DNS
@@ -372,11 +337,7 @@ subpackage:
       requires:
           - bind-license = %{epoch}:%{version}-%{release} 
           - python3-sphinx_rtd_theme 
-      buildArch: noarch 
-      files: |
-          %dir %{_pkgdocdir}
-          %doc %{_pkgdocdir}/Bv9ARM.html
-          %doc %{_pkgdocdir}/html
+      buildArch: noarch
 
 env.configureFlags: |
     --with-python=%{__python3}

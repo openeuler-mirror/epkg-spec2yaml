@@ -162,28 +162,15 @@ subpackage:
           - %{name}-tools-libs-devel
           
 
-    - name: perf %if %{with_perf}
+    perf rpmWhen %if %{with_perf}:
       meta.summary: Performance monitoring for the Linux kernel 
       meta.description: |
           This package contains the perf tool, which enables performance monitoring
           of the Linux kernel.
-      files: |
-          %{_bindir}/perf
-          %{_libdir}/libperf-jvmti.so
-          %dir %{_libdir}/traceevent
-          %{_libdir}/traceevent/plugins/
-          %{_libexecdir}/perf-core
-          %{_datadir}/perf-core/
-          %{_mandir}/man[1-8]/perf*
-          %{_sysconfdir}/bash_completion.d/perf
-          %doc linux-%{KernelVer}/tools/perf/Documentation/examples.txt
-          %dir %{_datadir}/doc/perf-tip
-          %{_datadir}/doc/perf-tip/*
-          %license linux-%{KernelVer}/COPYING
           
       AsWholeName: yes
 
-    - name: python2-perf %if %{with_perf} %if 0%{?with_python2}
+    python2-perf rpmWhen %if %{with_perf} %if 0%{?with_python2}:
       meta.summary: Python bindings for apps which will manipulate perf events 
       meta.description: |
           A Python module that permits applications written in the Python programming
@@ -191,20 +178,14 @@ subpackage:
       provides:
           - python-perf = %{version}-%{release} 
       obsoletes:
-          - python-perf 
-      files: |
-          %license linux-%{KernelVer}/COPYING
-          %{python2_sitearch}/*
+          - python-perf
       AsWholeName: yes
 
-    - name: python3-perf %if %{with_perf}
+    python3-perf rpmWhen %if %{with_perf}:
       meta.summary: Python bindings for apps which will manipulate perf events 
       meta.description: |
           A Python module that permits applications written in the Python programming
           language to use the interface to manipulate perf events.
-      files: |
-          %license linux-%{KernelVer}/COPYING
-          %{python3_sitearch}/*
       AsWholeName: yes
 
     bpftool:

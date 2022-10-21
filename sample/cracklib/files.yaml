@@ -18,3 +18,8 @@ subpackage.devel.files: |
 
 subpackage.help.files: |
     %doc README README-WORDS NEWS
+
+subpackage.python3-cracklib.files: |
+    %{_libdir}/python3*/site-packages/_cracklib*.so
+    %{_libdir}/python3*/site-packages/*.py*
+    %{_libdir}/python3*/site-packages/__pycache__/*

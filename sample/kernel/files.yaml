@@ -84,3 +84,25 @@ subpackage.source.files: |
     /usr/src/linux-%{KernelVer}/*
     /usr/src/linux-%{KernelVer}/.config
     /usr/src/linux-%{KernelVer}/.scmversion
+
+subpackage.perf.files: |
+    %{_bindir}/perf
+    %{_libdir}/libperf-jvmti.so
+    %dir %{_libdir}/traceevent
+    %{_libdir}/traceevent/plugins/
+    %{_libexecdir}/perf-core
+    %{_datadir}/perf-core/
+    %{_mandir}/man[1-8]/perf*
+    %{_sysconfdir}/bash_completion.d/perf
+    %doc linux-%{KernelVer}/tools/perf/Documentation/examples.txt
+    %dir %{_datadir}/doc/perf-tip
+    %{_datadir}/doc/perf-tip/*
+    %license linux-%{KernelVer}/COPYING
+
+subpackage.python2-perf.files: |
+    %license linux-%{KernelVer}/COPYING
+    %{python2_sitearch}/*
+
+subpackage.python3-perf.files: |
+    %license linux-%{KernelVer}/COPYING
+    %{python3_sitearch}/*

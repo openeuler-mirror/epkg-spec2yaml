@@ -167,3 +167,51 @@ subpackage.chroot.files: |
 subpackage.python3-bind.files: |
     %{python3_sitelib}/*.egg-info
     %{python3_sitelib}/isc/
+
+subpackage.pkcs11.files: |
+    %{_sbindir}/named-pkcs11
+    %{_unitdir}/named-pkcs11.service
+    %{_mandir}/man8/named-pkcs11.8*
+    %{_libexecdir}/setup-named-softhsm.sh
+
+subpackage.pkcs11-utils.files: |
+    %{_sbindir}/dnssec*pkcs11
+    %{_sbindir}/pkcs11-destroy
+    %{_sbindir}/pkcs11-keygen
+    %{_sbindir}/pkcs11-list
+    %{_sbindir}/pkcs11-tokens
+    %{_mandir}/man8/pkcs11*.8*
+    %{_mandir}/man8/dnssec*-pkcs11.8*
+
+subpackage.pkcs11-libs.files: |
+    %{_libdir}/libdns-pkcs11-%{version}*.so
+    %{_libdir}/libns-pkcs11-%{version}*.so
+
+subpackage.pkcs11-devel.files: |
+    %{_includedir}/bind9/pk11/*.h
+    %exclude %{_includedir}/bind9/pk11/site.h
+    %{_includedir}/bind9/pkcs11
+    %{_libdir}/libdns-pkcs11.so
+    %{_libdir}/libns-pkcs11.so
+
+subpackage.dlz-filesystem.files: |
+    %{_libdir}/{named,bind}/dlz_filesystem_dynamic.so
+
+subpackage.dlz-ldap.files: |
+    %{_libdir}/{named,bind}/dlz_ldap_dynamic.so
+    %doc contrib/dlz/modules/ldap/testing/*
+
+subpackage.dlz-mysql.files: |
+    %{_libdir}/{named,bind}/dlz_mysql_dynamic.so
+    %doc build/contrib/dlz/modules/doc/mysql
+    %{_libdir}/{named,bind}/dlz_mysqldyn_mod.so
+    %doc build/contrib/dlz/modules/doc/mysqldyn
+
+subpackage.dlz-sqlite3.files: |
+    %{_libdir}/{named,bind}/dlz_sqlite3_dynamic.so
+    %doc contrib/dlz/modules/sqlite3/testing/*
+
+subpackage.doc.files: |
+    %dir %{_pkgdocdir}
+    %doc %{_pkgdocdir}/Bv9ARM.html
+    %doc %{_pkgdocdir}/html

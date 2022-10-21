@@ -58,17 +58,13 @@ subpackage:
       buildArch: noarch
           
 
-    - name: python3-cracklib %if %{with python3}
+    python3-cracklib rpmWhen %if %{with python3}:
       meta.summary: Python 3 bindings for applications which use cracklib 
       meta.description: |
           The python3-cracklib package contains a module which permits applications
           written in the Python 3 programming language to use cracklib.
       requires:
-          - %{name} = %{version}-%{release} 
-      files: |
-          %{_libdir}/python3*/site-packages/_cracklib*.so
-          %{_libdir}/python3*/site-packages/*.py*
-          %{_libdir}/python3*/site-packages/__pycache__/*
+          - %{name} = %{version}-%{release}
       AsWholeName: yes
 
 env.configureFlags: |

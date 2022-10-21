@@ -48,3 +48,8 @@ subpackage.devel.files: |
     %{_bindir}/glib-compile-resources
     %{_bindir}/gresource
     %attr (0755, root, root) %{_bindir}/gtester-report
+
+subpackage.help.files: |
+    %defattr(-,root,root)
+    %{_mandir}/man1/*
+    %doc %{_datadir}/gtk-doc/html/*
