@@ -3,10 +3,10 @@ import os.path
 YAML_CHAIN_SHELL_KEYWORDS = ["install", "prep", "build", "pre", "preun", "post", "postun", "check", "petrans",
                              "posttrans", "clean"]
 YAML_LINES_KEYWORDS = ["meta.description"]
-NEED_QUOTATION_KEYWORDS = ['provides', 'obsoletes', 'buildRequires', 'requires', 'requires(postun)', 'buildRoot',
-                           'requires(pre)', 'preRequires', 'preReq', 'prereq', 'requires(preun)', 'provides',
-                           'obsoletes', 'conflicts', 'buildConflicts', 'exclusiveArch', 'macros', 'orderWithRequires',
-                           'requires(post)', 'requires(posttrans)', ]
+NEED_QUOTATION_KEYWORDS = ['Provides', 'Obsoletes', 'BuildRequires', 'Requires', 'Requires(postun)', 'BuildRoot',
+                           'Requires(pre)', 'PreRequires', 'PreReq', 'Prereq', 'Requires(preun)', 'Provides',
+                           'Obsoletes', 'Conflicts', 'BuildConflicts', 'ExclusiveArch', 'Macros', 'OrderWithRequires',
+                           'Requires(post)', 'Requires(posttrans)', ]
 MAY_QUOTATION_KEYWORDS = ['version', 'source', 'meta.description', 'meta.summary', 'patchset', 'files', 'filesInput',
                           'epoch', 'release', 'meta.license', 'recommends', 'suggests', 'excludeArch', "name",
                           "supplements", 'meta.homepage', 'prefix', 'includeSource', "filesJudgement"]
