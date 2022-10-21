@@ -7,7 +7,7 @@ prep() {
 
 build() {
 export CPPFLAGS="-I%{_includedir}/ncurses"
-%configure --with-curses
+%configure %%{env.configureFlags}
 %make_build
 
 }

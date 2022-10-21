@@ -7,18 +7,7 @@ prep() {
 
 build() {
 autoreconf -fi
-%configure \
-    --enable-bsd-behaviour \
-    --enable-ext2direct=yes \
-    --enable-ldapmail=yes \
-    --disable-libwrap \
-    --enable-netlink=yes \
-    --enable-nls \
-    --disable-rpath \
-    --enable-rpc=yes \
-    --enable-rpcsetquota=yes \
-    --disable-silent-rules \
-    --disable-xfs-roothack
+%configure %%{env.configureFlags}
 make
 
 

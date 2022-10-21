@@ -11,14 +11,6 @@ done
 }
 
 build() {
-common_options="--enable-colorfgbg --enable-hard-tabs --enable-overwrite \
-    --enable-pc-files --enable-xmc-glitch --disable-wattr-macros \
-    --with-cxx-shared --with-ospeed=unsigned \
-    --with-pkg-config-libdir=%{_libdir}/pkgconfig \
-    --with-shared \
-    --with-terminfo-dirs=%{_sysconfdir}/terminfo:%{_datadir}/terminfo \
-    --with-termlib=tinfo --with-ticlib=tic --with-xterm-kbs=DEL \
-    --without-ada"
 abi5_options="--with-chtype=long"
 
 for abi in 5 6; do
@@ -29,8 +21,8 @@ ln -s ../configure .
 
 [ $abi = 6 -a $char = widec ] && progs=yes || progs=no
 
-%configure $(
-echo $common_options --with-abi-version=$abi
+%configure %%{env.configureFlags} $(
+echo --with-abi-version=$abi
 [ $abi = 5 ] && echo $abi5_options
 [ $char = widec ] && echo --enable-widec
 [ $progs = yes ] || echo --without-progs

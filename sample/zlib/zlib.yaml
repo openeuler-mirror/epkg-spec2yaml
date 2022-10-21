@@ -24,14 +24,12 @@ meta.description: |
     library for use on virtually any computer hardware and operating system. The zlib data
     format is itself portable across platforms.
 buildRequires:
-    - automake, autoconf, libtool
-files: |
-    %defattr(-,root,root)
-    %doc README ChangeLog FAQ
-    %{_libdir}/libz.so.*
+    - automake
+    - autoconf
+    - libtool
     
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Header files and libraries for Zlib development
       meta.description: |
           This package contains the static library, the header files, the tests user case and other
@@ -40,46 +38,24 @@ subpackage:
           - zlib-static
       obsoletes:
           - zlib-static
-      files: |
-          %doc doc/algorithm.txt test/example.c
-          %{_includedir}/zlib.h
-          %{_includedir}/zconf.h
-          
-          %{_libdir}/libz.so
-          %{_libdir}/pkgconfig/zlib.pc
-          %{_libdir}/libz.a
-          
 
-    - name: help
+    help:
       meta.summary: Help documentation related to zlib
       meta.description: This package includes help documentation and manuals related to zlib.
       buildArch: noarch
-      files: |
-          %{_mandir}/man3/zlib.3*
-          
 
-    - name: minizip
+    minizip:
       meta.summary: Encapsulates the operations related to zip files
       meta.description: Minizip is the upper library of zlib, which encapsulates the operations related to zip files.
-      files: |
-          %doc contrib/minizip/MiniZip64_info.txt contrib/minizip/MiniZip64_Changes.txt
-          %{_libdir}/libminizip.so.*
-          
-          
       AsWholeName: yes
 
-    - name: minizip-devel
+    minizip-devel:
       meta.summary: The development-related content related to minizip
       meta.description: This package contains the development-related content related to minizip.
       requires:
           - minizip = %{version}-%{release}
           - %{name}-devel = %{version}-%{release}
-      files: |
-          %dir %{_includedir}/minizip
-          %{_includedir}/minizip/*.h
-          
-          %{_libdir}/libminizip.so
-          %{_libdir}/pkgconfig/minizip.pc
-          
       AsWholeName: yes
 
+env.configureFlags: |
+    --enable-static=no

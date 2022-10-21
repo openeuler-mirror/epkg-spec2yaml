@@ -7,7 +7,7 @@ prep() {
 
 build() {
 autoreconf -vif
-%configure --disable-static
+%configure %%{env.configureFlags}
 %make_build
 
 cd python

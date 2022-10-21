@@ -7,5 +7,4 @@ meta.description: The pseudo utility offers a way to run commands in a virtualiz
 buildRequires:
     - gcc
     - make
-files: 
-
+env.configureFlags: |

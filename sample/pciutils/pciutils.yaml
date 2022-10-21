@@ -27,24 +27,22 @@ meta.description: |
 requires:
     - hwdata
 buildRequires:
-    - gcc sed kmod-devel pkgconfig zlib-devel
+    - gcc
+    - sed
+    - kmod-devel
+    - pkgconfig
+    - zlib-devel
 provides:
     - %{name}-libs
     - %{name}-libs-debuginfo
 obsoletes:
     - %{name}-libs
     - %{name}-libs-debuginfo
-files: |
-    %doc README ChangeLog pciutils.lsm COPYING
-    /sbin/lspci
-    /sbin/setpci
-    /sbin/update-pciids
-    /%{_lib}/libpci.so.*
     
 Exclusiveos:
     - Linux
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Library and Include Files of the PCI utilities
       meta.description: |
           This package contains the files that are necessary for software
@@ -55,29 +53,14 @@ subpackage:
           - %{name}-devel-static
       obsoletes:
           - %{name}-devel-static
-      files: |
-          %defattr(0644, root, root, 0755)
-          %{_libdir}/pkgconfig/libpci.pc
-          %{_libdir}/libpci.so
-          %{_includedir}/pci
-          %{_libdir}/libpci.a
-          
 
-    - name: help
+    help:
       meta.summary: Including man files for pciutils
       meta.description: This contains man files for the using of pciutils.
       requires:
           - man
-      files: |
-          %{_mandir}/man5/*
-          %{_mandir}/man7/*
-          %{_mandir}/man8/*
-          
 
-    - name: %{name}
+    %{name}:
       AsWholeName: yes
-      Post:
-          - pciutils.sh
-      Postun:
-          - pciutils.sh
 
+env.configureFlags: |

@@ -7,7 +7,7 @@ prep() {
 
 build() {
 ./autogen
-%configure --disable-static --libdir=/%{_lib}
+%configure %%{env.configureFlags} --libdir=/%{_lib}
 %make_build
 
 }

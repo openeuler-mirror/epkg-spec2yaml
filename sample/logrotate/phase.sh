@@ -7,7 +7,7 @@ prep() {
 
 build() {
 mkdir build && cd build
-%configure --with-state-file-path=%{_localstatedir}/lib/logrotate/logrotate.status
+%configure %%{env.configureFlags}
 %make_build V=1
 
 }

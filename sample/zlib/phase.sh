@@ -31,7 +31,7 @@ CFLAGS+=" -march=armv8-a+crc"
 
 cd contrib/minizip
 autoreconf --install
-%configure --enable-static=no
+%configure %%{env.configureFlags}
 %make_build
 
 }

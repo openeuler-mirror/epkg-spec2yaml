@@ -18,14 +18,9 @@ meta.description: |
     received by a process.
 buildRequires:
     - xz %if 0%{?fedora} >= 12 || 0%{?centos} >= 6 || 0%{?rhel} >= 6 || 0%{?suse_version} >= 1200 || 0%{?openEuler} >= 1
-    - gcc gzip
+    - gcc
+    - gzip
     - pkgconfig(bluez) %if 0%{?fedora} >= 18 || 0%{?centos} >= 6 || 0%{?rhel} >= 8 || 0%{?suse_version} >= 1200 || 0%{?openEuler} >= 1
-files: |
-    %maybe_use_defattr
-    %doc CREDITS ChangeLog.gz ChangeLog-CVS.gz COPYING NEWS README
-    %{_bindir}/strace
-    %{_bindir}/strace-log-merge
-    %{_mandir}/man1/*
     
 rpmMacros:
     - "%define buildrequires_stacktrace BuildRequires: elfutils-devel binutils-devel %if 0%{?fedora} >= 20 || 0%{?centos} >= 6 || 0%{?rhel} >= 6 || 0%{?openEuler} >= 1"
@@ -34,3 +29,5 @@ rpmMacros:
     - "%{?!buildroot:BuildRoot: %_tmppath/buildroot-%name-%version-%release}"
     - "%define maybe_use_defattr %{?suse_version:%%defattr(-,root,root)}"
 
+env.configureFlags: |
+    --enable-mpers=check

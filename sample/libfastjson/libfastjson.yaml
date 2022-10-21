@@ -14,27 +14,22 @@ meta.description: |
     functions, sufficiently good json support (not 100%
     standards compliant), be very fast in processing.
 buildRequires:
-    - autoconf automake libtool
+    - autoconf
+    - automake
+    - libtool
 obsoletes:
     - %{name} < %{version}-%{release}
-files: |
-    %license COPYING
-    %doc AUTHORS ChangeLog README.html
-    %{_libdir}/libfastjson.so*
     
 Post:
     - libfastjson.sh
 Postun:
     - libfastjson.sh
 subpackage:
-    - name: devel
-      meta.summary: Development files for libfastjson
-      meta.description: provide development files for libfastjson
-      requires:
-          - libfastjson = %{version}-%{release}
-      files: |
-          %{_includedir}/libfastjson
-          %{_libdir}/libfastjson.so
-          %{_libdir}/pkgconfig/libfastjson.pc
-          
-
+    devel:
+        meta.summary: Development files for libfastjson
+        meta.description: provide development files for libfastjson
+        requires:
+            - libfastjson = %{version}-%{release}
+env.configureFlags: |
+    --enable-shared
+    --disable-static

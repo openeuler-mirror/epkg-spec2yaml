@@ -21,11 +21,9 @@ meta.description: |
     aliasing, ability to exec external option filters, and automatic generation
     of help and usage messages.
 buildRequires:
-    - gcc git gettext
-files: |
-    %license COPYING
-    %{_sysconfdir}/%{name}.d
-    %{_libdir}/lib%{name}.so*
+    - gcc
+    - git
+    - gettext
     
 filesInput: %{name}.lang
 
@@ -38,7 +36,7 @@ Post:
 Postun:
     - popt.sh
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Development files for %{name}
       meta.description: |
           The %{name}-devel package contains libraries and header files for
@@ -49,18 +47,9 @@ subpackage:
           - %{name}-static = %{version}-%{release}
       obsoletes:
           - %{name}-static < %{version}-%{release}
-      files: |
-          %{_includedir}/%{name}.h
-          %{_libdir}/pkgconfig/%{name}.pc
-          %{_libdir}/lib%{name}.a
-          
 
-    - name: help
+    help:
       meta.summary: Doc files for %{name}
       meta.description: The %{name}-help package contains doc files for %{name}.
       buildArch: noarch
-      files: |
-          %doc CHANGES README
-          %{_mandir}/man3/%{name}.3.gz
-          
-
+env.configureFlags: |

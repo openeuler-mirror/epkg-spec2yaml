@@ -11,8 +11,7 @@ cp -p %{SOURCE2} top/
 build() {
 autoreconf -ivf
 
-%configure  --exec-prefix=/ --docdir=/unwanted --disable-w-from --disable-kill --enable-watch8bit \
-           --enable-skill --enable-sigwinch --enable-libselinux --with-systemd --disable-modern-top
+%configure  --exec-prefix=/ --docdir=/unwanted %%{env.configureFlags}
 
 make CFLAGS="%{optflags}"
 

@@ -1,0 +1,19 @@
+files: |
+    %doc NEWS README
+    %license LICENCE AUTHORS
+    %{_libdir}/*.so.*
+    %{_bindir}/pcregrep
+    %{_bindir}/pcretest
+
+subpackage.devel.files: |
+    %{_libdir}/*.so
+    %{_libdir}/pkgconfig/*
+    %{_includedir}/*.h
+    %{_bindir}/pcre-config
+    %{_libdir}/*.a
+
+subpackage.help.files: |
+    %doc doc/*.txt doc/html
+    %doc HACKING pcredemo.c
+    %{_mandir}/man1/*
+    %{_mandir}/man3/*

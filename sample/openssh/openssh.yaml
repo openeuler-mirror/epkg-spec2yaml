@@ -85,21 +85,35 @@ meta.description: |
     capabilities, several authentication methods, and sophisticated configuration options.
 requires:
     - /sbin/nologin
-    - libselinux >= 2.3-5 audit-libs >= 1.0.8
+    - libselinux >= 2.3-5
+    - audit-libs >= 1.0.8
     - openssh-server = %{version}-%{release}
 buildRequires:
-    - gtk2-devel libX11-devel openldap-devel autoconf automake perl-interpreter perl-generators
-    - zlib-devel audit-libs-devel >= 2.0.5 util-linux groff pam-devel
-    - openssl-devel >= 0.9.8j perl-podlators systemd-devel gcc p11-kit-devel krb5-devel
-    - libedit-devel ncurses-devel libselinux-devel >= 2.3-5 audit-libs >= 1.0.8 xauth gnupg2
-files: |
-    %doc CREDITS README.platform
-    %attr(0755,root,root) %dir %{_sysconfdir}/ssh
-    %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ssh/moduli
-    %attr(0755,root,root) %{_bindir}/ssh-keygen
-    %attr(0755,root,root) %dir %{_libexecdir}/openssh
-    %attr(2555,root,ssh_keys) %{_libexecdir}/openssh/ssh-keysign
-    
+    - gtk2-devel
+    - libX11-devel
+    - openldap-devel
+    - autoconf
+    - automake
+    - perl-interpreter
+    - perl-generators
+    - zlib-devel
+    - audit-libs-devel >= 2.0.5
+    - util-linux
+    - groff
+    - pam-devel
+    - openssl-devel >= 0.9.8j
+    - perl-podlators
+    - systemd-devel
+    - gcc
+    - p11-kit-devel
+    - krb5-devel
+    - libedit-devel
+    - ncurses-devel
+    - libselinux-devel >= 2.3-5
+    - audit-libs >= 1.0.8
+    - xauth
+    - gnupg2
+
 recommends:
     - p11-kit
 Pre:
@@ -113,7 +127,7 @@ rpmMacros:
     - "%{?systemd_requires}"
 
 subpackage:
-    - name: clients
+    clients:
       meta.summary: An open source SSH client applications
       meta.description: |
           OpenSSH is a free version of SSH (Secure SHell), a program for logging
@@ -122,22 +136,8 @@ subpackage:
       requires:
           - openssh = %{version}-%{release}
           - crypto-policies >= 20180306-1
-      files: |
-          %attr(0755,root,root) %{_bindir}/ssh
-          %attr(0755,root,root) %{_bindir}/scp
-          %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ssh/ssh_config
-          %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ssh/ssh_config.d/05-redhat.conf
-          %attr(0755,root,root) %{_bindir}/ssh-agent
-          %attr(0755,root,root) %{_bindir}/ssh-add
-          %attr(0755,root,root) %{_bindir}/ssh-keyscan
-          %attr(0755,root,root) %{_bindir}/sftp
-          %attr(0755,root,root) %{_bindir}/ssh-copy-id
-          %attr(0755,root,root) %{_libexecdir}/openssh/ssh-pkcs11-helper
-          %attr(0755,root,root) %{_libexecdir}/openssh/ssh-sk-helper
-          %attr(0755,root,root) %{_userunitdir}/ssh-agent.service
-          
 
-    - name: server
+    server:
       meta.summary: An open source SSH server daemon
       meta.description: |
           OpenSSH is a free version of SSH (Secure SHell), a program for logging
@@ -150,43 +150,17 @@ subpackage:
           - crypto-policies >= 20180306-1
       requiresPre:
           - shadow
-      files: |
-          %dir %attr(0711,root,root) %{_var}/empty/sshd
-          %attr(0755,root,root) %{_sbindir}/sshd
-          %attr(0755,root,root) %{_libexecdir}/openssh/sftp-server
-          %attr(0755,root,root) %{_libexecdir}/openssh/sshd-keygen
-          %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ssh/sshd_config
-          %attr(0644,root,root) %config(noreplace) /etc/pam.d/sshd
-          %attr(0640,root,root) %config(noreplace) /etc/sysconfig/sshd
-          %attr(0644,root,root) %{_unitdir}/sshd.service
-          %attr(0644,root,root) %{_unitdir}/sshd@.service
-          %attr(0644,root,root) %{_unitdir}/sshd.socket
-          %attr(0644,root,root) %{_unitdir}/sshd-keygen@.service
-          %attr(0644,root,root) %{_unitdir}/sshd-keygen.target
-          %attr(0644,root,root) %{_tmpfilesdir}/openssh.conf
-          
-      Pre:
-          - openssh.sh
-      Preun:
-          - openssh.sh
-      Post:
-          - openssh.sh
-      Postun:
-          - openssh.sh
 
-    - name: keycat
+
+    keycat:
       meta.summary: A mls keycat backend for openssh
       meta.description: |
           OpenSSH mls keycat is backend for using the authorized keys in the
           openssh in the mls mode.
       requires:
           - openssh = %{version}-%{release}
-      files: |
-          %attr(0755,root,root) %{_libexecdir}/openssh/ssh-keycat
-          %attr(0644,root,root) %config(noreplace) /etc/pam.d/ssh-keycat
-          
 
-    - name: askpass
+    askpass:
       meta.summary: A passphrase dialog for OpenSSH and X
       meta.description: |
           OpenSSH is a free version of SSH (Secure SHell), a program for logging
@@ -194,41 +168,35 @@ subpackage:
           an X11 passphrase dialog for OpenSSH.
       requires:
           - openssh = %{version}-%{release}
-      files: |
-          %attr(0644,root,root) %{_sysconfdir}/profile.d/gnome-ssh-askpass.*
-          %attr(0755,root,root) %{_libexecdir}/openssh/gnome-ssh-askpass
-          %attr(0755,root,root) %{_libexecdir}/openssh/ssh-askpass
-          
 
-    - name: pam_ssh_agent_auth
+    pam_ssh_agent_auth:
       meta.summary: PAM module for authentication with ssh-agent
       version: 0.10.4
       release:
           - 4.%{openssh_release}
       meta.license: BSD
       meta.description:
-      files: |
-          %license pam_ssh_agent_auth-pam_ssh_agent_auth-0.10.4/OPENSSH_LICENSE
-          %attr(0755,root,root) %{_libdir}/security/pam_ssh_agent_auth.so
-          
       AsWholeName: yes
 
-    - name: help
+    help:
       meta.summary: Documents for %{name}
       meta.description: Man pages and other related documents for %{name}.
       requires:
           - man info
       buildArch: noarch
-      files: |
-          %doc ChangeLog OVERVIEW PROTOCOL* README README.privsep README.tun README.dns TODO
-          %doc HOWTO.ssh-keycat
-          %attr(0644,root,root) %{_mandir}/man1/scp.1*
-          %attr(0644,root,root) %{_mandir}/man1/ssh*.1*
-          %attr(0644,root,root) %{_mandir}/man1/sftp.1*
-          %attr(0644,root,root) %{_mandir}/man5/ssh*.5*
-          %attr(0644,root,root) %{_mandir}/man5/moduli.5*
-          %attr(0644,root,root) %{_mandir}/man8/ssh*.8*
-          %attr(0644,root,root) %{_mandir}/man8/pam_ssh_agent_auth.8*
-          %attr(0644,root,root) %{_mandir}/man8/sftp-server.8*
-          
-
+env.configureFlags: |
+    --with-default-path=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
+    --with-superuser-path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+    --with-privsep-path=%{_var}/empty/sshd
+    --disable-strip
+    --without-zlib-version-check
+    --with-ssl-engine
+    --with-ipaddr-display
+    --with-pie=no
+    --without-hardening
+    --with-systemd
+    --with-default-pkcs11-provider=yes
+    --with-pam
+    --with-selinux
+    --with-audit=linux
+    --with-security-key-buildin=yes

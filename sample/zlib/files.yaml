@@ -1,0 +1,27 @@
+files: |
+    %defattr(-,root,root)
+    %doc README ChangeLog FAQ
+    %{_libdir}/libz.so.*
+
+subpackage.devel.files: |
+    %doc doc/algorithm.txt test/example.c
+    %{_includedir}/zlib.h
+    %{_includedir}/zconf.h
+
+    %{_libdir}/libz.so
+    %{_libdir}/pkgconfig/zlib.pc
+    %{_libdir}/libz.a
+
+subpackage.help.files: |
+    %{_mandir}/man3/zlib.3*
+
+subpackage.minizip.files: |
+    %doc contrib/minizip/MiniZip64_info.txt contrib/minizip/MiniZip64_Changes.txt
+    %{_libdir}/libminizip.so.*
+
+subpackage.minizip-devel.files: |
+    %dir %{_includedir}/minizip
+    %{_includedir}/minizip/*.h
+
+    %{_libdir}/libminizip.so
+    %{_libdir}/pkgconfig/minizip.pc

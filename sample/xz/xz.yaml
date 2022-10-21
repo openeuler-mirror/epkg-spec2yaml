@@ -20,21 +20,13 @@ requires:
     - %{name} = %{version}-%{release}
     - grep >= 2.20-5
 buildRequires:
-    - perl-interpreter gcc
-files: |
-    %defattr(-,root,root)
-    %doc %{_pkgdocdir}
-    %license %{_pkgdocdir}/COPYING*
-    %{_bindir}/*xz*
-    %{profiledir}/*
-    
-    %exclude %_pkgdocdir/examples*
-    %exclude %{_libdir}/*.la
+    - perl-interpreter
+    - gcc
     
 filesInput: %{name}.lang
 
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Libraries & headers for xz
       meta.description: |
           This package mainly includes the following contents: static library,
@@ -43,45 +35,23 @@ subpackage:
           - xz-static
       obsoletes:
           - xz-static
-      files: |
-          %dir %{_includedir}/lzma
-          %doc %_pkgdocdir/examples*
-          %{_includedir}/lzma/*.h
-          %{_includedir}/lzma.h
-          
-          %{_libdir}/pkgconfig/liblzma.pc
-          %{_libdir}/liblzma.a
-          %{_libdir}/*.so
-          
 
-    - name: lzma-compat
+    lzma-compat:
       meta.summary: Old LZMA format compatibility binaries
       meta.description: This package contains the compatibility binaries for older LZMA.
       provides:
           - lzma = %{version}
       obsoletes:
           - lzma < %{version}
-      files: |
-          %{_bindir}/*lz*
-          
 
-    - name: libs
+    libs:
       meta.summary: Libraries for xz
       meta.description: Libraries for decoding files compressed with LZMA or XZ utils.
       obsoletes:
           - %{name}-compat-libs < %{version}-%{release}
-      files: |
-          %{_libdir}/lib*.so.5*
-          
 
-    - name: help
+    help:
       meta.summary: Help documentation related to xz
       meta.description: This package includes help documentation and manuals related to xz.
       buildArch: noarch
-      files: |
-          %{_mandir}/man1/*lz*
-          %{_mandir}/man1/*xz*
-          %{_mandir}/de/man1/*lz*
-          %{_mandir}/de/man1/*xz*
-          
-
+env.configureFlags: |

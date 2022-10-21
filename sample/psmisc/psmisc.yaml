@@ -13,13 +13,13 @@ meta.description: |
     filesystem. We're not about changing the world, but providing the system
     administrator with some help in common tasks.
 buildRequires:
-    - libselinux-devel gettext ncurses-devel autoconf automake gcc
-files: |
-    %{_sbindir}/fuser
-    %{_bindir}/*
-    %{_mandir}/man1/*
-    %license COPYING
-    %doc AUTHORS ChangeLog README
-    
-filesInput: %{name}.lang
+    - libselinux-devel
+    - gettext
+    - ncurses-devel
+    - autoconf
+    - automake
+    - gcc
 
+filesInput: %{name}.lang
+env.configureFlags: |
+    --enable-selinux

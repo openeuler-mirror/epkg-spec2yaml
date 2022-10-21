@@ -14,13 +14,16 @@ meta.description: |
     Libwebsockets (LWS) is a flexible, lightweight pure C library for implementing modern
     network protocols easily with a tiny footprint, using a nonblocking event loop.
 buildRequires:
-    - cmake openssl-devel zlib-devel libev-devel gcc gcc-c++
+    - cmake
+    - openssl-devel
+    - zlib-devel
+    - libev-devel
+    - gcc
+    - gcc-c++
 provides:
-    - bundled(sha1-hollerbach) bundled(base64-decode) bundled(ssl-http2)
-files: |
-    %defattr(-,root,root)
-    %license LICENSE
-    %{_libdir}/%{name}.so.*
+    - bundled(sha1-hollerbach)
+    - bundled(base64-decode)
+    - bundled(ssl-http2)
     
 subpackage:
     - name: devel
@@ -34,16 +37,6 @@ subpackage:
           - %{name}-tests
       obsoletes:
           - %{name}-tests
-      files: |
-          %defattr(-,root,root)
-          %{_includedir}/*.h
-          %{_includedir}/%{name}
-          %{_libdir}/*.so
-          %{_libdir}/pkgconfig/*.pc
-          %{_bindir}/%{name}-test-*
-          %{_datadir}/%{name}-test-server/
-          
-          
 
     - name: help
       meta.summary: Documents for %{name}
@@ -51,8 +44,4 @@ subpackage:
       requires:
           - man info
       buildArch: noarch
-      files: |
-          %defattr(-,root,root)
-          %doc changelog README.md READMEs/
-          
-
+env.configureFlags: |

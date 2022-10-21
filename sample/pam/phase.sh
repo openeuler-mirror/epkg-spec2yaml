@@ -9,12 +9,9 @@ autoreconf -i
 
 build() {
 %configure \
-	--disable-rpath \
+	%%{env.configureFlags} \
 	--libdir=%{_pamlibdir} \
 	--includedir=%{_includedir}/security \
-	--disable-static \
-	--disable-prelude \
-	--enable-db=ndbm
 
 make -C po update-gmo
 %make_build

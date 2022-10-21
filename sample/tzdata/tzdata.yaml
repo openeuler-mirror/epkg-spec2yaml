@@ -25,25 +25,17 @@ meta.description: |
     This package contains data files with rules for various timezones around
     the world.
 buildRequires:
-    - gawk glibc perl-interpreter
+    - gawk
+    - glibc
+    - perl-interpreter
     - java-devel
     - glibc-common >= 2.5.90-7
-files: |
-    %{_datadir}/zoneinfo
-    %doc README
-    %doc theory.html
-    %doc tz-link.html
-    %doc tz-art.html
-    %license LICENSE
     
 Buildarchitectures:
     - noarch
 subpackage:
-    - name: java
+    java:
       meta.summary: Timezone data for Java
       meta.description: This package contains timezone information for use by Java runtimes.
-      files: |
-          %{_datadir}/javazi
-          %{_datadir}/javazi-1.8
-          
 
+env.configureFlags: |

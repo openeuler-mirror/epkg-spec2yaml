@@ -12,7 +12,7 @@ meta.description: |
     its own native API, as well as a set of wrapper functions that correspond
     to the POSIX regular expression API. The PCRE library is free, even for
     building proprietary software.
-    
+
     PCRE was originally written for the Exim MTA, but is now used by many
     high-profile open source projects, including Apache, PHP, KDE, Postfix,
     and Nmap. PCRE has also found its way into some well known commercial
@@ -20,24 +20,31 @@ meta.description: |
     include Chicken, Ferite, Onyx, Hypermail, Leafnode, Askemos, Wenlin, and
     8th.
 buildRequires:
-    - readline-devel autoconf automake coreutils
-    - gcc gcc-c++ glibc-common libtool make
-    - bash diffutils grep
+    - readline-devel
+    - autoconf
+    - automake
+    - coreutils
+    - gcc
+    - gcc-c++
+    - glibc-common
+    - libtool
+    - make
+    - bash
+    - diffutils
+    - grep
 provides:
-    - %{name}-utf16 = %{version}-%{release} %{name}-utf32 = %{version}-%{release}
-    - %{name}-cpp = %{version}-%{release} %{name}-tools = %{version}-%{release}
+    - %{name}-utf16 = %{version}-%{release}
+    - %{name}-utf32 = %{version}-%{release}
+    - %{name}-cpp = %{version}-%{release}
+    - %{name}-tools = %{version}-%{release}
 obsoletes:
-    - %{name}-utf16 < %{version}-%{release} %{name}-utf32 < %{version}-%{release}
-    - %{name}-cpp < %{version}-%{release} %{name}-tools < %{version}-%{release}
-files: |
-    %doc NEWS README
-    %license LICENCE AUTHORS
-    %{_libdir}/*.so.*
-    %{_bindir}/pcregrep
-    %{_bindir}/pcretest
-    
+    - %{name}-utf16 < %{version}-%{release}
+    - %{name}-utf32 < %{version}-%{release}
+    - %{name}-cpp < %{version}-%{release}
+    - %{name}-tools < %{version}-%{release}
+
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Development files for %{name}
       meta.description: |
           The %{name}-devel package contains libraries and header files for
@@ -46,24 +53,18 @@ subpackage:
           - %{name}-static = %{version}-%{release}
       obsoletes:
           - %{name}-static < %{version}-%{release}
-      files: |
-          %{_libdir}/*.so
-          %{_libdir}/pkgconfig/*
-          %{_includedir}/*.h
-          %{_bindir}/pcre-config
-          %{_libdir}/*.a
-          
 
-    - name: help
+    help:
       meta.summary: Doc files for %{name}
       meta.description: The %{name}-help package contains doc files for %{name}.
       requires:
           - man
       buildArch: noarch
-      files: |
-          %doc doc/*.txt doc/html
-          %doc HACKING pcredemo.c
-          %{_mandir}/man1/*
-          %{_mandir}/man3/*
-          
-
+env.configureFlags: |
+    --enable-pcretest-libreadline
+    --enable-utf
+    --enable-unicode-properties
+    --enable-pcre8
+    --enable-pcre16
+    --enable-pcre32
+    --disable-silent-rules

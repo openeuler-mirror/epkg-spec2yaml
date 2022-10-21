@@ -11,13 +11,7 @@ sh -x autogen.sh
 %configure \
     CFLAGS="%{build_cflags} -D_FILE_OFFSET_BITS=64" \
     LDFLAGS="%{build_ldflags}" \
-    --enable-mountconfig \
-    --enable-ipv6 \
-    --with-statdpath=%{_statdpath} \
-    --enable-libmount-mount \
-    --with-systemd \
-    --without-tcp-wrappers \
-    --with-pluginpath=%{_libdir}/libnfsidmap
+    %%{env.configureFlags}
 
 %make_build all
 

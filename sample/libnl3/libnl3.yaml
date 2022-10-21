@@ -22,49 +22,41 @@ meta.description: |
 requires:
     - %{name} = %{version}-%{release}
 buildRequires:
-    - flex bison libtool autoconf automake swig
+    - flex
+    - bison
+    - libtool
+    - autoconf
+    - automake
+    - swig
 provides:
     - %{name}-cli
 obsoletes:
     - %{name}-cli
-files: |
-    %doc COPYING
-    %{_libdir}/libnl-*.so.*
-    %config(noreplace) %{_sysconfdir}/*
-    %{_libdir}/libnl/
-    %{_bindir}/*
     
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Libraries and headers for libnl3
       meta.description: This package provides various libraries and headers for using libnl3
       requires:
           - %{name} = %{version}-%{release} kernel-headers
-      files: |
-          %{_includedir}/libnl3/netlink/
-          %{_libdir}/*.so
-          %{_libdir}/pkgconfig/*.pc
           
 
-    - name: help
+    help:
       meta.summary: Document for libnl3
       meta.description: This package contains libnl3 related documentations
       provides:
           - %{name}-doc = %{version}-%{release}
       obsoletes:
           - %{name}-doc < %{version}-%{release}
-      files: |
-          %{_mandir}/man8/*
           
 
-    - name: python3-libnl3
+    python3-libnl3:
       meta.summary: Python3 binding for libnl3
       meta.description: Python3 bindings for libnl3
       buildRequires:
           - python3-devel
-      files: |
-          %{python3_sitearch}/netlink
-          %{python3_sitearch}/netlink-*.egg-info
           
       AsWholeName: yes
 
+env.configureFlags: |
+    --disable-static

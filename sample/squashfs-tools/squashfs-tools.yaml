@@ -11,14 +11,11 @@ meta.description: |
     It uses either gzip/xz/lzo/lz4/zstd compression to compress both files, inodes
     and directories.
 buildRequires:
-    - zlib-devel xz-devel libzstd-devel
-    - lzo-devel libattr-devel lz4-devel gcc
-files: |
-    %defattr(-,root,root)
-    %doc ACKNOWLEDGEMENTS README-4.5.1
-    %license COPYING
-    %{_sbindir}/mksquashfs
-    %{_sbindir}/unsquashfs
-    
-    
-    
+    - zlib-devel
+    - xz-devel
+    - libzstd-devel
+    - lzo-devel
+    - libattr-devel
+    - lz4-devel
+    - gcc
+env.configureFlags: |

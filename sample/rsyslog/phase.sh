@@ -22,47 +22,11 @@ export HIREDIS_CFLAGS=-I/usr/include/hiredis
 export HIREDIS_LIBS="-L%{_libdir} -lhiredis"
 %configure \
 	--prefix=/usr \
-	--disable-static \
-	--enable-testbench \
-	--enable-elasticsearch \
-	--enable-generate-man-pages \
-	--enable-gnutls \
-	--enable-gssapi-krb5 \
-	--enable-imdiag \
-	--enable-imfile \
+	%%{env.configureFlags} \
 %if %{systemd_lived} == 1
 --enable-imjournal \
         --enable-omjournal \
         %endif
---enable-impstats \
-	--enable-imptcp \
-	--enable-mail \
-	--enable-mmanon \
-	--enable-mmaudit \
-	--enable-mmcount \
-	--enable-mmkubernetes \
-	--enable-mmjsonparse \
-	--enable-mmnormalize \
-	--enable-mmsnmptrapd \
-	--enable-mysql \
-	--enable-omamqp1 \
-	--enable-omhiredis \
-	--enable-ommongodb \
-	--enable-omprog \
-	--enable-omrabbitmq \
-	--enable-omstdout \
-	--enable-omudpspoof \
-	--enable-omuxsock \
-	--enable-pgsql \
-	--enable-pmaixforwardedfrom \
-	--enable-pmcisconames \
-	--enable-pmlastmsg \
-	--enable-pmsnare \
-	--enable-relp \
-	--enable-snmp \
-	--enable-unlimited-select \
-	--enable-usertools \
-	--enable-omkafka
 
 %make_build
 

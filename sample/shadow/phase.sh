@@ -15,16 +15,7 @@ export CFLAGS="$RPM_OPT_FLAGS -fpie"
 export LDFLAGS="-pie -Wl,-z,relro -Wl,-z,now"
 
 autoreconf -fiv
-%configure \
-        --enable-shadowgrp \
-        --enable-man \
-        --with-audit \
-        --with-sha-crypt \
-        --with-selinux \
-        --without-libcrack \
-        --with-libpam \
-        --enable-shared \
-        --with-group-name-max-length=32
+%configure %%{env.configureFlags}
 %make_build
 
 }

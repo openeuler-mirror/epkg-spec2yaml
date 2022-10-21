@@ -27,9 +27,19 @@ requiresPost:
 requiresPostUn:
     - systemd
 buildRequires:
-    - autoconf, automake, coreutils, rpcgen, systemd, gcc
-    - e2fsprogs-devel, gettext-devel, openldap-devel
-    - pkgconfig(dbus-1), pkgconfig(libnl-3.0) >= 3.1, pkgconfig(libnl-genl-3.0), pkgconfig(libtirpc)
+    - autoconf
+    - automake
+    - coreutils
+    - rpcgen
+    - systemd
+    - gcc
+    - e2fsprogs-devel
+    - gettext-devel
+    - openldap-devel
+    - pkgconfig(dbus-1)
+    - pkgconfig(libnl-3.0) >= 3.1
+    - pkgconfig(libnl-genl-3.0)
+    - pkgconfig(libtirpc)
 provides:
     - %{name}-doc = %{epoch}:%{version}-%{release}
     - %{name}-nld = %{epoch}:%{version}-%{release}
@@ -42,15 +52,7 @@ obsoletes:
     - %{name}-nls
     - %{name}-rpc
     - %{name}-warnquota
-files: |
-    %license COPYING
-    %doc Changelog
-    %{_bindir}/*
-    %{_sbindir}/*
-    %{_unitdir}/*.service
-    %config(noreplace) %{_sysconfdir}/*
-    %exclude %{_docdir}/%{name}
-    
+
 filesInput: %{name}.lang
 
 Preun:
@@ -60,25 +62,27 @@ Post:
 Postun:
     - quota.sh
 subpackage:
-    - name: devel
+    devel:
       meta.summary: Including header files for the developing of quota RPC
       meta.license: GPLv2
       meta.description: This contains  header files for the developing of quota RPC.
       requires:
           - quota  = %{epoch}:%{version}-%{release}
-      files: |
-          %doc doc/* ldap-scripts
-          %dir %{_includedir}/rpcsvc
-          %{_includedir}/rpcsvc/*
-          
-          
 
-    - name: help
+    help:
       meta.summary: Including man files for quota
       meta.description: This contains man files for the using of quota.
       requires:
           - man
-      files: |
-          %{_mandir}/man*/*
-          
-
+env.configureFlags: |
+    --enable-bsd-behaviour
+    --enable-ext2direct=yes
+    --enable-ldapmail=yes
+    --disable-libwrap
+    --enable-netlink=yes
+    --enable-nls
+    --disable-rpath
+    --enable-rpc=yes
+    --enable-rpcsetquota=yes
+    --disable-silent-rules
+    --disable-xfs-roothack

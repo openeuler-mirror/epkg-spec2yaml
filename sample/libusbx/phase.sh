@@ -8,7 +8,7 @@ prep() {
 build() {
 mkdir -p m4
 autoreconf -ivf
-%configure --disable-static --enable-examples-build
+%configure %%{env.configureFlags}
 %make_build
 make docs -C doc
 
