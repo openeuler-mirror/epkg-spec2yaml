@@ -539,7 +539,7 @@ class Convertor(object):
                 if files:
                     extra['files'] = files
                     if "Files" in extra:
-                        del extra["Files"]
+                        del extra['Files']
                 else:
                     del extra['Files']
                     del extra['files']
@@ -1633,7 +1633,7 @@ class SpecParser(object):
         shell_name = file_name.replace(".spec", ".sh")
         for _key, _value in original_data.items():
             if _key in NEED_QUOTATION_KEYWORDS:
-                self.add_quotation_from_member(_key)
+                target_data = self.add_quotation_from_member(_key, target_items=target_data)
             if _key in SHELL_KEYWORDS:
                 if _key == "prep" and _value == "%prep" + os.linesep + "%autosetup -n %{name}-%{version} -p1":
                     continue
@@ -1654,7 +1654,7 @@ class SpecParser(object):
                         if member_key == "Summary" and len(member_value) == 1 and member_value[0].startswith("`"):
                             target_data["SubPackages"][sub_member_name][member_key] = ["_" + member_value[0]]
                         if member_key in NEED_QUOTATION_KEYWORDS:
-                            self.add_quotation_from_member(member_key, sub_name=sub_member_name)
+                            self.add_quotation_from_member(member_key, sub_name=sub_member_name, target_items=target_data)
                         if member_key in SHELL_KEYWORDS:
                             self.divide_into_shell(sub_member_name.split()[0].strip(), target_data["SubPackages"][
                                 sub_member_name][member_key], sub_name=member_key, whole=whole_name)
