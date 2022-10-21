@@ -1,7 +1,7 @@
 import os
 import re
 import sys
-
+import copy
 from openEulerTransition.logs.log import logger
 from openEulerTransition.actions.utils.file_operate import Chdir
 from openEulerTransition.configure.spec_config import *
@@ -337,7 +337,7 @@ class SpectacleDumper(object):
             try:
                 # fs = open(self.opath.replace(".yaml", ".sh"), "w")
                 fs_phase = open("phase.sh", "w")
-                fs_runtime = open("runtime-phase.sh", "w")
+                fs_runtime = open("runtimePhase.sh", "w")
             except IOError:
                 logger.warn('Cannot open file %s for writing' % self.opath)
                 # print out
@@ -1624,12 +1624,12 @@ class SpecParser(object):
         if "Summary" in original_data.keys() and len(original_data["Summary"]) == 1 and \
                 original_data["Summary"][0].startswith("`"):
             original_data["Summary"][0] = "_" + original_data["Summary"][0]
-        target_data = original_data.copy()
+        target_data = copy.deepcopy(original_data)
         if "Version" in original_data.keys() and original_data["Version"]:
             if type(original_data["Version"]) == str and original_data["Version"].startswith("%"):
-                self.add_quotation_from_member("Version")
+                target_data = self.add_quotation_from_member("Version", target_items=target_data)
             elif type(original_data["Version"]) == list and original_data["Version"][0].startswith("%"):
-                self.add_quotation_from_member("Version")
+                target_data = self.add_quotation_from_member("Version", target_items=target_data)
         shell_name = file_name.replace(".spec", ".sh")
         for _key, _value in original_data.items():
             if _key in NEED_QUOTATION_KEYWORDS:
@@ -1639,9 +1639,11 @@ class SpecParser(object):
                     continue
                 self.divide_into_shell(_key, target_data[_key])
                 if type(original_data[_key]) == str:
-                    target_data[_key] = shell_name
+                    # target_data[_key] = shell_name
+                    del target_data[_key]
                 elif type(original_data[_key]) == list:
-                    target_data[_key] = [shell_name]
+                    # target_data[_key] = [shell_name]
+                    del target_data[_key]
                 continue
             if _key == "SubPackages":
                 for sub_member_name, sub_member_dict in original_data["SubPackages"].items():
@@ -1657,43 +1659,49 @@ class SpecParser(object):
                             self.divide_into_shell(sub_member_name.split()[0].strip(), target_data["SubPackages"][
                                 sub_member_name][member_key], sub_name=member_key, whole=whole_name)
                             if type(sub_member_dict[member_key]) == str:
-                                target_data["SubPackages"][sub_member_name][member_key] = shell_name
+                                # target_data["SubPackages"][sub_member_name][member_key] = shell_name
+                                del target_data["SubPackages"][sub_member_name][member_key]
                             elif type(sub_member_dict[member_key]) == list:
-                                target_data["SubPackages"][sub_member_name][member_key] = [shell_name]
+                                # target_data["SubPackages"][sub_member_name][member_key] = [shell_name]
+                                del target_data["SubPackages"][sub_member_name][member_key]
         self.items = target_data
 
-    def add_quotation_from_member(self, keywords, sub_name=None):
+    def add_quotation_from_member(self, keywords, sub_name=None, target_items=None):
         """
         list类型的子项统一增加引号
         :param keywords:
         :param sub_name:
+        :param target_items:
         :return:
         """
+        if target_items is None:
+            target_items = self.items
         if sub_name is not None:
-            if keywords in self.items["SubPackages"][sub_name].keys() and type(
-                    self.items["SubPackages"][sub_name][keywords]) == list:
-                for index0, son_item in enumerate(self.items["SubPackages"][sub_name][keywords]):
+            if keywords in target_items["SubPackages"][sub_name].keys() and type(
+                    target_items["SubPackages"][sub_name][keywords]) == list:
+                for index0, son_item in enumerate(target_items["SubPackages"][sub_name][keywords]):
                     if type(son_item) != str:
                         continue
                     extra_escape = "\\" if son_item.endswith("\\") else ""
                     if "\"" in son_item and "\'" in son_item:
                         continue
                     elif "\"" not in son_item:
-                        self.items["SubPackages"][sub_name][keywords][index0] = "\"" + son_item + extra_escape + "\""
+                        target_items["SubPackages"][sub_name][keywords][index0] = "\"" + son_item + extra_escape + "\""
                     elif "\'" not in son_item:
-                        self.items["SubPackages"][sub_name][keywords][index0] = "\'" + son_item + extra_escape + "\'"
+                        target_items["SubPackages"][sub_name][keywords][index0] = "\'" + son_item + extra_escape + "\'"
         else:
-            if keywords in self.items.keys() and type(self.items[keywords]) == list:
-                for index1, son_item in enumerate(self.items[keywords]):
+            if keywords in target_items.keys() and type(target_items[keywords]) == list:
+                for index1, son_item in enumerate(target_items[keywords]):
                     if type(son_item) != str:
                         continue
                     extra_escape = "\\" if son_item.endswith("\\") else ""
                     if "\"" in son_item and "\'" in son_item:
                         continue
                     elif "\"" not in son_item:
-                        self.items[keywords][index1] = "\"" + son_item + extra_escape + "\""
+                        target_items[keywords][index1] = "\"" + son_item + extra_escape + "\""
                     elif "\'" not in son_item:
-                        self.items[keywords][index1] = "\'" + son_item + extra_escape + "\'"
+                        target_items[keywords][index1] = "\'" + son_item + extra_escape + "\'"
+        return target_items
 
     def divide_into_shell(self, keywords, value: str, sub_name=None, whole=False):
         """
@@ -1714,7 +1722,7 @@ class SpecParser(object):
             return True
         elif (sub_name is not None) and value.startswith("%" + sub_name + " " + keywords + os.linesep):  # 子包shell语句分解
             function_context = value.lstrip("%" + sub_name + " " + keywords).strip(os.linesep) + os.linesep
-            self.shell_functions[sub_name + "_" + keywords] = function_context
+            self.shell_functions[sub_name + ":" + keywords] = function_context
             return True
         else:
             if sub_name is not None and " -n " in value:
