@@ -382,7 +382,7 @@ class SpectacleDumper(object):
                 # fs = open(self.opath.replace(".yaml", ".sh"), "w")
                 fs_phase = open("phase.sh", "w")
                 fs_runtime = open("runtimePhase.sh", "w")
-                files_file = open("file.yaml", "w")
+                files_file = open("files.yaml", "w")
             except IOError:
                 logger.warn('Cannot open file %s for writing' % self.opath)
                 # print out
@@ -1726,23 +1726,27 @@ class SpecParser(object):
                 del target_data["files"]
             if _key == "SubPackages":
                 for sub_member_name, sub_member_dict in original_data["SubPackages"].items():
-                    whole_name = "AsWholeName" in original_data["SubPackages"].keys()
+                    whole_name = "AsWholeName" in original_data["SubPackages"][sub_member_name].keys()
                     sub_files_judgement = ""
                     if "FilesJudgement" in sub_member_dict:
-                        sub_files_judgement += " ".join(sub_member_dict["FilesJudgement"])
+                        temp_sub_member_list = copy.deepcopy(sub_member_dict["FilesJudgement"])
+                        for judgement_words in temp_sub_member_list:
+                            if judgement_words in sub_member_name:
+                                sub_member_dict["FilesJudgement"].remove(judgement_words)
+                        if sub_member_dict["FilesJudgement"]:
+                            sub_files_judgement += " rpmWhen " + " rpmWhen ".join(sub_member_dict["FilesJudgement"])
                         del target_data["SubPackages"][sub_member_name]["FilesJudgement"]
                     if "%if" in sub_member_name:
                         target_data = self.clear_sub_extra_judge(sub_member_name, target_items=target_data)
+                        temp_file_list = sub_member_name.split("%if")[1:]
+                        sub_file_name = target_data["Name"][0] + "-" + sub_member_name.split("%if")[0].strip() \
+                            if not whole_name else temp_file_list[0].strip()
+                        sub_files_judgement += " rpmWhen %if" + " rpmWhen %if".join(temp_file_list)
+                    else:
+                        sub_file_name = target_data["Name"][0] + "-" + sub_member_name \
+                            if not whole_name else sub_member_name.strip()
                     for member_key, member_value in sub_member_dict.items():
                         if member_key == "files":
-                            if "%if" in sub_member_name:
-                                temp_file_list = sub_member_name.split("%if")[1:]
-                                sub_file_name = target_data["Name"][0] + "-" + sub_member_name \
-                                    if "AsWholeName" not in sub_member_dict else temp_file_list[0].strip()
-                                sub_files_judgement += " rpmWhen %if" + " rpmWhen %if".join(temp_file_list)
-                            else:
-                                sub_file_name = target_data["Name"][0] + "-" + sub_member_name \
-                                    if "AsWholeName" not in sub_member_dict else sub_member_name.strip()
                             self.files["subpackage." + sub_file_name + ".files" + sub_files_judgement] = member_value
                             del target_data["SubPackages"][sub_member_name]["files"]
                         if member_key == "Summary" and len(member_value) == 1 and member_value[0].startswith("`"):
@@ -1752,7 +1756,8 @@ class SpecParser(object):
                                                                          target_items=target_data)
                         if member_key in SHELL_KEYWORDS:
                             self.divide_into_shell(sub_member_name.split()[0].strip(), target_data["SubPackages"][
-                                sub_member_name][member_key], sub_name=member_key, whole=whole_name)
+                                sub_member_name][member_key], sub_name=member_key, whole=whole_name,
+                                                   main_name=original_data["Name"][0])
                             if type(sub_member_dict[member_key]) == str:
                                 # target_data["SubPackages"][sub_member_name][member_key] = shell_name
                                 del target_data["SubPackages"][sub_member_name][member_key]
@@ -1802,19 +1807,22 @@ class SpecParser(object):
                         target_items[keywords][index1] = "\'" + son_item + extra_escape + "\'"
         return target_items
 
-    def divide_into_shell(self, keywords, value: str, sub_name=None, whole=False):
+    def divide_into_shell(self, keywords, value: str, sub_name=None, whole=False, main_name=None):
         """
         分解到shell中，当前shell的内容存放在变量中
         :param keywords:
         :param value:
         :param sub_name:
         :param whole:False代表子包不带-n，True代表子包带-n
+        :param main_name:主包名
         :return:
         """
         if " -n " in value and not whole:
             value = value.split(os.linesep)[0].replace("-n %{name}-", "") + os.linesep + os.linesep.join(
                 value.split(os.linesep)[1:])
         value = value.split(os.linesep)[0].replace(" -n", "") + os.linesep + os.linesep.join(value.split(os.linesep)[1:])
+        if sub_name is not None and not whole:
+            sub_name = main_name + "-" + sub_name
         if value.startswith("%" + keywords + os.linesep):  # 主包shell语句分解
             function_context = value.replace("%" + keywords + os.linesep, "", 1)
             self.shell_functions[keywords] = function_context
