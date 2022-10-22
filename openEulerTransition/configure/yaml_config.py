@@ -7,9 +7,9 @@ NEED_QUOTATION_KEYWORDS = ['Provides', 'Obsoletes', 'BuildRequires', 'Requires',
                            'Requires(pre)', 'PreRequires', 'PreReq', 'Prereq', 'Requires(preun)', 'Provides',
                            'Obsoletes', 'Conflicts', 'BuildConflicts', 'ExclusiveArch', 'Macros', 'OrderWithRequires',
                            'Requires(post)', 'Requires(posttrans)', ]
-MAY_QUOTATION_KEYWORDS = ['version', 'source', 'meta.description', 'meta.summary', 'patchset', 'files', 'filesInput',
-                          'epoch', 'release', 'meta.license', 'recommends', 'suggests', 'excludeArch', "name",
-                          "supplements", 'meta.homepage', 'prefix', 'includeSource', "filesJudgement"]
+MAY_QUOTATION_KEYWORDS = ['Version', 'Sources', 'Description', 'Summary', 'Patches', 'Files', 'FilesInput',
+                          'Epoch', 'Release', 'License', 'Recommends', 'Suggests', 'ExcludeArch', "Name",
+                          "Supplements", 'URL', 'Prefix', 'IncludeSource', "FilesJudgement"]
 
 CONF_CONTENT = "export CC=/usr/bin/gcc" + os.linesep + "export CXX=/usr/bin/g++" + os.linesep + \
                "export BUILD_SYS=`uname -m`-openeuler-`uname -s`-gnu" + os.linesep + \
