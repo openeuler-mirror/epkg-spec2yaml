@@ -188,10 +188,11 @@ class SpectacleDumper(object):
         'PreMakeExtras': ('build', 'pre'),
     }
 
-    def __init__(self, format='yaml', opath=None, shell_functions=None):
+    def __init__(self, format='yaml', opath=None, shell_functions=None, files=None):
         self.format = format
         self.opath = opath
         self.shell_functions = shell_functions
+        self.files = files
         self.spec_extra = {}
 
     def _esc_value(self, val):
@@ -217,7 +218,8 @@ class SpectacleDumper(object):
         else:
             return val
 
-    def _dump_yaml(self, data, fp, indent='', cur_pkg='main', f_phase=None, f_runtime_phase=None, script_data: dict = None):
+    def _dump_yaml(self, data, fp, indent='', cur_pkg='main', f_phase=None, f_runtime_phase=None, f_files=None,
+                   script_data: dict = None, files_data: dict = None):
         """
         载入内容到yaml文件中
         :param data:源数据
@@ -225,8 +227,10 @@ class SpectacleDumper(object):
         :param script_data:shell脚本数据
         :param f_phase:shell脚本写对象
         :param f_runtime_phase:shell脚本写对象
+        :param f_files:file.yaml写对象
         :param indent:行内容的开头，用于对内容做处理
         :param cur_pkg:用于区分主包和子包
+        :param files_data:file.yaml的数据
         :return:
         """
         if indent:
@@ -246,6 +250,12 @@ class SpectacleDumper(object):
                 for function_name, function_text in script_data.items():
                     if function_name not in ["install", "prep", "build", "clean", "check"]:
                         f_runtime_phase.write(function_name + "() {" + os.linesep + function_text + "}\n\n")
+        if f_files and files_data:
+            for file_member_key, file_member_value in files_data.items():
+                f_files.write(file_member_key + ": |" + os.linesep)
+                temp_text_list = file_member_value.split(os.linesep)
+                for line in temp_text_list[1:]:
+                    f_files.write(TAB + line + os.linesep)
         for key, value in data:
             if not first_line and indent:
                 cur_indent = indent + '  '
@@ -301,6 +311,31 @@ class SpectacleDumper(object):
                     fp.write(cur_indent + ("%s: yes" + os.linesep) % (key))
                 else:
                     fp.write(cur_indent + ("%s: no" + os.linesep) % (key))
+            elif isinstance(value, dict):
+                if value:
+                    fp.write(cur_indent + ("%s:" + os.linesep) % key)
+                    for dict_key, dict_value in value.items():
+                        if isinstance(dict_value, list):
+                            fp.write(cur_indent + TAB + ("%s:" + os.linesep) % dict_key)
+                            for sub_item in dict_value:
+                                if isinstance(sub_item, list):
+                                    self._dump_yaml(sub_item, fp, cur_indent + TAB, cur_pkg=sub_item[0][1])
+                                    fp.write(os.linesep)
+                                elif isinstance(sub_item, tuple) and len(sub_item) > 1:
+                                    if isinstance(sub_item[1], str):
+                                        fp.write(
+                                            cur_indent + TAB * 2 + ("%s: %s" + os.linesep) % (sub_item[0], sub_item[1]))
+                                    elif isinstance(sub_item[1], list):
+                                        fp.write(cur_indent + TAB * 2 + sub_item[0] + ":" + os.linesep)
+                                        for line in sub_item[1]:
+                                            fp.write(
+                                                cur_indent + TAB * 3 + ("- %s" + os.linesep) % self._esc_value(line))
+                                else:
+                                    fp.write(cur_indent + TAB * 2 + ("- %s" + os.linesep) % (self._esc_value(sub_item)))
+                        elif isinstance(dict_value, str):
+                            if dict_key.isdigit():
+                                dict_key = "\"" + dict_key + "\""
+                            fp.write(cur_indent + TAB + ("%s: %s" + os.linesep) % (dict_key, dict_value))
             else:
                 lines_to_write = value.splitlines()
 
@@ -333,11 +368,15 @@ class SpectacleDumper(object):
         fp = sys.stdout
         fs_phase = sys.stdout
         fs_runtime = sys.stdout
+        files_file = sys.stdout
+        if self.files is None:
+            self.files = {}
         if self.shell_functions:
             try:
                 # fs = open(self.opath.replace(".yaml", ".sh"), "w")
                 fs_phase = open("phase.sh", "w")
                 fs_runtime = open("runtimePhase.sh", "w")
+                files_file = open("file.yaml", "w")
             except IOError:
                 logger.warn('Cannot open file %s for writing' % self.opath)
                 # print out
@@ -352,13 +391,15 @@ class SpectacleDumper(object):
 
         try:
             if file_type == 'yaml':
-                self._dump_yaml(data, fp, script_data=self.shell_functions, f_phase=fs_phase, f_runtime_phase=fs_runtime)
+                self._dump_yaml(data, fp, script_data=self.shell_functions, f_phase=fs_phase,
+                                f_runtime_phase=fs_runtime, f_files=files_file, files_data=self.files)
             else:
                 logger.error('Unsupported spectacle data dump format: %s' % file_type)
         finally:
             fp.close()
             fs_phase.close()
             fs_runtime.close()
+            files_file.close()
 
         return self.opath
 
@@ -474,7 +515,10 @@ class Convertor(object):
         self._remove_duplicate(_dict)
 
         items = []
+        package_name = ""
         for entry in ORDER_ENTRIES:
+            if entry == "Name" and "SubPackages" in _dict:
+                package_name = _dict["Name"]
             if not entry:
                 # empty string means a blank line for break
                 if need_break:
@@ -503,16 +547,31 @@ class Convertor(object):
                                     _dict[entry] = "\"" + _dict[entry].strip() + "\""
                                 elif "\'" not in _dict[entry]:
                                     _dict[entry] = "\'" + _dict[entry].strip() + "\'"
-                items.append((lower_first_word(entry), _dict[entry]))
+                if entry in ["Sources", "Patches"]:
+                    target_items = {}
+                    the_items = _dict[entry]
+                    if isinstance(the_items, list):
+                        for index2, member in enumerate(the_items):
+                            target_items[str(index2)] = member
+                    items.append((lower_first_word(entry), target_items))
+                else:
+                    items.append((lower_first_word(entry), _dict[entry]))
                 del _dict[entry]
 
-        subpkgs = []
+        subpkgs = {}
         try:
             subpkgs_list = _dict['SubPackages']
             del _dict['SubPackages']
 
             for sub_items in subpkgs_list:
-                subpkgs.append(self.convert(sub_items, False))
+                if "AsWholeName" not in sub_items and package_name != "" and "Name" in sub_items:
+                    sub_items["Name"] = package_name + "-" + sub_items["Name"]
+                elif "AsWholeName" in sub_items:
+                    del sub_items["AsWholeName"]
+                if "Name" in sub_items:
+                    sub_name = sub_items["Name"]
+                    del sub_items["Name"]
+                    subpkgs[sub_name] = self.convert(sub_items, False)
         except Exception as e:
             logger.info(str(e))
 
@@ -623,7 +682,8 @@ class YamlWriter:
         convertor = SpecConvertor()
 
         """Dump them to spectacle file"""
-        dumper = SpectacleDumper(format='yaml', opath=out_fpath, shell_functions=spec_parser.shell_functions)
+        dumper = SpectacleDumper(format='yaml', opath=out_fpath, shell_functions=spec_parser.shell_functions,
+                                 files=spec_parser.files)
         newspec_fpath = dumper.dump(convertor.convert(spec_parser.cooked_items()))
 
         logger.info('<spec2yaml> Yaml file %s created' % out_fpath)
@@ -646,6 +706,7 @@ class SpecParser(object):
         self.keywords_if_config = {}
         self.sources_num_dict = {}
         self.patches_num_dict = {}
+        self.files = {}
         self.changelog = ""
 
     def _switch_subpkg(self, subpkg, create=False, cond_part=None):
@@ -1630,7 +1691,6 @@ class SpecParser(object):
                 target_data = self.add_quotation_from_member("Version", target_items=target_data)
             elif type(original_data["Version"]) == list and original_data["Version"][0].startswith("%"):
                 target_data = self.add_quotation_from_member("Version", target_items=target_data)
-        shell_name = file_name.replace(".spec", ".sh")
         for _key, _value in original_data.items():
             if _key in NEED_QUOTATION_KEYWORDS:
                 target_data = self.add_quotation_from_member(_key, target_items=target_data)
@@ -1645,16 +1705,45 @@ class SpecParser(object):
                     # target_data[_key] = [shell_name]
                     del target_data[_key]
                 continue
+            if _key == "files" and "Name" in original_data:
+                files_judgement = ""
+                if "FilesJudgement" in original_data:
+                    files_judgement += " ".join(original_data["FilesJudgement"])
+                    del target_data["FilesJudgement"]
+                file_key = original_data["Name"]
+                if "%if" in file_key:
+                    files_judgement += " rpmWhen %if" + " rpmWhen %if".join(file_key.split(" %if")[1:])
+                    main_file_key = "files" + files_judgement
+                else:
+                    main_file_key = "files"
+                self.files[main_file_key] = original_data["files"]
+                del target_data["files"]
             if _key == "SubPackages":
                 for sub_member_name, sub_member_dict in original_data["SubPackages"].items():
                     whole_name = "AsWholeName" in original_data["SubPackages"].keys()
+                    sub_files_judgement = ""
+                    if "FilesJudgement" in sub_member_dict:
+                        sub_files_judgement += " ".join(sub_member_dict["FilesJudgement"])
+                        del target_data["SubPackages"][sub_member_name]["FilesJudgement"]
                     if "%if" in sub_member_name:
-                        self.clear_sub_extra_judge(sub_member_name)
+                        target_data = self.clear_sub_extra_judge(sub_member_name, target_items=target_data)
                     for member_key, member_value in sub_member_dict.items():
+                        if member_key == "files":
+                            if "%if" in sub_member_name:
+                                temp_file_list = sub_member_name.split("%if")[1:]
+                                sub_file_name = target_data["Name"][0] + "-" + sub_member_name \
+                                    if "AsWholeName" not in sub_member_dict else temp_file_list[0].strip()
+                                sub_files_judgement += " rpmWhen %if" + " rpmWhen %if".join(temp_file_list)
+                            else:
+                                sub_file_name = target_data["Name"][0] + "-" + sub_member_name \
+                                    if "AsWholeName" not in sub_member_dict else sub_member_name.strip()
+                            self.files["subpackage." + sub_file_name + ".files" + sub_files_judgement] = member_value
+                            del target_data["SubPackages"][sub_member_name]["files"]
                         if member_key == "Summary" and len(member_value) == 1 and member_value[0].startswith("`"):
                             target_data["SubPackages"][sub_member_name][member_key] = ["_" + member_value[0]]
                         if member_key in NEED_QUOTATION_KEYWORDS:
-                            self.add_quotation_from_member(member_key, sub_name=sub_member_name, target_items=target_data)
+                            target_data = self.add_quotation_from_member(member_key, sub_name=sub_member_name,
+                                                                         target_items=target_data)
                         if member_key in SHELL_KEYWORDS:
                             self.divide_into_shell(sub_member_name.split()[0].strip(), target_data["SubPackages"][
                                 sub_member_name][member_key], sub_name=member_key, whole=whole_name)
@@ -1826,22 +1915,25 @@ class SpecParser(object):
 
         return ck_items
 
-    def clear_sub_extra_judge(self, sub_name):
+    def clear_sub_extra_judge(self, sub_name, target_items=None):
         """
         清理子包多余的判断语句
         :param sub_name:
+        :param target_items:
         :return:
         """
+        if target_items is None:
+            target_items = self.items
         if "%if" in sub_name:
             judge_words = sub_name.replace(sub_name.split("%if")[0], "")
             judge_words_values = judge_words.split("%if")
             judge_words_list = map(lambda x: ("%if" + x).strip(), judge_words_values)
             judge_words_values.remove("")
             judge_count = len(judge_words_values)
-            for sub_item_key, sub_item_value in self.items["SubPackages"][sub_name].items():
+            for sub_item_key, sub_item_value in target_items["SubPackages"][sub_name].items():
                 if type(sub_item_value) is str:
                     if judge_words in sub_item_value:
-                        self.items["SubPackages"][sub_name][sub_item_key] = sub_item_value.replace(judge_words, "")
+                        target_items["SubPackages"][sub_name][sub_item_key] = sub_item_value.replace(judge_words, "")
                 elif type(sub_item_value) is list and sub_item_value:
                     if sub_item_key == "FilesJudgement" and judge_count:
                         if judge_count == 1 and judge_words in sub_item_value:
@@ -1852,12 +1944,15 @@ class SpecParser(object):
                                     sub_item_value.remove(single_judge_words)
                     for index1, member_item_value in enumerate(sub_item_value):
                         if judge_words in member_item_value:
-                            self.items["SubPackages"][sub_name][sub_item_key][index1] = member_item_value.replace(judge_words, "")
+                            target_items["SubPackages"][sub_name][sub_item_key][index1] = member_item_value.replace(judge_words, "")
+        return target_items
 
 
 def lower_first_word(words: str):
     if words == "Patches":
         return "patchset"
+    if words == "Sources":
+        return "source"
     if words == "Macros":
         return "rpmMacros"
     if words.upper() == "URL":
