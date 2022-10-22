@@ -323,8 +323,14 @@ class SpectacleDumper(object):
                                     fp.write(os.linesep)
                                 elif isinstance(sub_item, tuple) and len(sub_item) > 1:
                                     if isinstance(sub_item[1], str):
-                                        fp.write(
-                                            cur_indent + TAB * 2 + ("%s: %s" + os.linesep) % (sub_item[0], sub_item[1]))
+                                        if os.linesep in sub_item[1].strip():
+                                            fp.write(cur_indent + TAB * 2 + ("%s: |" + os.linesep) % sub_item[0])
+                                            line_list = sub_item[1].split(os.linesep)
+                                            for line in line_list:
+                                                fp.write(cur_indent + TAB * 3 + line + os.linesep)
+                                        else:
+                                            fp.write(cur_indent + TAB * 2 + ("%s: %s" + os.linesep) % (
+                                                sub_item[0], sub_item[1]))
                                     elif isinstance(sub_item[1], list):
                                         fp.write(cur_indent + TAB * 2 + sub_item[0] + ":" + os.linesep)
                                         for line in sub_item[1]:
@@ -1753,6 +1759,10 @@ class SpecParser(object):
                             elif type(sub_member_dict[member_key]) == list:
                                 # target_data["SubPackages"][sub_member_name][member_key] = [shell_name]
                                 del target_data["SubPackages"][sub_member_name][member_key]
+                    if "%if" in sub_member_name:
+                        temp_sub_dict = target_data["SubPackages"][sub_member_name]
+                        del target_data["SubPackages"][sub_member_name]
+                        target_data["SubPackages"][sub_member_name.replace("%if", "rpmWhen %if")] = temp_sub_dict
         self.items = target_data
 
     def add_quotation_from_member(self, keywords, sub_name=None, target_items=None):
