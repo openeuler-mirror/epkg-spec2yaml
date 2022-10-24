@@ -343,6 +343,35 @@ def update_key_params(text):
     return after_trans_text
 
 
+def remove_strings_keywords(origin_dict: dict, keywords=""):
+    """
+    去除关键字
+    :param origin_dict:
+    :param keywords:
+    :return:
+    """
+    target_dict = copy.deepcopy(origin_dict)
+    for some_key in origin_dict:
+        if isinstance(origin_dict[some_key], str):
+            target_dict[some_key] = origin_dict[some_key].replace(keywords, "").replace(keywords + " ", "")
+        if isinstance(origin_dict[some_key], dict):
+            target_dict[some_key] = remove_strings_keywords(origin_dict[some_key], keywords)
+        if isinstance(origin_dict[some_key], list):
+            for index0, member in enumerate(origin_dict[some_key]):
+                if isinstance(member, dict):
+                    target_dict[some_key][index0] = remove_strings_keywords(member, keywords)
+                elif isinstance(member, str):
+                    target_dict[some_key][index0] = origin_dict[some_key][index0].replace(keywords, "").replace(keywords + " ", "")
+                elif isinstance(member, list):
+                    for index1, member_item in enumerate(member):
+                        target_dict[some_key][index0][index1] = member_item.replace(keywords, "").replace(keywords + " ", "")
+        if keywords in some_key:
+            target_value = origin_dict[some_key]
+            del target_dict[some_key]
+            target_dict[some_key.replace(keywords, "")] = target_value
+    return target_dict
+
+
 class SpecWriter:
     """
         The following keys will be generated on the fly based on values from
@@ -794,44 +823,44 @@ class SpecWriter:
         if keys:
             logger.warn('Please remove empty keys in main package: %s' % ', '.join(keys))
         if "subpackage" in self.metadata:
-            for sp_name, sp in self.metadata["subpackage"].items():
-                keys = _check_empty_keys(self.metadata["subpackage"][sp_name])
+            for sp in self.metadata["subpackage"]:
+                keys = _check_empty_keys(sp)
                 if keys:
-                    logger.warn('Please remove empty keys in %s subpackage: %s' % (sp_name, ', '.join(keys)))
+                    logger.warn('Please remove empty keys in %s subpackage: %s' % (sp['name'], ', '.join(keys)))
 
         # checking for mandatory keys
         keys = _check_mandatory_keys(self.metadata)
         if keys:
             logger.warn('Missing mandatory keys for main package: %s' % ', '.join(keys))
         if "subpackage" in self.metadata:
-            for sp_name, sp in self.metadata["subpackage"].items():
+            for sp in self.metadata["subpackage"]:
                 keys = _check_mandatory_keys(sp, True)
                 if keys:
                     if 'name' in keys:
                         logger.warn('Missing mandatory keys for sub-pkg: name')
                     else:
-                        logger.warn('Missing mandatory keys for sub-pkg "%s": %s' % (sp_name, ', '.join(keys)))
+                        logger.warn('Missing mandatory keys for sub-pkg "%s": %s' % (sp['name'], ', '.join(keys)))
 
         # checking for unexpected keys
         keys = _check_invalid_keys(self.metadata)
         if keys:
             logger.warn('Unexpected keys found: %s' % ', '.join(keys))
         if "subpackage" in self.metadata:
-            for sub_name, sp in self.metadata["subpackage"].items():
+            for index, sp in enumerate(self.metadata["subpackage"]):
                 if "files" in sp.keys():
-                    temp_list = self.metadata["subpackage"][sub_name]["files"].split(os.linesep)
+                    temp_list = self.metadata["subpackage"][index]["files"].split(os.linesep)
                     combine_str = combine_if_lines(temp_list)
-                    self.metadata["subpackage"][sub_name]["files"] = combine_str.strip().strip(os.linesep)
-                keys = _check_invalid_keys(sp, sub_name)
+                    self.metadata["subpackage"][index]["files"] = combine_str.strip().strip(os.linesep)
+                keys = _check_invalid_keys(sp, sp['name'])
                 if keys:
-                    logger.warn('Unexpected keys for sub-pkg %s found: %s' % (sub_name, ', '.join(keys)))
+                    logger.warn('Unexpected keys for sub-pkg %s found: %s' % (sp['name'], ', '.join(keys)))
 
         # checking for questionable sub-package keys
         if "subpackage" in self.metadata and 'NoFiles' not in self.metadata:
-            for sub_name, sp in self.metadata["subpackage"].items():
-                keys = _check_subwarn_keys(sp, sub_name)
+            for sp in self.metadata["subpackage"]:
+                keys = _check_subwarn_keys(sp, sp['name'])
                 if keys:
-                    logger.warn('Questionable keys for sub-pkg %s found: %s' % (sub_name, ', '.join(keys)))
+                    logger.warn('Questionable keys for sub-pkg %s found: %s' % (sp['name'], ', '.join(keys)))
 
         # checking for deprecated keys
         _check_dropped_keys(self.metadata)
@@ -846,10 +875,10 @@ class SpecWriter:
                 logger.warn('the value of "%s" in main package is expected as list typed' % _key)
                 self.metadata[_key] = [self.metadata[_key]]
             if "subpackage" in self.metadata:
-                for sp_name, sp in self.metadata["subpackage"].items():
+                for sp in self.metadata["subpackage"]:
                     if not _check_listkey(sp, _key):
                         logger.warn(
-                            'the value of "%s" in "%s" sub-package is expected as list typed' % (_key, sp_name))
+                            'the value of "%s" in "%s" sub-package is expected as list typed' % (_key, sp['name']))
                         sp[_key] = [sp[_key]]
 
         # checking for STR expected keys
@@ -861,10 +890,10 @@ class SpecWriter:
                 else:
                     del self.metadata[_key]
             if "subpackage" in self.metadata:
-                for sub_name, sp in self.metadata["subpackage"].items():
+                for sp in self.metadata["subpackage"]:
                     if not _check_strkey(sp, _key):
                         logger.warn(
-                            'the value of "%s" in "%s" sub-package is expected as string typed' % (_key, sub_name))
+                            'the value of "%s" in "%s" sub-package is expected as string typed' % (_key, sp['name']))
                         if isinstance(sp[_key], list):
                             if len(sp[_key]) == 1 and sp[_key][0] is None:
                                 del sp[_key]
@@ -880,10 +909,10 @@ class SpecWriter:
                 # just drop it
                 del self.metadata[_key]
             if "subpackage" in self.metadata:
-                for sp_name, sp in self.metadata["subpackage"].items():
+                for sp in self.metadata["subpackage"]:
                     if not _check_boolkey(sp, _key):
                         logger.warn('the value of "%s" in "%s" sub-package is expected as bool typed, dropped!' % (
-                            _key, sp_name))
+                            _key, sp['name']))
                         del sp[_key]
 
         ######### checkings for special keys ##########
@@ -931,20 +960,20 @@ class SpecWriter:
         # checking for meego valid groups
         _check_key_group(self.metadata)
         if "subpackage" in self.metadata:
-            for sp_name, sp in self.metadata["subpackage"].items():
+            for sp in self.metadata["subpackage"]:
                 _check_key_group(sp)
 
         # checking for meego invalid licenses
         _check_key_license(self.metadata)
         if "subpackage" in self.metadata:
-            for sp_name, sp in self.metadata["subpackage"].items():
+            for sp in self.metadata["subpackage"]:
                 _check_key_license(sp)
 
         # By default make meta.description equal to %{summary}.
         if "meta.description" not in self.metadata and 'meta.summary' in self.metadata:
             self.metadata["meta.description"] = "%{summary}."
         if "subpackage" in self.metadata:
-            for sp_name, sp in self.metadata["subpackage"].items():
+            for sp in self.metadata["subpackage"]:
                 if 'meta.description' not in sp and 'meta.summary' in sp:
                     sp['meta.description'] = "%{summary}."
 
@@ -972,7 +1001,7 @@ class SpecWriter:
             self._check_dup_files(self.metadata['files'])
         if "subpackage" in self.metadata:
             self._modify_arg_value("subpackage")
-            for sp_name, sp in self.metadata["subpackage"].items():
+            for sp in self.metadata["subpackage"]:
                 if 'files' in sp:
                     self._check_dup_files(sp['files'])
 
@@ -1011,6 +1040,22 @@ class SpecWriter:
             with open("nativeCommands.json", "w") as f:
                 for line in self.metadata["use.nativeCommands"]:
                     f.write(line)
+        # remove rpmWhen
+        self.metadata = remove_strings_keywords(origin_dict=self.metadata, keywords="rpmWhen ")
+        # remove runtimePhase.
+        self.metadata = remove_strings_keywords(origin_dict=self.metadata, keywords="runtimePhase.")
+        # remove phase.
+        self.metadata = remove_strings_keywords(origin_dict=self.metadata, keywords="phase.")
+        # change struct of subpackage
+        if "subpackage" in self.metadata and isinstance(self.metadata["subpackage"], dict):
+            subpackage_list = []
+            for sp_name, sp in self.metadata["subpackage"].items():
+                if isinstance(sp, dict):
+                    sp["name"] = sp_name
+                    if "asWholeName" not in sp:
+                        sp["asWholeName"] = True
+                    subpackage_list.append(sp)
+            self.metadata["subpackage"] = subpackage_list
         for some_key in LIST_KEYS:
             if some_key in self.metadata.keys() and some_key not in ["rpmMacros", "source", "patchset"]:
                 if not self.metadata[some_key]:
@@ -1061,7 +1106,7 @@ class SpecWriter:
                 shell_content = shell_content_f.read()
                 self.iterate_keys_sub(shell_content)
             except IOError:
-                logger.error("No shell script, need finger out it!")
+                logger.info("No shell script, need finger out it!")
         if "prep" not in self.metadata.keys():
             logger.warn("no keywords prep, target spec file can't unzip package")
 
@@ -1141,7 +1186,7 @@ class SpecWriter:
         # clean up all boolean type keys, use the exists status to present bool value
         _cleanup_boolkeys(self.metadata)
         if "subpackage" in self.metadata:
-            for sub_name, sp in self.metadata["subpackage"].items():
+            for sp in self.metadata["subpackage"]:
                 _cleanup_boolkeys(sp)
 
         # check duplicate requires for base package
@@ -1149,22 +1194,22 @@ class SpecWriter:
             autodep = "%{name} = %{epoch}:%{version}-%{release}" if 'epoch' in self.metadata else \
                 "%{name} = %{version}-%{release}"
 
-            for sub_name, sp in self.metadata["subpackage"].items():
+            for sp in self.metadata["subpackage"]:
                 if 'requires' in sp and autodep in sp['requires'] and 'AutoDepend' in sp:
                     logger.warn(
-                        'found duplicate requires for %s in sub-pkg:%s, please remove it' % (autodep, sub_name))
+                        'found duplicate requires for %s in sub-pkg:%s, please remove it' % (autodep, sp['name']))
                     sp['requires'].remove(autodep)
                     if not sp['requires']:
                         del sp['requires']
 
         # initialize extra flags for subpkgs
         if "subpackage" in self.metadata:
-            for sub_name, sp in self.metadata["subpackage"].items():
-                self.extra['subpkgs'][sub_name] = copy.deepcopy(self.extra_per_pkg)
-        if "autoSubPackage" in self.metadata:
+            for sp in self.metadata["subpackage"]:
+                self.extra['subpkgs'][sp['name']] = copy.deepcopy(self.extra_per_pkg)
+        if "autoSubPackages" in self.metadata:
             if 'subpackage' not in self.metadata:
                 self.metadata['subpackage'] = []
-            for asp in self.metadata["autoSubPackage"]:
+            for asp in self.metadata["autoSubPackages"]:
                 self.extra['subpkgs'][asp] = copy.deepcopy(self.extra_per_pkg)
                 if asp in self.asp_templates:
                     self.metadata['subpackage'].append(self.asp_templates[asp])
@@ -1209,8 +1254,8 @@ class SpecWriter:
             return self.metadata
 
         try:
-            for sp_name, sp in self.metadata['subpackage'].items():
-                if sp_name == pkgname:
+            for sp in self.metadata['subpackage']:
+                if sp['Name'] == pkgname:
                     return sp
         except KeyError:
             # Not a available subpackage for 'pkgname'
@@ -1555,49 +1600,41 @@ class SpecWriter:
             else:
                 files['main'] = self.metadata['files']
         if "subpackage" in self.metadata:
-            for sp_name, sp in self.metadata["subpackage"].items():
+            for sp in self.metadata["subpackage"]:
                 if 'files' in sp:
-                    if sp_name in files:
-                        files[sp_name] += sp['files']
+                    if sp['name'] in files:
+                        files[sp['name']] += sp['files']
                     else:
-                        files[sp_name] = sp['files']
+                        files[sp['name']] = sp['files']
 
         self.parse_files(files)
 
         # adding automatic requires according %files
         _gen_auto_requires(self.metadata, self.extra)
         if "subpackage" in self.metadata:
-            for sub_name, sp in self.metadata["subpackage"].items():
-                _gen_auto_requires(sp, self.extra['subpkgs'][sub_name], sub_name)
+            for sp in self.metadata["subpackage"]:
+                _gen_auto_requires(sp, self.extra['subpkgs'][sp['name']], sp['name'])
 
         self._check_dup_ldconfig()
         if "subpackage" in self.metadata:
-            for sub_name, sp in self.metadata["subpackage"].items():
-                self._check_dup_ldconfig(sub_name)
+            for sp in self.metadata["subpackage"]:
+                self._check_dup_ldconfig(sp['name'])
 
         # check duplicate other auto-scriptlets in %post/%postun
         self._check_dup_scriptlets()
         if "subpackage" in self.metadata:
-            for sp_name, sp in self.metadata["subpackage"].items():
+            for sp_index, sp in enumerate(self.metadata["subpackage"]):
                 for Sub_key in sp.keys():
                     if Sub_key in YAML_LINES_KEYWORDS:
                         temp_list = sp[Sub_key].split(os.linesep)
                         combine_str = combine_if_lines(temp_list)
-                        self.metadata["subpackage"][sp_name][Sub_key] = combine_str.strip().strip(os.linesep)
-                self._check_dup_scriptlets(sp_name)
+                        self.metadata["subpackage"][sp_index][Sub_key] = combine_str.strip().strip(os.linesep)
+                self._check_dup_scriptlets(sp["name"])
         if "rpmMacros" in self.metadata:
             for macros_index, macros_line in enumerate(self.metadata["rpmMacros"]):
                 if "{os.linesep}" in macros_line:
                     self.metadata["rpmMacros"][macros_index] = macros_line.replace("{os.linesep}", os.linesep)
 
-        # change struct of subpackage
-        if "subpackage" in self.metadata:
-            subpackage_list = []
-            for sp_name, sp in self.metadata["subpackage"].items():
-                if isinstance(sp, dict):
-                    sp["name"] = sp_name
-                    subpackage_list.append(sp)
-            self.metadata["subpackage"] = subpackage_list
         self.metadata["builder"] = ""
         necessary_keys = ["name", "version", "meta.summary", "meta.license", "release", "meta.description"]
         for necessary_key in necessary_keys:
@@ -1621,6 +1658,12 @@ class SpecWriter:
                                 del target_sp[sp_key]
                                 real_sp_key = sp_key.replace("meta.", "")
                                 target_sp[real_sp_key] = this_value
+                            if sp_key.startswith("files") and "%if" in sp_key and "filesJudgement" not in sp:
+                                judge_list = sp_key.split("%if")[1:]
+                                this_value = sp[sp_key]
+                                del target_sp[sp_key]
+                                target_sp["files"] = this_value
+                                target_sp["filesJudgement"] = map(lambda x: ("%if" + x).strip(), judge_list)
                         target_metadata["subpackage"][index0] = target_sp
         self.metadata = target_metadata
 
