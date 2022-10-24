@@ -577,6 +577,8 @@ class Convertor(object):
                 if "Name" in sub_items:
                     sub_name = sub_items["Name"]
                     del sub_items["Name"]
+                    if sub_name.startswith("%"):
+                        sub_name = "\"" + sub_name + "\""
                     subpkgs[sub_name] = self.convert(sub_items, False)
         except Exception as e:
             logger.info(str(e))
@@ -1253,7 +1255,7 @@ class SpecParser(object):
                 if state == ST_INLINE and header in SHELL_KEYWORDS:
                     if re.match("%\w+", line) is not None:
                         temp_available_key = line.strip().lstrip("%").split()[0]
-                        available_key = temp_available_key in SHELL_KEYWORDS
+                        available_key = temp_available_key in SHELL_KEYWORDS + ["package"]
                 unclosed_brackets = 0
                 if in_package_help:
                     if "Summary" in line or "BuildArch" in line or "Requires" in line or "description" in line or line not in SHELL_KEYWORDS:
