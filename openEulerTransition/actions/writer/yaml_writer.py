@@ -1348,7 +1348,13 @@ class SpecParser(object):
                     if subpackages_model:
                         state = ST_MAIN
                         if not while_next and header in SHELL_KEYWORDS + ["description", "files"]:
-                            items[header] += ("%endif" + os.linesep) * len(_if_cond_part)
+                            if _if_cond_part:
+                                if_count = len(re.findall("%if", items[header]))
+                                endif_count = len(re.findall("%endif", items[header]))
+                                if if_count > endif_count or header == "files":
+                                    items[header] += ("%endif" + os.linesep) * len(_if_cond_part)
+                                elif if_count == endif_count:
+                                    _if_cond_part.pop()
                         if len(_if_cond_part) > 0:
                             if_cond_part += _if_cond_part
                             _if_cond_part.clear()
@@ -1646,7 +1652,7 @@ class SpecParser(object):
                                     line = line.replace(" -n ", "").replace(sub_pkg, "")
                             if len(if_cond_part) > 0:
                                 if type(items) is dict and "FilesJudgement" not in items.keys():
-                                    items["FilesJudgement"] = if_cond_part.copy()
+                                    items["FilesJudgement"] = copy.deepcopy(if_cond_part)
                         else:
                             # for 'main' package
                             # 'InputFile' in 'main' package
