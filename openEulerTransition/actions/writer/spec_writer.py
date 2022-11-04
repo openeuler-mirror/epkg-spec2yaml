@@ -1045,7 +1045,7 @@ class SpecWriter:
                     if "rpmMacros" in self.metadata:
                         self.metadata["rpmMacros"].append("%global build_optflags %build_optflags " + self.metadata["env.LDFLAGS"])
                     else:
-                        self.metadata["rpmMacros"] = "%global build_optflags %build_optflags " + self.metadata["env.LDFLAGS"]
+                        self.metadata["rpmMacros"] = ["%global build_optflags %build_optflags " + self.metadata["env.LDFLAGS"]]
 
     def parse(self):
         """
