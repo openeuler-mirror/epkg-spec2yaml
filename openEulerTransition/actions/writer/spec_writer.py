@@ -1030,18 +1030,18 @@ class SpecWriter:
             if "env.CC" in self.metadata:
                 self.metadata["build"] = "export CC=" + self.metadata["env.CC"] + os.linesep + self.metadata["build"]
             if "env.CFLAGS" in self.metadata:
-                if configure_make:
+                if only_make:
                     self.metadata["build"] = "export CFLAGS=" + self.metadata["env.CFLAGS"] + os.linesep + self.metadata["build"]
-                elif only_make:
+                else:
                     if "rpmMacros" in self.metadata:
                         self.metadata["rpmMacros"].append("%global optflags %optflags " + self.metadata["env.CFLAGS"])
                     else:
                         self.metadata["rpmMacros"] = ["%global optflags %optflags " + self.metadata["env.CFLAGS"]]
             if "env.LDFLAGS" in self.metadata:
-                if configure_make:
+                if only_make:
                     self.metadata["build"] = "export LDFLAGS=" + self.metadata["env.LDFLAGS"] + os.linesep + \
                                              self.metadata["build"]
-                elif only_make:
+                else:
                     if "rpmMacros" in self.metadata:
                         self.metadata["rpmMacros"].append("%global build_optflags %build_optflags " + self.metadata["env.LDFLAGS"])
                     else:
