@@ -1011,6 +1011,42 @@ class SpecWriter:
         if 'builder' in self.metadata:
             _check_key_builder(self.metadata)
 
+    def trans_compile_args(self):
+        """
+        转换编译选项
+        :return:
+        """
+        if "build" in self.metadata:
+            # check is only make or not
+            build_info_list = self.metadata["build"].split(os.linesep)
+            only_make = False
+            configure_make = False
+            for line in build_info_list:
+                if re.search("#.*make", line) is None and "make" in line and "cmake" not in line and not configure_make:
+                    only_make = True
+                if re.search("#.*configure", line) is None and ("/configure" in line or "%configure" in line):
+                    only_make = False
+                    configure_make = True
+            if "env.CC" in self.metadata:
+                self.metadata["build"] = "export CC=" + self.metadata["env.CC"] + os.linesep + self.metadata["build"]
+            if "env.CFLAGS" in self.metadata:
+                if configure_make:
+                    self.metadata["build"] = "export CFLAGS=" + self.metadata["env.CFLAGS"] + os.linesep + self.metadata["build"]
+                elif only_make:
+                    if "rpmMacros" in self.metadata:
+                        self.metadata["rpmMacros"].append("%global optflags %optflags " + self.metadata["env.CFLAGS"])
+                    else:
+                        self.metadata["rpmMacros"] = ["%global optflags %optflags " + self.metadata["env.CFLAGS"]]
+            if "env.LDFLAGS" in self.metadata:
+                if configure_make:
+                    self.metadata["build"] = "export LDFLAGS=" + self.metadata["env.LDFLAGS"] + os.linesep + \
+                                             self.metadata["build"]
+                elif only_make:
+                    if "rpmMacros" in self.metadata:
+                        self.metadata["rpmMacros"].append("%global build_optflags %build_optflags " + self.metadata["env.LDFLAGS"])
+                    else:
+                        self.metadata["rpmMacros"] = "%global build_optflags %build_optflags " + self.metadata["env.LDFLAGS"]
+
     def parse(self):
         """
         yaml转spec入口
@@ -1096,17 +1132,8 @@ class SpecWriter:
             self.metadata["SpecialKey"] = final_paragra_key
         # verifying the sanity
         self.sanity_check()
-        # get inherit file from keywords Include
-        if "Include" in self.metadata.keys() and self.metadata["Include"]:
-            self.get_append_content(self.metadata["Include"])
-        elif "Include" not in self.metadata.keys() and self.shell_fpath is None:
-            try:
-                self.shell_fpath = change_yaml2sh_file(self.yaml_fpath)
-                shell_content_f = open(change_yaml2sh_file(self.yaml_fpath), "r")
-                shell_content = shell_content_f.read()
-                self.iterate_keys_sub(shell_content)
-            except IOError:
-                logger.info("No shell script, need finger out it!")
+        # change compile args
+        self.trans_compile_args()
         if "prep" not in self.metadata.keys():
             logger.warn("no keywords prep, target spec file can't unzip package")
 
