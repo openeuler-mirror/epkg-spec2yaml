@@ -87,7 +87,6 @@ LIST_KEYS = ('source',
              'RpmLintIgnore',
              'rpmMacros',
              'Macros2',
-             'buildArch',
              )
 
 # Keys expected to have string value.
@@ -114,6 +113,12 @@ STR_KEYS = ('name',
             # Defines the package name where the *.lang file is added.
             'LocaleFilesPkgName',
             'filesInput',
+            'build',
+            'check',
+            'install',
+            'prep',
+            'clean',
+            'SpecialKey',
             'prefix',
             )
 
@@ -133,11 +138,12 @@ SUBWARN_KEYS = ('pkgBR',
 SUBAVAIL_KEYS = ('name',
                  'meta.summary',
                  'recommends',
-                 'install',
-                 'build',
-                 'clean',
+                 'posttrans',
+                 'pretrans',
+                 'postun',
+                 'preun',
                  'post',
-                 'prep',
+                 'pre',
                  'suggests',
                  'meta.description',
                  'group',
@@ -668,11 +674,11 @@ class SpecWriter:
             gpl3_re = re.compile(r'L?GPL\s*v3', re.I)
             if "meta.license" in metadata:
                 if gpl3_re.search(metadata['meta.license']):
-                    logger.warn('GPLv3 related license might be unacceptable.')
+                    logger.info('GPLv3 related license might be unacceptable.')
 
         def _check_key_epoch(metadata):
             if 'epoch' in metadata:
-                logger.warn('Please consider to remove "epoch"')
+                logger.info('Please consider to remove "epoch"')
 
         def _check_pkgconfig():
             try:
@@ -872,13 +878,15 @@ class SpecWriter:
         # checking for LIST expected keys
         for _key in LIST_KEYS:
             if not _check_listkey(self.metadata, _key):
-                logger.warn('the value of "%s" in main package is expected as list typed' % _key)
+                if _key != "files":
+                    logger.warn('the value of "%s" in main package is expected as list typed' % _key)
                 self.metadata[_key] = [self.metadata[_key]]
             if "subpackage" in self.metadata:
                 for sp in self.metadata["subpackage"]:
                     if not _check_listkey(sp, _key):
-                        logger.warn(
-                            'the value of "%s" in "%s" sub-package is expected as list typed' % (_key, sp['name']))
+                        if _key != "files":
+                            logger.warn(
+                                'the value of "%s" in "%s" sub-package is expected as list typed' % (_key, sp['name']))
                         sp[_key] = [sp[_key]]
 
         # checking for STR expected keys
