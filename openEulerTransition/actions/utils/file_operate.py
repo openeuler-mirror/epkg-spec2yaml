@@ -15,13 +15,9 @@ import codecs
 import platform
 import jinja2
 from datetime import date, datetime
-
 from openEulerTransition.logs.log import logger
-from os.path import join, basename
 from collections import OrderedDict
 from openEulerTransition.logs.error_info import EXCEPTION_CODE
-import threading
-import configparser
 
 
 class Path:
@@ -96,16 +92,10 @@ class Chdir:
     def __exit__(self, exc_type, exc_value, exc_tb):
         os.chdir(self.back)
 
+
 def check_conf_file(path):
     if os.path.isfile(path):
         if path.endswith(".conf"):
-            return True
-        else:
-            return False
-
-def check_yaml_file(path):
-    if os.path.isfile(path):
-        if path.endswith(".yaml") or path.endswith(".yml"):
             return True
         else:
             return False
@@ -295,137 +285,3 @@ def _ordered_yaml_dump(data, stream=None, dumper=yaml.SafeDumper, default_flow_s
 
     OrderedDumper.add_representer(OrderedDict, _dict_representer)
     return yaml.dump(data, stream, OrderedDumper, default_flow_style=default_flow_style, width=1000, allow_unicode=True)
-
-
-def copy_rename(f, to, rename=""):
-    # 设置中间临时文件夹进行处理
-    tmp = "renamedir"
-    make_sure_dir(tmp)
-    shutil.copy2(f, tmp)
-    os.rename(join(tmp, basename(f)), join(tmp, rename))
-    logger.debug("[copy_rename]rename from %s ======>> %s" %
-                 (join(tmp, basename(f)), join(tmp, rename)))
-    shutil.copy2(join(tmp, rename), to)
-    logger.debug("[copy_rename]move from %s ======>> %s" %
-                 (join(tmp, rename), to))
-
-
-def config_parser(file_path):
-    """
-    分析ini 文件
-    :param file_path: 文件路径
-    """
-    cf = configparser.ConfigParser()
-    cf.read(file_path, encoding="utf-8")
-    d = dict(cf._sections)
-    for k in d:
-        d[k] = dict(d[k])
-    return d
-
-
-def calc_filesize(filename):
-    return os.stat(filename).st_size
-
-
-def get_files_fist(path):
-    result = list()
-    if os.path.isfile(path):
-        result.append(path)
-    elif os.path.isdir(path):
-        for dirpath, dirnames, filenames in os.walk(path, followlinks=True):
-            for filename in filenames:
-                file_path = os.path.join(dirpath, filename)
-                result.append(file_path)
-        result.sort()
-    else:
-        print("it's a special file(socket,FIFO,device file)")
-    return result
-
-
-def write_to_file(contents, dest_file):
-    fp = open(dest_file, "w")
-
-    for content in contents:
-        str0 = str(content)
-        str1 = str0.replace("\\\\", "/")
-        fp.write(str1)
-        fp.write(os.linesep)
-    fp.close()
-
-
-def find_path_with_reg(cur_path, reg_exp: str):
-    """
-    :param cur_path:
-    :param reg_exp: "tmp*/ww*/a*.yaml"
-    :return:
-    """
-    res_paths = []
-    path_lst = re.split(r'[/ \\]', cur_path) + re.split(r'[/ \\]', reg_exp)
-    patt_lst = [i for i in path_lst if i]
-    size = len(patt_lst)
-    for this_path in get_alldirs_of_path(cur_path):
-        this_lst = re.split(r'[/ \\]', this_path)
-        if len(this_lst) != size or not math_path(patt_lst, this_lst):
-            continue
-        res_paths.append(this_path)
-    return res_paths
-
-
-def get_alldirs_of_path(cur_path):
-    """
-    root 表示当前正在访问的文件夹路径
-    dirs 表示该文件夹下的子目录名list
-    files 表示该文件夹下的文件list
-    :param cur_path:
-    :return: 路径列表
-    """
-    tmp = list()
-    for root, dirs, files in os.walk(cur_path, followlinks=True):
-        tmp.extend([os.path.join(root, f) for f in files])
-        tmp.extend([os.path.join(root, d) for d in dirs])
-    return tmp
-
-
-def math_path(patt_lst, this_lst):
-    """
-    支持正则表达式的路径匹配
-    :param patt_lst: 模式分割列表
-    :param this_lst: 路径分割列表
-    :return:
-    """
-    for i in range(len(this_lst)):
-        if not re.findall(patt_lst[i], this_lst[i]):
-            return None
-    return True
-
-
-def merge_file(paths_lst, new_file):
-    print(paths_lst, new_file)
-    with open(new_file, mode='a', encoding="utf-8") as file:
-        file.seek(0)
-        file.truncate()
-        for path in paths_lst:
-            with open(path, encoding="utf-8") as child:
-                child_data = child.read()
-                file.write(child_data)
-            file.write(os.linesep)
-    return new_file
-
-
-def include_yaml(path):
-    new_file_path = os.path.dirname(os.path.abspath(path))
-    new_file = Path.join(new_file_path, '..', 'tmp_include_result.yaml')
-    data = read_yaml(path, jina_template=False, include=False)
-
-    if data.get('include') and isinstance(data.get('include'), list):
-        include_lst = data.get('include')
-        include_lst.append(path)
-        return merge_file(include_lst, new_file)
-    return path
-
-
-def merge_yaml(paths_lst):
-    new_file_path = os.path.dirname(os.path.abspath(paths_lst[-1]))
-    # file_name = str(time.time()).replace('.', '')
-    new_file = 'tmp_include_result' + str(threading.currentThread().ident) + '.yaml'
-    return merge_file(paths_lst, new_file)

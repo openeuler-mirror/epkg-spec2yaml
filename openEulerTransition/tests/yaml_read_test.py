@@ -20,7 +20,7 @@ def test_run_parse_case_spell():
 
 def test_run_find_quotes_from_words():
     try:
-        test_spec_parser.find_quotes_from_words("")
+        find_quotes_from_words("")
     except Exception:
         raise Exception("fail to run function find_quotes_from_words")
 

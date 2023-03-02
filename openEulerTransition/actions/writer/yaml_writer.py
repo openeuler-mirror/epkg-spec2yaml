@@ -1,116 +1,10 @@
-import os
-import re
 import sys
 import copy
 from openEulerTransition.logs.log import logger
 from openEulerTransition.actions.utils.file_operate import Chdir
+from openEulerTransition.actions.utils.data_operate import *
 from openEulerTransition.configure.spec_config import *
 from openEulerTransition.configure.yaml_config import *
-
-HEADERS = ('package',
-           'description',
-           'prep',
-           'build',
-           'install',
-           'clean',
-           'check',
-           'preun',
-           'pretrans',
-           'pre',
-           'postun',
-           'posttrans',
-           'post',
-           'files',
-           'changelog',
-           'include')
-SINGLES = ('Summary',
-           'Name',
-           'Version',
-           'Epoch',
-           'URL',
-           'Group',
-           'BuildArch',
-           'Source',
-           'Patch',
-           'AutoReq',
-           'AutoProv',
-           'AutoReqProv',
-           'Autoreq',
-           'Autoprov',
-           'Autoreqprov',
-           'Prefix',
-           'License')
-REQUIRES = ('BuildRequires',
-            'Requires',
-            'Requires(post)',
-            'Requires(postun)',
-            'Requires(posttrans)',
-            'Requires(pre)',
-            'PreRequires', 'PreReq', 'Prereq',  # alias in old spec
-            'Requires(preun)',
-            'Requires(pretrans)',
-            'Provides',
-            'Obsoletes',
-            'Conflicts',
-            'BuildConflicts',
-            'FilesJudgement',
-            )
-SKIPS = ('BuildRoot',)
-
-ORDER_ENTRIES = ['Macros',
-                 'Name',
-                 'Summary',
-                 'Version',
-                 'Release',
-                 'Epoch',
-                 'Group',
-                 'License',
-                 'URL',
-                 'SCM',
-                 'Sources',
-                 'ExtraSources',
-                 'Patches',
-                 'Description',
-                 'Define',
-                 'Undefine',
-                 'Global',
-                 'Requires',
-                 'RequiresPre',
-                 'RequiresPreUn',
-                 'RequiresPreTrans',
-                 'RequiresPost',
-                 'RequiresPostUn',
-                 'RequiresPostTrans',
-                 'BuildRequires',
-                 'Provides',
-                 'Obsoletes',
-                 'Conflicts',
-                 'ConfigOptions',
-                 'Builder',
-                 'BuildArch',
-                 'ExclusiveArch',
-                 'LocaleName',
-                 'LocaleOptions',
-                 'Files',
-                 'FilesInput',
-                 'SupportOtherDistros',
-                 'UseAsNeeded',
-                 'NoAutoReq',
-                 'NoAutoProv',
-                 'NoAutoReqProv',
-                 'ExclusiveArch',
-                 'ExcludeArch',
-                 'Recommends',
-                 'Supplements',
-                 'Prefix',
-                 'OrderWithRequires',
-                 'Suggests',
-                 'IncludeSource',
-                 'FilesJudgement'
-                 ]
-# must have keys for 'main' package
-MUSTHAVE = {'Release': '1',
-            }
 
 # state definition of parser
 (
@@ -118,8 +12,6 @@ MUSTHAVE = {'Release': '1',
     ST_INLINE,
     ST_SUBPKG,
 ) = list(range(3))
-
-TAB = '    '  # 4space, instead of Tab
 
 
 class SpecError(Exception):
@@ -134,10 +26,6 @@ class SpecError(Exception):
 
 
 class SpecFormatError(SpecError):
-    pass
-
-
-class SpecUnknowLineError(SpecError):
     pass
 
 
@@ -173,50 +61,12 @@ class SpectacleDumper(object):
 
     """
 
-    spec_extra_keys = {
-        # key -> ( nkey, nsubkey)
-        #                ^^ None means to use <pkg_name>
-        'Files': ('files', None),
-        'macros': ('macros', None),
-        'setup': ('setup', None),
-        'define': ('define', None),
-        'undefine': ('undefine', None),
-        'global': ('global', None),
-        'PostMakeInstallExtras': ('install', 'post'),
-        'PreMakeInstallExtras': ('install', 'pre'),
-        'PostMakeExtras': ('build', 'post'),
-        'PreMakeExtras': ('build', 'pre'),
-    }
-
-    def __init__(self, format='yaml', opath=None, shell_functions=None, files=None):
-        self.format = format
+    def __init__(self, file_type='yaml', opath=None, shell_functions=None, files=None):
+        self.format = file_type
         self.opath = opath
         self.shell_functions = shell_functions
         self.files = files
         self.spec_extra = {}
-
-    def _esc_value(self, val):
-        """
-        加载%标识符
-        :param val: 字段
-        :return:
-        """
-        # ESC for leading '%', for yaml syntax
-        if val.startswith('%') or \
-                val.startswith('*') or \
-                ": " in val or \
-                ":\t" in val or \
-                val.endswith(':'):
-            quote_char = ""
-            extra_escape = "\\" if val.endswith("\\") else ""
-            if not ((val.startswith("\"") and val.endswith("\"")) or (val.startswith("\'") and val.endswith("\'"))):
-                if '\"' in val and "\'" not in val:
-                    quote_char = '\''
-                elif '\"' not in val and "\'" in val:
-                    quote_char = '\"'
-            return quote_char + val + extra_escape + quote_char
-        else:
-            return val
 
     def _dump_yaml(self, data, fp, indent='', cur_pkg='main', f_phase=None, f_runtime_phase=None, f_files=None,
                    script_data: dict = None, files_data: dict = None):
@@ -271,8 +121,8 @@ class SpectacleDumper(object):
                         continue
 
                     try:
-                        nkey = self.spec_extra_keys[extra_key][0]
-                        nsubkey = self.spec_extra_keys[extra_key][1]
+                        nkey = SPEC_EXTRA_KEYS[extra_key][0]
+                        nsubkey = SPEC_EXTRA_KEYS[extra_key][1]
                         if not nsubkey:
                             nsubkey = cur_pkg
                     except KeyError:
@@ -305,7 +155,7 @@ class SpectacleDumper(object):
                         self._dump_yaml(item, fp, cur_indent + TAB, cur_pkg=item[0][1])
                         fp.write(os.linesep)
                     else:
-                        fp.write(cur_indent + TAB + ("- %s" + os.linesep) % (self._esc_value(item)))
+                        fp.write(cur_indent + TAB + ("- %s" + os.linesep) % (esc_value(item)))
             elif isinstance(value, bool):
                 if value:
                     fp.write(cur_indent + ("%s: yes" + os.linesep) % (key))
@@ -335,9 +185,9 @@ class SpectacleDumper(object):
                                         fp.write(cur_indent + TAB * 2 + sub_item[0] + ":" + os.linesep)
                                         for line in sub_item[1]:
                                             fp.write(
-                                                cur_indent + TAB * 3 + ("- %s" + os.linesep) % self._esc_value(line))
+                                                cur_indent + TAB * 3 + ("- %s" + os.linesep) % esc_value(line))
                                 else:
-                                    fp.write(cur_indent + TAB * 2 + ("- %s" + os.linesep) % (self._esc_value(sub_item)))
+                                    fp.write(cur_indent + TAB * 2 + ("- %s" + os.linesep) % (esc_value(sub_item)))
                         elif isinstance(dict_value, str):
                             if dict_key.isdigit():
                                 dict_key = "\"" + dict_key + "\""
@@ -347,9 +197,9 @@ class SpectacleDumper(object):
 
                 if len(lines_to_write) == 1:
                     try:
-                        fp.write(cur_indent + ("%s: %s" + os.linesep) % (key, self._esc_value(value)))
+                        fp.write(cur_indent + ("%s: %s" + os.linesep) % (key, esc_value(value)))
                     except UnicodeEncodeError:
-                        fp.write(cur_indent + ("%s: %s" + os.linesep) % (key, self._esc_value(value).encode('utf8')))
+                        fp.write(cur_indent + ("%s: %s" + os.linesep) % (key, esc_value(value).encode('utf8')))
 
                 elif len(lines_to_write) == 0:
                     # not exist until now
@@ -385,15 +235,11 @@ class SpectacleDumper(object):
                 files_file = open("files.yaml", "w")
             except IOError:
                 logger.warn('Cannot open file %s for writing' % self.opath)
-                # print out
-                pass
         if self.opath:
             try:
                 fp = open(self.opath, 'w')
             except IOError:
                 logger.warn('Cannot open file %s for writing' % self.opath)
-                # print out
-                pass
 
         try:
             if file_type == 'yaml':
@@ -429,33 +275,6 @@ class Convertor(object):
             cv_table = {}
         self.cv_table.update(cv_table)
 
-    def _translate_keys(self, _dict):
-        """
-        将AutoReq/AutoProv的值转换成布尔类型
-        :param _dict: 传入的字典
-        :return:
-        """
-        # translate AutoReq/AutoProv to spectacle boolean keys
-        autoreq = autoprov = None
-        if 'AutoReq' in _dict:
-            autoreq = _dict['AutoReq']
-            del _dict['AutoReq']
-        if 'AutoProv' in _dict:
-            autoprov = _dict['AutoProv']
-            del _dict['AutoProv']
-        if 'AutoReqProv' in _dict:
-            if _dict['AutoReqProv'] == '0':
-                autoreq = autoprov = '0'
-            del _dict['AutoReqProv']
-
-        if autoreq == '0' and autoprov == '0':
-            _dict['NoAutoReqProv'] = 'yes'
-        elif autoreq == '0':
-            _dict['NoAutoReq'] = 'yes'
-        elif autoprov == '0':
-            _dict['NoAutoProv'] = 'yes'
-        # else: ignore
-
     def _replace_keys(self, _dict):
         """
         源数据中根据..去掉不需要的键值对
@@ -469,46 +288,6 @@ class Convertor(object):
                 _dict[v] = _dict[k]
                 del _dict[k]
 
-    def _remove_duplicate(self, _dict):
-        """
-        配置去重
-        :param _dict:字典类型输入
-        :return:
-        """
-        dup = '--disable-static'
-        if 'ConfigOptions' in _dict and dup in _dict['ConfigOptions']:
-            _dict['ConfigOptions'].remove(dup)
-            if not _dict['ConfigOptions']:
-                del _dict['ConfigOptions']
-        if 'FilesJudgement' in _dict and len(_dict['FilesJudgement']) == 0:
-            del _dict['FilesJudgement']
-        if "Description" in _dict.keys() and _dict["Description"].startswith("`"):
-            _dict["Description"] = "_" + _dict["Description"]
-
-        # check duplicate requires for base package
-        if "SubPackages" in _dict:
-            if 'Epoch' in _dict:
-                autodep = "%{name} = %{epoch}:%{version}-%{release}"
-            else:
-                autodep = "%{name} = %{version}-%{release}"
-
-            for sp in _dict["SubPackages"]:
-                if 'Requires' in sp and autodep in sp['Requires']:
-                    sp['Requires'].remove(autodep)
-                    if not sp['Requires']:
-                        del sp['Requires']
-                if 'FilesJudgement' in sp and len(sp['FilesJudgement']) == 0:
-                    del sp['FilesJudgement']
-                if "Description" in sp.keys() and sp["Description"].startswith("`"):
-                    sp["Description"] = "_" + sp["Description"]
-
-        # check duplicate '%defattr' for files list
-        if 'extra' in _dict and 'Files' in _dict['extra']:
-            try:
-                _dict['extra']['Files'].remove('%defattr(-,root,root,-)')
-            except ValueError:
-                pass
-
     def convert(self, _dict, need_break=True):
         """
         整理不必要和额外的数据
@@ -517,8 +296,8 @@ class Convertor(object):
         :return:
         """
         self._replace_keys(_dict)
-        self._translate_keys(_dict)
-        self._remove_duplicate(_dict)
+        translate_keys(_dict)
+        _remove_duplicate(_dict)
 
         items = []
         package_name = ""
@@ -626,36 +405,7 @@ class SpecConvertor(Convertor):
     """ Convertor for SpecBuild ini files """
 
     def __init__(self):
-        sb_cv_table = {
-            'BuildRequires': 'BuildRequires',
-            'description': 'Description',
-            'Requires(post)': 'RequiresPost',
-            'Requires(postun)': 'RequiresPostUn',
-            'Requires(posttrans)': 'RequiresPostTrans',
-            'Requires(pre)': 'RequiresPre',
-            'PreRequires': 'RequiresPre',
-            'PreReq': 'RequiresPre',
-            'Prereq': 'RequiresPre',
-            'Requires(preun)': 'RequiresPreUn',
-            'Requires(pretrans)': 'RequiresPreTrans',
-            'Url': 'URL',
-            'install': 'Install',
-            'build': 'Build',
-            'files': 'Files',
-            'clean': 'Clean',
-            'pre': 'Pre',
-            'preun': 'Preun',
-            'post': 'Post',
-            'postun': 'Postun',
-            'pretrans': 'Pretrans',
-            'posttrans': 'Posttrans',
-            'check': 'Check',
-            'prep': 'Prep',
-            'include': 'IncludeSource',
-            'Autoreq': 'AutoReq',
-            'Autoprov': 'AutoProv',
-            'Autoreqprov': 'AutoReqProv',
-        }
+        sb_cv_table = KEY_SYS
         Convertor.__init__(self, sb_cv_table)
 
 
@@ -690,7 +440,7 @@ class YamlWriter:
         convertor = SpecConvertor()
 
         """Dump them to spectacle file"""
-        dumper = SpectacleDumper(format='yaml', opath=out_fpath, shell_functions=spec_parser.shell_functions,
+        dumper = SpectacleDumper(file_type='yaml', opath=out_fpath, shell_functions=spec_parser.shell_functions,
                                  files=spec_parser.files)
         newspec_fpath = dumper.dump(convertor.convert(spec_parser.cooked_items()))
 
@@ -739,10 +489,7 @@ class SpecParser(object):
                 ls.remove(this_files_input)
 
         if '-p' in ls:
-            cmd_run_tool = ls[ls.index('-p') + 1]
             create = True
-        else:
-            cmd_run_tool = ""
         if '-n' in ls:
             try:
                 origin_name = subpkg
@@ -803,8 +550,6 @@ class SpecParser(object):
                 self.items['SubPackages'][subpkg]['AsWholeName'] = True
         if filesinput != '':
             self.items['SubPackages'][subpkg]['FilesInput'] = filesinput
-        if cmd_run_tool != '':
-            self.items['SubPackages'][subpkg]
         # switch
         self.cur_pkg = subpkg
         return self.items['SubPackages'][subpkg]
@@ -958,89 +703,6 @@ class SpecParser(object):
         content = kwargs.get("content")
         items['Description'] = content.strip()
 
-    def add_special_keywords(self, _items, line, keyword):
-        if keyword.lower() in line:
-            line = line.replace("%" + keyword.lower(), "").strip()
-            if keyword in _items:
-                _items[keyword].append(line)
-            else:
-                _items[keyword] = [line]
-
-    def parse_case_spell(self, word):
-        """
-        解析关键字的拼写问题，目的是兼容spec大小写不敏感的特性
-        :param word:关键字
-        :return:
-        """
-        if not word:
-            return False, word
-        temp_keys_list = []
-        for _key in self.items.keys():
-            temp_keys_list.append(_key)
-        for _key1 in SINGLES:
-            temp_keys_list.append(_key1)
-        for _key2 in REQUIRES:
-            temp_keys_list.append(_key2)
-        for _key3 in ORDER_ENTRIES:
-            temp_keys_list.append(_key3)
-        for _key4 in SKIPS:
-            temp_keys_list.append(_key4)
-        for temp_key in temp_keys_list:
-            if word.lower() == temp_key.lower():
-                word = temp_key
-                return True, word
-        return False, word
-
-    def find_quotes_from_words(self, words):
-        """
-        从字段中找出引号，做特殊处理，是yaml不会识别引号为特殊字符串
-        :param words:
-        :return:
-        """
-        value = words
-        if "'" in words.strip("'") and '"' not in words.strip("'"):
-            value = '"' + words + '"'
-        elif '"' in words.strip('"') and "'" not in words.strip('"'):
-            value = "'" + words + "'"
-        return value
-
-    def update_keywords(self, keywords, value=""):
-        """
-        更新关键字（只有sources和patches）
-        :param keywords:
-        :param value:
-        :return:
-        """
-        if keywords.lower().startswith("source"):
-            keywords = 'Sources'
-        elif keywords.lower().startswith("patch"):
-            num = keywords[5:]
-            if num.startswith("0") and len(num) > 1:
-                num = re.sub("^0*", "", num)
-                keywords = keywords[0:5] + num
-            keywords = 'Patches'
-        return keywords
-
-    def resolve_special_macros_config(self, line):
-        """
-        处理特殊的宏配置
-        :param line:
-        :return:
-        """
-        if line == "%package_help":
-            if "SubPackages" in self.items:
-                self.items["SubPackages"]["help"] = {"Summary": ["Documents for %{name}"],
-                                                     "BuildArch": ["noarch"],
-                                                     "Requires": ["man info"],
-                                                     "Description":
-                                                         "Man pages and other related documents for %{name}."}
-            else:
-                self.items["SubPackages"] = {"help": {"Summary": ["Documents for %{name}"],
-                                                      "BuildArch": ["noarch"],
-                                                      "Requires": ["man info"],
-                                                      "Description":
-                                                          "Man pages and other related documents for %{name}."}}
-
     def modify_source_number(self, line):
         """
         修改%{SOURCE}序号，与新的Source对齐
@@ -1112,42 +774,6 @@ class SpecParser(object):
                 line = line.replace(p, val)
         return line
 
-    def resolve_inner_quotes(self, _line):
-        """"""
-        can_trans = not ((_line.startswith("\"") and _line.endswith("\"")) or (
-                _line.startswith("\'") and _line.endswith("\'")))
-        if can_trans and ("\"" in _line and "\\\"" not in _line):
-            _line = _line.replace("\"", "\\\"")
-        return _line
-
-    def revise_macros(self):
-        macros = self.macros
-        for i in range(len(macros)):
-            line = macros[i]
-            if re.search(r"\\\\[0-9|a-z|A-Z|.|(|)|$]", line) is not None:
-                exist_special_words = re.findall(r"\\\\[0-9|a-z|A-Z|.|(|)|$]", line)
-                for a_special_words in exist_special_words:
-                    line = line.replace(a_special_words, "\\\\" + a_special_words)
-            if re.search(r"\\[0-9|a-z|A-Z|.|(|)|$]", line) is not None:
-                exist_special_words = re.findall(r"\\[0-9|a-z|A-Z|.|(|)|$]", line)
-                for a_special_words in exist_special_words:
-                    start = 0
-                    while line.find(a_special_words, start, len(line)) != -1:
-                        sub_index = line.find(a_special_words, start, len(line))
-                        if sub_index > 0 and line[sub_index-1] == "\\":
-                            start = sub_index + 1
-                            continue
-                        line_list = list(line)
-                        line_list.insert(sub_index, "\\")
-                        line = "".join(line_list)
-                        start = line.find(a_special_words, start, len(line)) + 1
-            if not line.startswith("%define") and re.search("%\{version\}", line) or re.search("%\{name\}", line):
-                if 'Version' in self.items:
-                    line = re.sub("%\{version\}", self.items['Version'][0], line)
-                if 'Name' in self.items:
-                    line = re.sub("%\{name\}", self.items['Name'][0], line)
-            macros[i] = line
-
     def read(self, filename):
         """
         读取所有的文件内容和关键字并保存数据
@@ -1160,7 +786,6 @@ class SpecParser(object):
         cond_endif = re.compile('^%endif.*')
         directive = re.compile('^([\w()]+)[ \t]*:[ \t]*(.*)')
         header_re = re.compile('^%(' + '|'.join(HEADERS) + ')\s*(.*)')
-        macros_re = re.compile('^%.*')
         single_re = re.compile('^(' + '|'.join(SINGLES) + ')\s*(.*)')
         require_re = re.compile('^(' + '|'.join(REQUIRES) + ')\s*(.*)')
 
@@ -1232,7 +857,7 @@ class SpecParser(object):
                     line = line.rstrip()
                 need_left_strip = True
             if line in MACROS_KEYWORDS:
-                self.resolve_special_macros_config(line)
+                resolve_special_macros_config(line, self.items)
                 if line == MACROS_KEYWORDS[0]:
                     in_package_help = True
                     subpackages_model = True
@@ -1333,7 +958,7 @@ class SpecParser(object):
             if not available_key:
                 if ":" in line:
                     first_key = line.split(":")[0].strip()
-                    is_available, real_key = self.parse_case_spell(first_key)
+                    is_available, real_key = parse_case_spell(first_key, self.items)
                     if not is_available:
                         temp_line = line.replace(line.split(":")[0], line.split(":")[0].capitalize().strip())
                         available_key = header_re.match(temp_line) or single_re.match(
@@ -1368,7 +993,7 @@ class SpecParser(object):
                 elif single_re.match(line):
                     if single_re.match(line).group(1) not in items:
                         state = ST_MAIN
-                        line = self.resolve_inner_quotes(line)
+                        line = resolve_inner_quotes(line)
                 elif require_re.match(line):
                     if require_re.match(line).group(1) not in items:
                         state = ST_MAIN
@@ -1382,7 +1007,7 @@ class SpecParser(object):
                         line = line.replace(header + " ", header + os.linesep)
                     if cur_block == "package":
                         # change model from INLINE into subpackages
-                        state == ST_MAIN
+                        state = ST_MAIN
                         subpackages_model = True
                     elif cur_block.startswith("files"):
                         header = cur_block = "files"
@@ -1434,7 +1059,7 @@ class SpecParser(object):
                     keywords_type = "single"
                     line_suffix = get_line_suffix()
                     cur_block = single_re.match(line).group(0)
-                    line = self.resolve_inner_quotes(line)
+                    line = resolve_inner_quotes(line)
                     items[cur_block] = line + os.linesep + line_suffix
                     continue
                 elif require_re.match(line) and require_re.match(line).group(1) not in items:
@@ -1592,17 +1217,17 @@ class SpecParser(object):
                         self.patches_num_dict[new_key] = new_key[0:5] + str(patch_number)
                         patch_number += 1
                     val = directive_match.group(2)
-                    key = self.update_keywords(key, val)
-                    case_spell_result = self.parse_case_spell(key)
+                    key = update_keywords(key, val)
+                    case_spell_result = parse_case_spell(key, self.items)
                     key = key.replace("requires", "Requires") if case_spell_result else key
                     if key not in SINGLES and key not in REQUIRES and key not in ORDER_ENTRIES and key not in SKIPS:
-                        may_parse = not (self.parse_case_spell(key))
+                        may_parse = not (parse_case_spell(key, self.items))
                         if not may_parse:
                             key = key.capitalize()
 
                     # special case for Source and Patch
-                    key = self.update_keywords(key)
-                    val = self.find_quotes_from_words(val + line_suffix)
+                    key = update_keywords(key)
+                    val = find_quotes_from_words(val + line_suffix)
                     if key not in items:
                         items[key] = [val]
                     else:
@@ -1676,7 +1301,7 @@ class SpecParser(object):
                             cur_block = header
                             if cur_block not in items:
                                 items[cur_block] = line + os.linesep
-        self.revise_macros()
+        revise_macros(self.macros, self.items)
         self.collation_original_data(self.items, filename)
 
     def collation_original_data(self, original_data: dict, file_name: str):
@@ -1700,12 +1325,12 @@ class SpecParser(object):
         target_data = copy.deepcopy(original_data)
         if "Version" in original_data.keys() and original_data["Version"]:
             if type(original_data["Version"]) == str and original_data["Version"].startswith("%"):
-                target_data = self.add_quotation_from_member("Version", target_items=target_data)
+                target_data = add_quotation_from_member("Version", self.items, target_items=target_data)
             elif type(original_data["Version"]) == list and original_data["Version"][0].startswith("%"):
-                target_data = self.add_quotation_from_member("Version", target_items=target_data)
+                target_data = add_quotation_from_member("Version", self.items, target_items=target_data)
         for _key, _value in original_data.items():
             if _key in NEED_QUOTATION_KEYWORDS:
-                target_data = self.add_quotation_from_member(_key, target_items=target_data)
+                target_data = add_quotation_from_member(_key, self.items, target_items=target_data)
             if _key in SHELL_KEYWORDS:
                 if _key == "prep" and _value == "%prep" + os.linesep + "%autosetup -n %{name}-%{version} -p1":
                     continue
@@ -1743,7 +1368,7 @@ class SpecParser(object):
                             sub_files_judgement += " rpmWhen " + " rpmWhen ".join(sub_member_dict["FilesJudgement"])
                         del target_data["SubPackages"][sub_member_name]["FilesJudgement"]
                     if "%if" in sub_member_name:
-                        target_data = self.clear_sub_extra_judge(sub_member_name, target_items=target_data)
+                        target_data = clear_sub_extra_judge(sub_member_name, self.items, target_items=target_data)
                     sub_file_name = target_data["Name"][0] + "-" + sub_member_name.split("%if")[0].strip() \
                         if not whole_name else sub_member_name.strip()
                     for member_key, member_value in sub_member_dict.items():
@@ -1753,8 +1378,8 @@ class SpecParser(object):
                         if member_key == "Summary" and len(member_value) == 1 and member_value[0].startswith("`"):
                             target_data["SubPackages"][sub_member_name][member_key] = ["_" + member_value[0]]
                         if member_key in NEED_QUOTATION_KEYWORDS:
-                            target_data = self.add_quotation_from_member(member_key, sub_name=sub_member_name,
-                                                                         target_items=target_data)
+                            target_data = add_quotation_from_member(member_key, self.items,
+                                                                    sub_name=sub_member_name, target_items=target_data)
                         if member_key in SHELL_KEYWORDS:
                             self.divide_into_shell(member_key, target_data["SubPackages"][
                                 sub_member_name][member_key], sub_name=sub_member_name.split()[0].strip(),
@@ -1770,43 +1395,6 @@ class SpecParser(object):
                         del target_data["SubPackages"][sub_member_name]
                         target_data["SubPackages"][sub_member_name.replace("%if", "rpmWhen %if")] = temp_sub_dict
         self.items = target_data
-
-    def add_quotation_from_member(self, keywords, sub_name=None, target_items=None):
-        """
-        list类型的子项统一增加引号
-        :param keywords:
-        :param sub_name:
-        :param target_items:
-        :return:
-        """
-        if target_items is None:
-            target_items = self.items
-        if sub_name is not None:
-            if keywords in target_items["SubPackages"][sub_name].keys() and type(
-                    target_items["SubPackages"][sub_name][keywords]) == list:
-                for index0, son_item in enumerate(target_items["SubPackages"][sub_name][keywords]):
-                    if type(son_item) != str:
-                        continue
-                    extra_escape = "\\" if son_item.endswith("\\") else ""
-                    if "\"" in son_item and "\'" in son_item:
-                        continue
-                    elif "\"" not in son_item:
-                        target_items["SubPackages"][sub_name][keywords][index0] = "\"" + son_item + extra_escape + "\""
-                    elif "\'" not in son_item:
-                        target_items["SubPackages"][sub_name][keywords][index0] = "\'" + son_item + extra_escape + "\'"
-        else:
-            if keywords in target_items.keys() and type(target_items[keywords]) == list:
-                for index1, son_item in enumerate(target_items[keywords]):
-                    if type(son_item) != str:
-                        continue
-                    extra_escape = "\\" if son_item.endswith("\\") else ""
-                    if "\"" in son_item and "\'" in son_item:
-                        continue
-                    elif "\"" not in son_item:
-                        target_items[keywords][index1] = "\"" + son_item + extra_escape + "\""
-                    elif "\'" not in son_item:
-                        target_items[keywords][index1] = "\'" + son_item + extra_escape + "\'"
-        return target_items
 
     def divide_into_shell(self, keywords, value: str, sub_name=None, whole=False, main_name=None):
         """
@@ -1934,52 +1522,3 @@ class SpecParser(object):
             ck_items['extra']['macros'] = self.macros
 
         return ck_items
-
-    def clear_sub_extra_judge(self, sub_name, target_items=None):
-        """
-        清理子包多余的判断语句
-        :param sub_name:
-        :param target_items:
-        :return:
-        """
-        if target_items is None:
-            target_items = self.items
-        if "%if" in sub_name:
-            judge_words = sub_name.replace(sub_name.split("%if")[0], "")
-            judge_words_values = judge_words.split("%if")
-            judge_words_list = map(lambda x: ("%if" + x).strip(), judge_words_values)
-            judge_words_values.remove("")
-            judge_count = len(judge_words_values)
-            for sub_item_key, sub_item_value in target_items["SubPackages"][sub_name].items():
-                if type(sub_item_value) is str:
-                    if judge_words in sub_item_value:
-                        target_items["SubPackages"][sub_name][sub_item_key] = sub_item_value.replace(judge_words, "")
-                elif type(sub_item_value) is list and sub_item_value:
-                    if sub_item_key == "FilesJudgement" and judge_count:
-                        if judge_count == 1 and judge_words in sub_item_value:
-                            sub_item_value.remove(judge_words)
-                        else:
-                            for single_judge_words in judge_words_list:
-                                if single_judge_words in sub_item_value:
-                                    sub_item_value.remove(single_judge_words)
-                    for index1, member_item_value in enumerate(sub_item_value):
-                        if judge_words in member_item_value:
-                            target_items["SubPackages"][sub_name][sub_item_key][index1] = member_item_value.replace(judge_words, "")
-        return target_items
-
-
-def lower_first_word(words: str):
-    if words == "Patches":
-        return "patchset"
-    if words == "Sources":
-        return "source"
-    if words == "Macros":
-        return "rpmMacros"
-    if words.upper() == "URL":
-        return "meta.homepage"
-    if words in ["Description", "License", "Summary"]:
-        return "meta." + words[0].lower() + words[1:]
-    if len(words) <= 1:
-        return words.lower()
-    else:
-        return words[0].lower() + words[1:]
