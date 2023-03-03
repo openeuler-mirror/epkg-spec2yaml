@@ -297,7 +297,7 @@ class Convertor(object):
         """
         self._replace_keys(_dict)
         translate_keys(_dict)
-        _remove_duplicate(_dict)
+        remove_duplicate(_dict)
 
         items = []
         package_name = ""

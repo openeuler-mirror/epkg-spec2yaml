@@ -29,9 +29,6 @@ setup(
         'configobj==5.0.6',
     ],
     data_files=[
-        ("", ["openEulerTransition/configure/template/spec.tmpl",
-              "openEulerTransition/configure/date/GROUPS",
-              "openEulerTransition/configure/date/pkgconfig-provides.csv",
-              "openEulerTransition/../openEulerTransitionMain.py"]),
+        ("", ["openEulerTransition/../openEulerTransitionMain.py"]),
     ],
 )

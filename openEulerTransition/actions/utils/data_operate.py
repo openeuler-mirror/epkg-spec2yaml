@@ -256,7 +256,7 @@ def resolve_special_macros_config(line, source_items: dict):
                                                         "Man pages and other related documents for %{name}."}}
 
 
-def _remove_duplicate(_dict):
+def remove_duplicate(_dict):
     """
     配置去重
     :param _dict:字典类型输入
