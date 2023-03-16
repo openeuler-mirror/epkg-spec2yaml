@@ -1,5 +1,0 @@
-subpackage的key存在if:
-    - bind
-    - cracklib
-    - glib2
-    - kernel
