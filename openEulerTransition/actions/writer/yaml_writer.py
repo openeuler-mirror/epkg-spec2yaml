@@ -90,13 +90,13 @@ class SpectacleDumper(object):
 
         first_line = True
         if (f_phase or f_runtime_phase) and script_data:
-            if f_phase:
+            if f_phase != sys.stdout:
                 f_phase.write("#!/usr/bash\n\n")
                 for function_name, function_text in script_data.items():
                     if function_name in ["install", "prep", "build", "clean", "check"]:
                         function_text = add_tab_in_lines(function_text)
                         f_phase.write(function_name + "() {" + os.linesep + function_text + "}\n\n")
-            if f_runtime_phase:
+            if f_runtime_phase != sys.stdout:
                 f_runtime_phase.write("#!/usr/bash\n\n")
                 for function_name, function_text in script_data.items():
                     if function_name not in ["install", "prep", "build", "clean", "check"]:
@@ -1143,10 +1143,12 @@ class SpecParser(object):
                         if header not in items:
                             items[header] = ""
                         if re.match(r"%patch\d*", line) is not None or re.search("%\{PATCH\d*\}", line) is not None:
-                            line = self.modify_patch_serial_number(line)
+                            if not line.startswith("#"):
+                                line = self.modify_patch_serial_number(line)
                         if re.search(r"%\{SOURCE\d*\}", line) is not None or re.search("%SOURCE\d*", line) is not None \
                                 or re.search("%\{S:\d*\}", line) is not None:
-                            line = self.modify_source_number(line)
+                            if not line.startswith("#"):
+                                line = self.modify_source_number(line)
                         if header == "prep" and line.startswith("%setup"):
                             if re.search("-b\d+", line):
                                 line = line.replace("-b", "-b ")
