@@ -319,3 +319,22 @@ def esc_value(val):
         return quote_char + val + extra_escape + quote_char
     else:
         return val
+
+
+def add_tab_in_lines(lines, tab=" "*4, tab_left=False):
+    """
+
+    :param lines:
+    :param tab:
+    :param tab_left:
+    :return:
+    """
+    result = ""
+    line_list = lines.split(os.linesep)
+    if tab_left:
+        for line in line_list:
+            result += line.replace(tab_left, "", 1) + os.linesep
+    else:
+        for line in line_list:
+            result += tab + line + os.linesep
+    return result

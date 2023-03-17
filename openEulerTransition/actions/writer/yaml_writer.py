@@ -94,18 +94,21 @@ class SpectacleDumper(object):
                 f_phase.write("#!/usr/bash\n\n")
                 for function_name, function_text in script_data.items():
                     if function_name in ["install", "prep", "build", "clean", "check"]:
+                        function_text = add_tab_in_lines(function_text)
                         f_phase.write(function_name + "() {" + os.linesep + function_text + "}\n\n")
             if f_runtime_phase:
                 f_runtime_phase.write("#!/usr/bash\n\n")
                 for function_name, function_text in script_data.items():
                     if function_name not in ["install", "prep", "build", "clean", "check"]:
+                        function_text = add_tab_in_lines(function_text)
                         f_runtime_phase.write(function_name + "() {" + os.linesep + function_text + "}\n\n")
         if f_files and files_data:
             for file_member_key, file_member_value in files_data.items():
                 f_files.write(file_member_key + ": |" + os.linesep)
                 temp_text_list = file_member_value.split(os.linesep)
                 for line in temp_text_list[1:]:
-                    f_files.write(TAB + line + os.linesep)
+                    if line != "":
+                        f_files.write(TAB + line + os.linesep)
         for key, value in data:
             if not first_line and indent:
                 cur_indent = indent + '  '
@@ -189,7 +192,7 @@ class SpectacleDumper(object):
                                 else:
                                     fp.write(cur_indent + TAB * 2 + ("- %s" + os.linesep) % (esc_value(sub_item)))
                         elif isinstance(dict_value, str):
-                            if dict_key.isdigit():
+                            if dict_key.isdigit() and dict_key not in ["source", "patchset"]:
                                 dict_key = "\"" + dict_key + "\""
                             fp.write(cur_indent + TAB + ("%s: %s" + os.linesep) % (dict_key, dict_value))
             else:
@@ -231,7 +234,10 @@ class SpectacleDumper(object):
             try:
                 # fs = open(self.opath.replace(".yaml", ".sh"), "w")
                 fs_phase = open("phase.sh", "w")
-                fs_runtime = open("runtimePhase.sh", "w")
+                for function_name in self.shell_functions.keys():
+                    if function_name not in ["install", "prep", "build", "clean", "check"]:
+                        fs_runtime = open("runtimePhase.sh", "w")
+                        break
                 files_file = open("files.yaml", "w")
             except IOError:
                 logger.warn('Cannot open file %s for writing' % self.opath)
@@ -780,7 +786,7 @@ class SpecParser(object):
         :param filename:
         :return:
         """
-        comment = re.compile('^#.*')
+        # comment = re.compile('^#.*')
         cond_if = re.compile('^%if.*')
         cond_else = re.compile('^%else.*')
         cond_endif = re.compile('^%endif.*')
@@ -862,10 +868,10 @@ class SpecParser(object):
                     in_package_help = True
                     subpackages_model = True
                 continue
-            if comment.match(line):
-                # skip comment line and empty line
-                if len(_if_cond_part) == 0:
-                    continue
+            # if comment.match(line):
+            #     # skip comment line and empty line
+            #     if len(_if_cond_part) == 0:
+            #         continue
             elif state == ST_MAIN and not line:
                 continue
             if header == "description" and line == "%package_description":
@@ -1214,7 +1220,7 @@ class SpecParser(object):
                         if num == "":
                             num = "0"
                         new_key = patch + num
-                        self.patches_num_dict[new_key] = new_key[0:5] + str(patch_number)
+                        self.patches_num_dict[new_key] = new_key
                         patch_number += 1
                     val = directive_match.group(2)
                     key = update_keywords(key, val)

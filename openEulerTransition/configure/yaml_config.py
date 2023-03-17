@@ -6,7 +6,7 @@ YAML_LINES_KEYWORDS = ["meta.description"]
 NEED_QUOTATION_KEYWORDS = ['Provides', 'Obsoletes', 'BuildRequires', 'Requires', 'Requires(postun)', 'BuildRoot',
                            'Requires(pre)', 'PreRequires', 'PreReq', 'Prereq', 'Requires(preun)', 'Provides',
                            'Obsoletes', 'Conflicts', 'BuildConflicts', 'ExclusiveArch', 'Macros', 'OrderWithRequires',
-                           'Requires(post)', 'Requires(posttrans)', ]
+                           'Requires(post)', 'Requires(posttrans)', 'Version']
 MAY_QUOTATION_KEYWORDS = ['Version', 'Sources', 'Description', 'Summary', 'Patches', 'Files', 'FilesInput',
                           'Epoch', 'Release', 'License', 'Recommends', 'Suggests', 'ExcludeArch', "Name",
                           "Supplements", 'URL', 'Prefix', 'IncludeSource', "FilesJudgement"]
