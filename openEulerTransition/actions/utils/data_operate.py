@@ -200,7 +200,7 @@ def translate_keys(_dict):
         _dict['NoAutoProv'] = 'yes'
 
 
-def revise_macros(macros: list, source_dict: dict):
+def revise_macros(macros: str, source_dict: dict):
     """
     从源数据中修改宏
     :param macros: 宏
@@ -338,3 +338,20 @@ def add_tab_in_lines(lines, tab=" "*4, tab_left=False):
         for line in line_list:
             result += tab + line + os.linesep
     return result
+
+
+def add_string_to_dict(dict1, this_key, line, turn_line=True):
+    """
+    向字典中加字符串
+    :param dict1:
+    :param this_key:
+    :param line:
+    :param turn_line:
+    :return:
+    """
+    suffix = os.linesep if turn_line else ""
+    if this_key in dict1:
+        dict1[this_key] += line + suffix
+    else:
+        dict1[this_key] = line + suffix
+    return dict1
