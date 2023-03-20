@@ -141,10 +141,11 @@ class SpectacleDumper(object):
 
                     # handle macros
                     if extra_key == "macros":
-                        fp.write(cur_indent + "rpmMacros:" + os.linesep)
+                        fp.write(cur_indent + "rpmMacros: |" + os.linesep)
                         for item in extra_val:
                             # fp.write(cur_indent + TAB + "%s\n" % item)
-                            fp.write(cur_indent + TAB + "- \"%s\"\n" % item.replace('\"', '\\"'))
+                            item = add_tab_in_lines(item)
+                            fp.write(cur_indent + "%s\n" % item.replace('\"', '\\"'))
                         fp.write(os.linesep)
                 continue
 
@@ -192,8 +193,8 @@ class SpectacleDumper(object):
                                 else:
                                     fp.write(cur_indent + TAB * 2 + ("- %s" + os.linesep) % (esc_value(sub_item)))
                         elif isinstance(dict_value, str):
-                            if dict_key.isdigit() and dict_key not in ["source", "patchset"]:
-                                dict_key = "\"" + dict_key + "\""
+                            # if dict_key.isdigit() and dict_key not in ["source", "patchset"]:
+                            #     dict_key = "\"" + dict_key + "\""
                             fp.write(cur_indent + TAB + ("%s: %s" + os.linesep) % (dict_key, dict_value))
             else:
                 lines_to_write = value.splitlines()
@@ -463,7 +464,7 @@ class SpecParser(object):
         self.items = {}
         self.table = {}
         self.cur_pkg = 'main'
-        self.macros = []
+        self.macros = ""
         self.shell_functions = {}
         self.keywords_if_config = {}
         self.sources_num_dict = {}
@@ -816,6 +817,7 @@ class SpecParser(object):
         cat_eof_model = False
         unclosed_brackets = 0
         in_package_help = False
+        macros_mode = False
 
         def get_line_suffix():
             if len(if_cond_part) > 0 and len(else_cond_part) == 0 and not else_status:
@@ -843,6 +845,8 @@ class SpecParser(object):
                 _line_suffix = ""
             return _line_suffix
         for line in open(filename):
+            if "## We use out of tree configure/build for export libs" in line:
+                print("====>>>>")
             if unclosed_brackets < 0:
                 unclosed_brackets = 0
             if cat_eof_model and header:
@@ -881,6 +885,7 @@ class SpecParser(object):
                 need_left_strip = False
             available_key = header_re.match(line) or single_re.match(line) or require_re.match(line)  # parse key spell
             if available_key:
+                macros_mode = False
                 if state == ST_INLINE and header in SHELL_KEYWORDS:
                     if re.match("%\w+", line) is not None:
                         temp_available_key = line.strip().lstrip("%").split()[0]
@@ -898,69 +903,32 @@ class SpecParser(object):
                 right_character = re.findall("\\\\\\)", line)
                 right_count = len(brackets_right_list) - len(right_character)
                 unclosed_brackets = left_count + unclosed_brackets - right_count
-                pre_macro = self.macros.pop()
-                pre_macro += line
-                if unclosed_brackets == 0:
-                    if len(_if_cond_part) > 0:
-                        if_cond_part += _if_cond_part
-                        state = ST_MAIN
-                        _if_cond_part.clear()
-                    if len(_else_cond_part) > 0:
-                        else_cond_part += _else_cond_part
-                        state = ST_MAIN
-                        _else_cond_part.clear()
-                    while_next_true = 0
-                    line_suffix = get_line_suffix()
-                    self.macros.append(pre_macro + line_suffix)
-                else:
-                    self.macros.append(pre_macro + "{os.linesep}")
                 continue
             if re.match("(%define)|(%global)|(%bcond_with)|(%\{\!\?)|(%undefine)|(%\{\?)|(%\{expand:\s*%)", line) is not None:
                 if header in SHELL_KEYWORDS + ["files"] and state == ST_INLINE:
+                    # shell lines or inline mode pass
+                    macros_mode = False
                     pass
                 else:
-                    if line.endswith("\\") and not line.endswith("\\\\"):
-                        last_line = line + "\\{os.linesep}"
-                        continue
-                    elif line.endswith("||") or line.endswith("&&"):
-                        last_line = line + "{os.linesep}"
-                        continue
-                    elif line.endswith("\\\\\\"):
-                        last_line = line + "\\\\\\{os.linesep}"
-                        continue
-                    else:
-                        last_line = ""
-                    if "{" in line or "(" in line:
-                        if len(line.split()) == 3 and (line.split()[2] == "(" or line.split()[2] == ")"):
-                            pass
+                    if unclosed_brackets != 0:
+                        if subpackages_model:
+                            items = add_string_to_dict(items, "rpmMacros", line)
                         else:
-                            brackets_left_list = re.findall("\{\w*|\(\w*", line)
-                            brackets_right_list = re.findall("\}\w*|\)\w*", line)
-                            left_character = re.findall("\\\\\\(", line)
-                            left_count = len(brackets_left_list) - len(left_character)
-                            right_character = re.findall("\\\\\\)", line)
-                            right_count = len(brackets_right_list) - len(right_character)
-                            if left_count != right_count:
-                                unclosed_brackets = left_count - right_count
-                    if unclosed_brackets == 0:
-                        if len(_if_cond_part) > 0:
-                            if_cond_part += _if_cond_part
-                            state = ST_MAIN
-                            _if_cond_part.clear()
-                            if while_next_true:
-                                while_next_true = 0
-                        if len(_else_cond_part) > 0:
-                            else_cond_part += _else_cond_part
-                            state = ST_MAIN
-                            _else_cond_part.clear()
-                            if while_next_true:
-                                while_next_true = 0
-                        line_suffix = get_line_suffix()
-                        self.macros.append(line + line_suffix)
-                        state = ST_MAIN
-                    else:
-                        self.macros.append(line + "{os.linesep}")
+                            self.macros += line + os.linesep
                         continue
+                    else:
+                        if if_cond_part:
+                            if subpackages_model:
+                                items = add_string_to_dict(items, "rpmMacros", if_cond_part[0])
+                            else:
+                                self.macros += if_cond_part[0]
+                            if_cond_part.clear()
+                        macros_mode = True
+            if macros_mode:
+                if subpackages_model:
+                    items = add_string_to_dict(items, "rpmMacros", line)
+                else:
+                    self.macros += line + os.linesep
             if not available_key:
                 if ":" in line:
                     first_key = line.split(":")[0].strip()
@@ -1309,7 +1277,7 @@ class SpecParser(object):
                             cur_block = header
                             if cur_block not in items:
                                 items[cur_block] = line + os.linesep
-        revise_macros(self.macros, self.items)
+        # revise_macros(self.macros, self.items)
         self.collation_original_data(self.items, filename)
 
     def collation_original_data(self, original_data: dict, file_name: str):
