@@ -1,4 +1,5 @@
 import re
+import os
 from openEulerTransition.configure.spec_config import *
 
 
@@ -355,3 +356,48 @@ def add_string_to_dict(dict1, this_key, line, turn_line=True):
     else:
         dict1[this_key] = line + suffix
     return dict1
+
+
+def divide_rpm_global(macros_text, rpm_global_text):
+    line_list = macros_text.split(os.linesep)
+    if_flag = 0
+    else_flag = 0
+    target_list = line_list.copy()
+    for i, line in enumerate(line_list):
+        if re.search("%global \S+ \S+", line) is not None:
+            if line.endswith("\\"):
+                continue
+            if if_flag == else_flag == 0:
+                re_line = re.findall("%global \S+ \S+", line)[0]
+                re_line_list = re_line.split()
+                if len(re_line_list) == 3:
+                    global_key = re_line_list[1]
+                    global_value = re_line_list[2]
+                    rpm_global_text[global_key] = global_value
+                    target_list.pop(i)
+        if line.startswith("%if"):
+            if_flag += 1
+        elif line.startswith("%else"):
+            else_flag += 1
+        elif line.strip() == "%endif":
+            if_flag -= 1
+            else_flag -= 1
+    macros_text = os.linesep.join(target_list)
+    return macros_text, rpm_global_text
+
+
+def get_reverse_judgement(judgement):
+    if "%ifarch" in judgement:
+        return judgement.replace("%ifarch", "%ifnarch")
+    elif "%ifnarch" in judgement:
+        return judgement.replace("%ifnarch", "%ifarch")
+    elif "%ifos" in judgement:
+        return judgement.replace("%ifos", "%ifnos")
+    elif "%ifnos" in judgement:
+        return judgement.replace("%ifnos", "%ifos")
+    elif "%if %{with " in judgement:
+        return judgement.replace("%if %{with ", "%if %{without ")
+    elif "%if %{without " in judgement:
+        return judgement.replace("%if %{without ", "%if %{with ")
+    else:
+        return judgement
