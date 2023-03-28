@@ -480,7 +480,7 @@ def add_context(name, text, obj, file_obj: LuaFile):
         file_name = os.path.splitext(name)[0]
         mode = "a+" if file_obj.CREATED_LUA[file_name] else "w+"
         file_obj.CREATED_LUA[file_name] = True
-        with open(name.replace(".sh", "lua"), mode) as f:
+        with open(name.replace(".sh", ".lua"), mode) as f:
             if mode == "w+":
                 f.write("#!/usr/bin/env lua" + os.linesep*2)
             text = add_tab_in_lines(text)
