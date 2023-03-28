@@ -839,13 +839,14 @@ class SpecParser(object):
         while_next_true = 0
         keywords_type = ""  # 用于多行字段的切换
         last_line = ""  # be used to resolve Line breaks '\'
-        source_number = 0
-        patch_number = 0
+        # source_number = 0
+        # patch_number = 0
         need_left_strip = True
         cat_eof_mode = False
         unclosed_brackets = 0
         in_package_help = False
         macros_mode = False
+        lua_mode = False
 
         def get_line_suffix():
             if len(if_cond_part) > 0 and len(else_cond_part) == 0 and not else_status:
@@ -953,6 +954,12 @@ class SpecParser(object):
                                 self.macros += if_cond_part[0]
                             if_cond_part.clear()
                         macros_mode = True
+            lua_mode, end_words = check_lua_config(line, lua_mode)
+            if lua_mode:
+                items = add_lua_config(items, line)
+                if line == end_words:
+                    lua_mode = False
+                continue
             if macros_mode:
                 if subpackages_mode:
                     items = add_string_to_dict(items, "rpmMacros", line)
@@ -1140,13 +1147,13 @@ class SpecParser(object):
                             items = {}
                         if header not in items:
                             items[header] = ""
-                        if re.match(r"%patch\d*", line) is not None or re.search("%\{PATCH\d*\}", line) is not None:
-                            if not line.startswith("#"):
-                                line = self.modify_patch_serial_number(line)
-                        if re.search(r"%\{SOURCE\d*\}", line) is not None or re.search("%SOURCE\d*", line) is not None \
-                                or re.search("%\{S:\d*\}", line) is not None:
-                            if not line.startswith("#"):
-                                line = self.modify_source_number(line)
+                        # if re.match(r"%patch\d*", line) is not None or re.search("%\{PATCH\d*\}", line) is not None:
+                        #     if not line.startswith("#"):
+                        #         line = self.modify_patch_serial_number(line)
+                        # if re.search(r"%\{SOURCE\d*\}", line) is not None or re.search("%SOURCE\d*", line) is not None \
+                        #         or re.search("%\{S:\d*\}", line) is not None:
+                        #     if not line.startswith("#"):
+                        #         line = self.modify_source_number(line)
                         if header == "prep" and line.startswith("%setup"):
                             if re.search("-b\d+", line):
                                 line = line.replace("-b", "-b ")
@@ -1203,6 +1210,7 @@ class SpecParser(object):
                 header_match = header_re.match(line) if not directive_match else None
                 if directive_match:
                     key = directive_match.group(1) if real_key == "" else real_key
+                    val = directive_match.group(2)
                     if key.lower().startswith("source"):
                         if len(else_cond_part) == 0:
                             new_key = key.upper()
@@ -1211,8 +1219,7 @@ class SpecParser(object):
                             if num == "":
                                 num = "0"
                             new_key = source + num
-                            self.sources_num_dict[new_key] = new_key[0:6] + str(source_number)
-                            source_number += 1
+                            self.sources_num_dict[new_key] = val
                     if key.lower().startswith("patch"):
                         new_key = key.lower()
                         patch = new_key[0:5]
@@ -1220,9 +1227,8 @@ class SpecParser(object):
                         if num == "":
                             num = "0"
                         new_key = patch + num
-                        self.patches_num_dict[new_key] = new_key
-                        patch_number += 1
-                    val = directive_match.group(2)
+                        self.patches_num_dict[new_key] = val
+                        # patch_number += 1
                     key = update_keywords(key, val)
                     case_spell_result = parse_case_spell(key, self.items)
                     key = key.replace("requires", "Requires") if case_spell_result else key
@@ -1234,10 +1240,13 @@ class SpecParser(object):
                     # special case for Source and Patch
                     key = update_keywords(key)
                     val = find_quotes_from_words(val + line_suffix)
-                    if key not in items:
-                        items[key] = [val]
+                    if key in ["Sources", "Patches"]:
+                        items = self.add_source_or_patch(items, key, val)
                     else:
-                        items[key].append(val)
+                        if key not in items:
+                            items[key] = [val]
+                        else:
+                            items[key].append(val)
 
                 elif header_match:
                     header = header_match.group(1)
@@ -1307,7 +1316,6 @@ class SpecParser(object):
                             cur_block = header
                             if cur_block not in items:
                                 items[cur_block] = line + os.linesep
-        # revise_macros(self.macros, self.items)
         self.change_several_requires()
         self.collation_original_data(self.items, filename)
 
@@ -1402,6 +1410,9 @@ class SpecParser(object):
                             elif type(sub_member_dict[member_key]) == list:
                                 # target_data["SubPackages"][sub_member_name][member_key] = [shell_name]
                                 del target_data["SubPackages"][sub_member_name][member_key]
+                    if "FilesInput" in sub_member_dict:
+                        target_data["SubPackages"][sub_member_name]["files"] = sub_member_dict["files"].replace("%files", "%files" + os.linesep, 1)
+                        del target_data["SubPackages"][sub_member_name]["FilesInput"]
                     if "%if" in sub_member_name:
                         temp_sub_dict = target_data["SubPackages"][sub_member_name]
                         del target_data["SubPackages"][sub_member_name]
@@ -1418,20 +1429,20 @@ class SpecParser(object):
         target_list = self.items[origin].copy()
         for build_rq in self.items[origin]:
             if "%if %{with" in build_rq:
-                with_parts = re.findall("%if %[{]with \w+}", build_rq)
-                without_parts = re.findall("%if %[{]without \w+}", build_rq)
-                with_parts = list(map(lambda x: x.replace("%if %{with", "").replace("}", "").strip(), with_parts))
-                without_parts = list(map(lambda x: x.replace("%if %{without", "").replace("}", "").strip(), without_parts))
+                with_parts, without_parts = get_if_with_parts(build_rq)
                 new_key = target + " when"
+                without = ""
                 if len(with_parts):
                     new_key += " +" + " +".join(with_parts)
+                    without = "-"
                 if len(without_parts):
                     new_key += " -" + " -".join(without_parts)
+                    without = "+"
                 value = build_rq.split("%if %{with")[0].strip()
                 if new_key in self.items:
-                    self.items[new_key].append(value)
+                    self.items[new_key].append(without + value)
                 else:
-                    self.items[new_key] = [value]
+                    self.items[new_key] = [without + value]
                 target_list.remove(build_rq)
             else:
                 pass
@@ -1472,9 +1483,12 @@ class SpecParser(object):
                 function_context = value.replace(first_line, "", 1).strip(os.linesep) + os.linesep
                 self.shell_functions[keywords] = first_line.replace(
                     "%" + keywords, "", 1) + os.linesep + function_context
-        else:
-            if sub_name is not None and " -n " in value:
-                return False
+        # else:
+        #     if sub_name is not None and " -n " in value:
+        #         return False
+        if "build" in self.shell_functions and "configure" not in self.shell_functions:
+            self.shell_functions["configure"], self.shell_functions["build"] = divide_out_configure(
+                self.shell_functions["build"])
 
     def produce_use_flag(self):
         line_list = self.macros.split(os.linesep)
@@ -1627,7 +1641,7 @@ class SpecParser(object):
             ck_items['rpmGlobal'] = self.rpm_global
 
         return ck_items
-    
+
     def change_define2global(self):
         macros_list = self.macros.split(os.linesep)
         target_list = macros_list.copy()
