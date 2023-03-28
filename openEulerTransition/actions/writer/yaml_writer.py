@@ -789,6 +789,16 @@ class SpecParser(object):
         :param value:
         :return:
         """
+        judgement = ""
+        keywords = lower_first_word(keywords)
+        if "%if %{with" in value:
+            with_parts, without_parts = get_if_with_parts(value)
+            judgement = " when"
+            if len(with_parts):
+                judgement += " +" + " +".join(with_parts)
+            if len(without_parts):
+                judgement += " -" + " -".join(without_parts)
+        num_dict = self.sources_num_dict if keywords == "source" else self.patches_num_dict
 
     def read(self, filename):
         """
