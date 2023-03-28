@@ -3,6 +3,10 @@ import os
 from openEulerTransition.configure.spec_config import *
 
 
+class LuaFile(object):
+    CREATED_LUA = {"Phase": False, "runtimePhase": False}
+
+
 def lower_first_word(words: str):
     if words == "Patches":
         return "patchset"
@@ -401,3 +405,88 @@ def get_reverse_judgement(judgement):
         return judgement.replace("%if %{without ", "%if %{with ")
     else:
         return judgement
+
+
+def divide_out_configure(content: str):
+    """
+    分出configure字段
+    :param content:
+    :return:
+    """
+    configure = ""
+    build = ""
+    configure_cmd = False
+    line_list = content.split(os.linesep)
+    for num, line in enumerate(line_list):
+        if line.startswith("#"):
+            if configure_cmd:
+                configure += line + os.linesep
+            else:
+                build += line + os.linesep
+            continue
+        if configure_cmd:
+            if line.startswith("%if") or line.startswith("%else") or line.startswith("%endif"):
+                configure += line + os.linesep
+            elif line.endswith("\\"):
+                configure += line + os.linesep
+            else:
+                configure += line + os.linesep
+                configure_cmd = False
+        if "configure" in line.lower():
+            if "configure" in line:
+                line = line.replace("configure", "configure %%{env.configureFlags}")
+            configure_cmd = True
+            configure += line + os.linesep
+        if not configure_cmd:
+            build += line + os.linesep
+    return configure, build
+
+
+def get_if_with_parts(line):
+    with_parts = re.findall("%if %[{]with \w+}", line)
+    without_parts = re.findall("%if %[{]without \w+}", line)
+    with_parts = list(map(lambda x: x.replace("%if %{with", "").replace("}", "").strip(), with_parts))
+    without_parts = list(map(lambda x: x.replace("%if %{without", "").replace("}", "").strip(), without_parts))
+    return with_parts, without_parts
+
+
+def check_lua_config(line, mode):
+    """
+    检查是否是复杂配置
+    :param line:
+    :param mode:
+    :return: 是否是lua配置，结束行标志
+    """
+    if re.match("%[{]lua:", line) is not None:
+        return True, "}"
+    if mode:
+        return True, "}"
+    else:
+        return False, ""
+
+
+def add_lua_config(target: dict, line):
+    if "luaConfig" in target:
+        target["luaConfig"] += line + os.linesep
+    else:
+        target["luaConfig"] = line + os.linesep
+    return target
+
+
+def add_context(name, text, obj, file_obj: LuaFile):
+    first_line = text.split(os.linesep)[0]
+    if "-p <lua>" in first_line:
+        name = obj.name
+        file_name = os.path.splitext(name)[0]
+        mode = "a+" if file_obj.CREATED_LUA[file_name] else "w+"
+        file_obj.CREATED_LUA[file_name] = True
+        with open(name.replace(".sh", "lua"), mode) as f:
+            if mode == "w+":
+                f.write("#!/usr/bin/env lua" + os.linesep*2)
+            text = add_tab_in_lines(text)
+            f.write("function " + name + "()" + os.linesep + text + os.linesep)
+            f.close()
+        return file_obj
+    text = add_tab_in_lines(text)
+    obj.write(name + "() {" + os.linesep + text + "}" + os.linesep*2)
+    return file_obj
