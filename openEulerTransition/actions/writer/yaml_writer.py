@@ -92,22 +92,23 @@ class SpectacleDumper(object):
         first_line = True
         if (f_phase or f_runtime_phase) and script_data:
             if f_phase != sys.stdout:
-                f_phase.write("#!/usr/bash\n\n")
+                f_phase.write("#!/usr/bin/env bash\n\n")
+                lua_file = LuaFile()
                 for function_name, function_text in script_data.items():
-                    if function_name in ["install", "prep", "build", "clean", "check"]:
-                        function_text = add_tab_in_lines(function_text)
-                        f_phase.write(function_name + "() {" + os.linesep + function_text + "}\n\n")
+                    if function_name in ["install", "prep", "build", "clean", "check", "configure"]:
+                        lua_file = add_context(function_name, function_text, f_phase, lua_file)
             if f_runtime_phase != sys.stdout:
-                f_runtime_phase.write("#!/usr/bash\n\n")
+                f_runtime_phase.write("#!/usr/bin/env bash\n\n")
+                lua_runtime_file = LuaFile()
                 for function_name, function_text in script_data.items():
-                    if function_name not in ["install", "prep", "build", "clean", "check"]:
-                        function_text = add_tab_in_lines(function_text)
-                        f_runtime_phase.write(function_name + "() {" + os.linesep + function_text + "}\n\n")
+                    if function_name not in ["install", "prep", "build", "clean", "check", "configure"]:
+                        lua_runtime_file = add_context(function_name, function_text, f_runtime_phase, lua_runtime_file)
         if f_files and files_data:
             for file_member_key, file_member_value in files_data.items():
                 f_files.write(file_member_key + ": |" + os.linesep)
+                file_member_value = file_member_value.lstrip("%files")
                 temp_text_list = file_member_value.split(os.linesep)
-                for line in temp_text_list[1:]:
+                for line in temp_text_list:
                     if line != "":
                         f_files.write(TAB + line + os.linesep)
         for key, value in data:
@@ -343,8 +344,8 @@ class Convertor(object):
                 if entry in ["Sources", "Patches"]:
                     target_items = {}
                     the_items = _dict[entry]
-                    if isinstance(the_items, list):
-                        for index2, member in enumerate(the_items):
+                    if isinstance(the_items, dict):
+                        for index2, member in the_items.items():
                             target_items[str(index2)] = member
                     items.append((lower_first_word(entry), target_items))
                 else:
@@ -352,8 +353,8 @@ class Convertor(object):
                 del _dict[entry]
 
         subpkgs = {}
-        try:
-            subpkgs_list = _dict['SubPackages']
+        if "SubPackages" in _dict:
+            subpkgs_list = _dict["SubPackages"]
             del _dict['SubPackages']
 
             for sub_items in subpkgs_list:
@@ -367,8 +368,6 @@ class Convertor(object):
                     if sub_name.startswith("%"):
                         sub_name = "\"" + sub_name + "\""
                     subpkgs[sub_name] = self.convert(sub_items, False)
-        except Exception as e:
-            logger.info(str(e))
 
         if 'extra' in _dict:
             extra = _dict['extra']
@@ -383,7 +382,6 @@ class Convertor(object):
             del _dict["BuildRoot"]
             _dict["buildRoot"] = buildroot
         for k, v in _dict.items():
-            logger.warn('un-ordered entry: %s' % k)
             items.append((k, v))
 
         if extra:
@@ -490,9 +488,9 @@ class SpecParser(object):
         ls = subpkg.split()
         while '-f' in ls:
             this_files_input = ls[ls.index('-f') + 1]
-            filesinput += this_files_input + os.linesep
             if "-f" in ls:
-                filesinput += " "
+                filesinput += " -f "
+            filesinput += this_files_input + os.linesep
             ls.remove("-f")
             if this_files_input != "":
                 ls.remove(this_files_input)
@@ -782,6 +780,15 @@ class SpecParser(object):
                 val = "%{" + self.patches_num_dict[key].upper() + "}"
                 line = line.replace(p, val)
         return line
+
+    def add_source_or_patch(self, dict1, keywords, value):
+        """
+        新增source和patch
+        :param dict1:
+        :param keywords:
+        :param value:
+        :return:
+        """
 
     def read(self, filename):
         """
