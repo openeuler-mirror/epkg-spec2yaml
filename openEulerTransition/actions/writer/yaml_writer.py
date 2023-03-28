@@ -1621,8 +1621,21 @@ class SpecParser(object):
 
         # check for global macros
         if self.macros:
+            self.change_define2global()
             ck_items['extra']['macros'] = self.macros
         if self.rpm_global:
             ck_items['rpmGlobal'] = self.rpm_global
 
         return ck_items
+    
+    def change_define2global(self):
+        macros_list = self.macros.split(os.linesep)
+        target_list = macros_list.copy()
+        for k, macros_line in enumerate(macros_list):
+            if macros_line.endswith("\\"):
+                continue
+            if re.match("%define \w+ \w+", macros_line) is not None:
+                line_list = macros_line.split()
+                self.rpm_global[line_list[1]] = line_list[2]
+                target_list.pop(k)
+        self.macros = os.linesep.join(target_list)
