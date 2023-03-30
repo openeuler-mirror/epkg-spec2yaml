@@ -354,11 +354,12 @@ def add_string_to_dict(dict1, this_key, line, turn_line=True):
     :param turn_line:
     :return:
     """
-    suffix = os.linesep if turn_line else ""
-    if this_key in dict1:
-        dict1[this_key] += line + suffix
-    else:
-        dict1[this_key] = line + suffix
+    if this_key in ["files"]:
+        suffix = os.linesep if turn_line else ""
+        if this_key in dict1:
+            dict1[this_key] += line + suffix
+        else:
+            dict1[this_key] = line + suffix
     return dict1
 
 
@@ -367,6 +368,7 @@ def divide_rpm_global(macros_text, rpm_global_text):
     if_flag = 0
     else_flag = 0
     target_list = line_list.copy()
+    remove_list = []
     for i, line in enumerate(line_list):
         if re.search("%global \S+ \S+", line) is not None:
             if line.endswith("\\"):
@@ -377,8 +379,8 @@ def divide_rpm_global(macros_text, rpm_global_text):
                 if len(re_line_list) == 3:
                     global_key = re_line_list[1]
                     global_value = re_line_list[2]
-                    rpm_global_text[global_key] = global_value
-                    target_list.pop(i)
+                    rpm_global_text[global_key] = "\"" + global_value + "\""
+                    remove_list.append(i)
         if line.startswith("%if"):
             if_flag += 1
         elif line.startswith("%else"):
@@ -386,6 +388,9 @@ def divide_rpm_global(macros_text, rpm_global_text):
         elif line.strip() == "%endif":
             if_flag -= 1
             else_flag -= 1
+    remove_list.reverse()
+    for remove_index in remove_list:
+        target_list.pop(remove_index)
     macros_text = os.linesep.join(target_list)
     return macros_text, rpm_global_text
 
@@ -490,3 +495,103 @@ def add_context(name, text, obj, file_obj: LuaFile):
     text = add_tab_in_lines(text)
     obj.write(name + "() {" + os.linesep + text + "}" + os.linesep*2)
     return file_obj
+
+
+def inline_to_mainline(inline: list, mainline: list):
+    if len(inline) != 0 and len(mainline) == 0:
+        return mainline, inline
+    return inline, mainline
+
+
+def add_input_to_files(input_value, items):
+    if "files" in items and isinstance(items["files"], str):
+        items["files"] += input_value + os.linesep
+    else:
+        items["files"] = input_value + os.linesep
+    return items
+
+
+def get_line_suffix(if_cond_part, else_cond_part, else_status):
+    if len(if_cond_part) > 0 and len(else_cond_part) == 0 and not else_status:
+        _line_suffix = " " + " ".join(if_cond_part)
+    elif len(if_cond_part) > 0 and len(else_cond_part) > 0 and else_status:
+        temp_if_cond_part = if_cond_part.copy()
+        temp_else_cond_part = else_cond_part.copy()
+        _line_suffix = ""
+        while len(temp_else_cond_part) > 0 or len(temp_if_cond_part) > 0:
+            if len(temp_if_cond_part) > len(temp_else_cond_part):
+                if len(temp_if_cond_part) > 0:
+                    _line_suffix += " " + temp_if_cond_part[-1]
+                    temp_if_cond_part.pop()
+                if len(temp_else_cond_part) > 0:
+                    _line_suffix += " " + temp_else_cond_part[-1]
+                    temp_else_cond_part.pop()
+            else:
+                if len(temp_else_cond_part) > 0:
+                    _line_suffix += " " + temp_else_cond_part[-1]
+                    temp_else_cond_part.pop()
+                if len(temp_if_cond_part) > 0:
+                    _line_suffix += " " + temp_if_cond_part[-1]
+                    temp_if_cond_part.pop()
+    else:
+        _line_suffix = ""
+    return _line_suffix
+
+
+def parse_files_input(origin_items, target_items, **kwargs):
+    line = kwargs.get("line")
+    if_lines = kwargs.get("if_lines") if "if_lines" in kwargs else []
+    else_lines = kwargs.get("else_lines") if "else_lines" in kwargs else []
+    else_status = kwargs.get("else_status") if "else_status" in kwargs else False
+    opt = line.split()
+    if len(opt) > 1:
+        files_input = opt[1:]
+        files_input_value = ""
+        while '-f' in files_input:
+            this_files_input = files_input[files_input.index('-f') + 1].strip()
+            files_input_value += " -f " + this_files_input
+            files_input.remove("-f")
+            opt.remove("-f")
+            if this_files_input != "":
+                files_input.remove(this_files_input)
+                opt.remove(this_files_input)
+        if len(opt) == 1 and opt[0] == "%files":
+            if origin_items != target_items and "files" not in origin_items:
+                items = origin_items
+                items["files"] = line + os.linesep
+        if files_input_value != "":
+            target_items = add_input_to_files(files_input_value + get_line_suffix(if_lines, else_lines, else_status), target_items)
+    elif len(opt) == 1 and opt[0] == "%files":
+        if origin_items != target_items:
+            target_items = origin_items
+        if "files" not in target_items:
+            target_items["files"] = ""
+    return target_items
+
+
+def strip_files_startswith(text):
+    if re.match("%files \S+ -f", text) is not None:
+        match_words = re.findall("%files \S+ -f", text)[0]
+        strip_words = match_words.rstrip("-f").strip()
+        text = text.replace(strip_words, "", 1)
+    if text.startswith("%files"):
+        text = text.lstrip("%files")
+    return text
+
+
+def divide_several_requires(origin_list):
+    target_list = []
+    for line in origin_list:
+        if "%if" in line:
+            target_list.append(line)
+            continue
+        if re.search("\S+ [>=<]+ \S+", line) is not None:
+            search_list = re.findall("\S+ [>=<]+ \S+", line)
+            target_list += search_list
+        elif "," in line:
+            temp_list = line.split(",")
+            temp_list = list(map(lambda x: x.strip(), temp_list))
+            target_list += temp_list
+        else:
+            target_list += line.split()
+    return target_list
