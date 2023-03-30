@@ -169,31 +169,39 @@ class SpectacleDumper(object):
                     fp.write(cur_indent + ("%s: no" + os.linesep) % (key))
             elif isinstance(value, dict):
                 if value:
-                    fp.write(cur_indent + ("%s:" + os.linesep) % key)
+                    if key != "subpackage":
+                        fp.write(cur_indent + ("%s:" + os.linesep) % key)
                     for dict_key, dict_value in value.items():
+                        if key == "subpackage":
+                            dict_key = "subpackage." + dict_key
                         if isinstance(dict_value, list):
-                            fp.write(cur_indent + TAB + ("%s:" + os.linesep) % dict_key)
+                            base = 0
+                            if key == "subpackage":
+                                fp.write(("%s:" + os.linesep) % dict_key)
+                                base = -1
+                            else:
+                                fp.write(cur_indent + TAB + ("%s:" + os.linesep) % dict_key)
                             for sub_item in dict_value:
                                 if isinstance(sub_item, list):
-                                    self._dump_yaml(sub_item, fp, cur_indent + TAB, cur_pkg=sub_item[0][1])
+                                    self._dump_yaml(sub_item, fp, cur_indent + TAB*(base+1), cur_pkg=sub_item[0][1])
                                     fp.write(os.linesep)
                                 elif isinstance(sub_item, tuple) and len(sub_item) > 1:
                                     if isinstance(sub_item[1], str):
                                         if os.linesep in sub_item[1].strip():
-                                            fp.write(cur_indent + TAB * 2 + ("%s: |" + os.linesep) % sub_item[0])
+                                            fp.write(cur_indent + TAB * (base+2) + ("%s: |" + os.linesep) % sub_item[0])
                                             line_list = sub_item[1].split(os.linesep)
                                             for line in line_list:
-                                                fp.write(cur_indent + TAB * 3 + line + os.linesep)
+                                                fp.write(cur_indent + TAB * (base+3) + line + os.linesep)
                                         else:
-                                            fp.write(cur_indent + TAB * 2 + ("%s: %s" + os.linesep) % (
+                                            fp.write(cur_indent + TAB * (base+2) + ("%s: %s" + os.linesep) % (
                                                 sub_item[0], sub_item[1]))
                                     elif isinstance(sub_item[1], list):
-                                        fp.write(cur_indent + TAB * 2 + sub_item[0] + ":" + os.linesep)
+                                        fp.write(cur_indent + TAB * (base+2) + sub_item[0] + ":" + os.linesep)
                                         for line in sub_item[1]:
                                             fp.write(
-                                                cur_indent + TAB * 3 + ("- %s" + os.linesep) % esc_value(line))
+                                                cur_indent + TAB * (base+3) + ("- %s" + os.linesep) % esc_value(line))
                                 else:
-                                    fp.write(cur_indent + TAB * 2 + ("- %s" + os.linesep) % (esc_value(sub_item)))
+                                    fp.write(cur_indent + TAB * (base+2) + ("- %s" + os.linesep) % (esc_value(sub_item)))
                         elif isinstance(dict_value, str):
                             # if dict_key.isdigit() and dict_key not in ["source", "patchset"]:
                             #     dict_key = "\"" + dict_key + "\""
@@ -847,32 +855,6 @@ class SpecParser(object):
         in_package_help = False
         macros_mode = False
         lua_mode = False
-
-        def get_line_suffix():
-            if len(if_cond_part) > 0 and len(else_cond_part) == 0 and not else_status:
-                _line_suffix = " " + " ".join(if_cond_part)
-            elif len(if_cond_part) > 0 and len(else_cond_part) > 0 and else_status:
-                temp_if_cond_part = if_cond_part.copy()
-                temp_else_cond_part = else_cond_part.copy()
-                _line_suffix = ""
-                while len(temp_else_cond_part) > 0 or len(temp_if_cond_part) > 0:
-                    if len(temp_if_cond_part) > len(temp_else_cond_part):
-                        if len(temp_if_cond_part) > 0:
-                            _line_suffix += " " + temp_if_cond_part[-1]
-                            temp_if_cond_part.pop()
-                        if len(temp_else_cond_part) > 0:
-                            _line_suffix += " " + temp_else_cond_part[-1]
-                            temp_else_cond_part.pop()
-                    else:
-                        if len(temp_else_cond_part) > 0:
-                            _line_suffix += " " + temp_else_cond_part[-1]
-                            temp_else_cond_part.pop()
-                        if len(temp_if_cond_part) > 0:
-                            _line_suffix += " " + temp_if_cond_part[-1]
-                            temp_if_cond_part.pop()
-            else:
-                _line_suffix = ""
-            return _line_suffix
         for line in open(filename):
             if unclosed_brackets < 0:
                 unclosed_brackets = 0
@@ -1015,37 +997,27 @@ class SpecParser(object):
                     keywords_type = "lines"
                     header = cur_block = header_re.match(line).group(1)
                     if header in line and header not in OBS_LINES_KEYWORDS and header != "package" and len(line.split()) > 0:
+                        while_next = False
                         line = line.replace(header + " ", header + os.linesep)
                     if cur_block == "package":
+                        while_next = False
+                        while_next_true = 0
                         # change model from INLINE into subpackages
                         state = ST_MAIN
                         subpackages_mode = True
+                        _if_cond_part, if_cond_part = inline_to_mainline(_if_cond_part, if_cond_part)
+                        _else_cond_part, else_cond_part = inline_to_mainline(_else_cond_part, else_cond_part)
+                        continue
                     elif cur_block.startswith("files"):
+                        while_next = False
+                        while_next_true = 0
+                        _if_cond_part, if_cond_part = inline_to_mainline(_if_cond_part, if_cond_part)
+                        _else_cond_part, else_cond_part = inline_to_mainline(_else_cond_part, else_cond_part)
                         header = cur_block = "files"
                         items[cur_block] = line + os.linesep
-                        opt = line.split()
-                        if len(opt) > 1:
-                            files_input = opt[1:]
-                            files_input_value = ""
-                            while '-f' in files_input:
-                                this_files_input = files_input[files_input.index('-f') + 1].strip()
-                                files_input_value += this_files_input + os.linesep
-                                files_input.remove("-f")
-                                opt.remove("-f")
-                                if this_files_input != "":
-                                    files_input.remove(this_files_input)
-                                    opt.remove(this_files_input)
-                            if files_input_value != "":
-                                items['FilesInput'] = files_input_value
-                            if len(opt) == 1 and opt[0] == "%files":
-                                if self.items != items and "files" not in self.items:
-                                    items = self.items
-                                    items["files"] = line + os.linesep
-                        elif len(opt) == 1 and opt[0] == "%files":
-                            if self.items != items:
-                                items = self.items
-                            if "files" not in items:
-                                items["files"] = ""
+                        items = parse_files_input(self.items, items, line=line, if_lines=if_cond_part,
+                                                  else_lines=else_cond_part, else_status=else_status)
+                        continue
                     else:
                         if cur_block in OBS_LINES_KEYWORDS:
                             line += os.linesep
@@ -1068,7 +1040,7 @@ class SpecParser(object):
                 elif single_re.match(line) and single_re.match(line).group(1) not in items:
                     state = ST_MAIN
                     keywords_type = "single"
-                    line_suffix = get_line_suffix()
+                    line_suffix = get_line_suffix(if_cond_part, else_cond_part, else_status)
                     cur_block = single_re.match(line).group(0)
                     line = resolve_inner_quotes(line)
                     items[cur_block] = line + os.linesep + line_suffix
@@ -1105,6 +1077,11 @@ class SpecParser(object):
                         while_next_true += 1
                     if len(_if_cond_part) == 0 and len(if_cond_part) > 0:
                         state = ST_MAIN
+                        if cond_else.match(line):
+                            _else_cond_part, else_cond_part = inline_to_mainline(_else_cond_part, else_cond_part)
+                            else_status = True
+                            _else_status = False
+                            continue
                     elif len(_if_cond_part) > 0 and cond_endif.match(line) and len(_else_cond_part) == 0:
                         _if_cond_part.pop()
                         items[header] += line + os.linesep
@@ -1205,7 +1182,7 @@ class SpecParser(object):
                         else_cond_part.pop()
                         if len(else_cond_part) == 0:
                             else_status = False
-                line_suffix = get_line_suffix()
+                line_suffix = get_line_suffix(if_cond_part, else_cond_part, else_status)
                 directive_match = directive.match(line)
                 header_match = header_re.match(line) if not directive_match else None
                 if directive_match:
@@ -1297,17 +1274,8 @@ class SpecParser(object):
                             # for 'main' package
                             # 'InputFile' in 'main' package
                             items = self.items
-                            if opt and '-f ' in opt:
-                                files_input = opt.split("-f ")
-                                files_input_value = ""
-                                for f in files_input:
-                                    if f.strip() == "":
-                                        continue
-                                    files_input_value = files_input_value + f.strip() + os.linesep
-                                if "FilesInput" not in items:
-                                    items["FilesInput"] = files_input_value
-                                else:
-                                    items["FilesInput"] += files_input_value
+                            items = parse_files_input(self.items, items, line=line, if_lines=if_cond_part,
+                                                      else_lines=else_cond_part, else_status=else_status)
 
                         if items:
                             if header not in self.keywords_if_config:
@@ -1316,6 +1284,13 @@ class SpecParser(object):
                             cur_block = header
                             if cur_block not in items:
                                 items[cur_block] = line + os.linesep
+                else:
+                    if len(if_cond_part) == len(else_cond_part) == len(_if_cond_part) == 0 and line == "%endif":
+                        continue
+                    try:
+                        items = add_string_to_dict(items, header, line, True)
+                    except Exception as e:
+                        logger.info(str(e))
         self.change_several_requires()
         self.collation_original_data(self.items, filename)
 
@@ -1446,6 +1421,7 @@ class SpecParser(object):
                 target_list.remove(build_rq)
             else:
                 pass
+        target_list = divide_several_requires(target_list)
         self.items[origin] = target_list
 
     def divide_into_shell(self, keywords, value: str, sub_name=None, whole=False, main_name=None):
@@ -1643,11 +1619,15 @@ class SpecParser(object):
     def change_define2global(self):
         macros_list = self.macros.split(os.linesep)
         target_list = macros_list.copy()
+        remove_line_list = []
         for k, macros_line in enumerate(macros_list):
             if macros_line.endswith("\\"):
                 continue
-            if re.match("%define \w+ \w+", macros_line) is not None:
+            if re.match("%define \w+ [\s\S]+", macros_line) is not None:
                 line_list = macros_line.split()
-                self.rpm_global[line_list[1]] = line_list[2]
-                target_list.pop(k)
+                self.rpm_global[line_list[1]] = " ".join(line_list[2:])
+                remove_line_list.append(k)
+        remove_line_list.reverse()
+        for line_num in remove_line_list:
+            target_list.pop(line_num)
         self.macros = os.linesep.join(target_list)
