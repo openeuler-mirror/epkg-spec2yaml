@@ -106,7 +106,7 @@ class SpectacleDumper(object):
         if f_files and files_data:
             for file_member_key, file_member_value in files_data.items():
                 f_files.write(file_member_key + ": |" + os.linesep)
-                file_member_value = file_member_value
+                file_member_value = strip_files_startswith(file_member_value)
                 temp_text_list = file_member_value.split(os.linesep)
                 if temp_text_list[0] in temp_text_list[1]:
                     temp_text_list.pop(0)
