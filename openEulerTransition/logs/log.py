@@ -97,7 +97,11 @@ class LoggerSample:
         self.logger_sample0.error(message)
 
     def change_path(self):
-        self.logger_sample = Logger(self.name, log_file_path=self.log_file_path, clevel=self.clevel, Flevel=self.log_level, only_file=True)
+        try:
+            self.logger_sample = Logger(self.name, log_file_path=self.log_file_path, clevel=self.clevel,
+                                        Flevel=self.log_level, only_file=True)
+        except Exception as e:
+            self.logger_sample.error("can't change log path to " + self.log_file_path + " : " + str(e))
 
 
 logger = LoggerSample("build", log_file_path="openEulerTransition_{0}.log".format(
