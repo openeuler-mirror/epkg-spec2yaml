@@ -30,6 +30,7 @@ class ArgsParser:
         self.type = _type
 
         cmd_args = {
+            'trans': '_trans_file',
             'conf': '_conf_file',
             'parse': '_parse_file',
             'shell': '_shell_script',
@@ -46,6 +47,13 @@ class ArgsParser:
             logger.error("%s\n            Reason:%s\n        EXCEPTION_RESPONSE:%s\n" % (
                 EXCEPTION_CODE[600], 'Invalid Command Line', EXCEPTION_RESPONSE[1]))
             raise Exception(EXCEPTION_CODE[600], 'Invalid Command Line')
+
+    def _trans_file(self):
+        self._parser.add_option(
+            '--trans', '-t',
+            dest="yaml_file",
+            type="string", default=None,
+            help='Trans file.')
 
     def _parse_file(self):
         self._parser.add_option(
@@ -70,7 +78,7 @@ class ArgsParser:
 
     def _target_type(self):
         self._parser.add_option(
-            '--target', '-t',
+            '--target', '-g',
             dest="target_type",
             type="string", default="spec",
             help='File type.')
