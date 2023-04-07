@@ -77,7 +77,11 @@ class Logger(object):
 class LoggerSample:
     def __init__(self, name, clevel=log_level,
                  log_file_path=None, Flevel=log_level):
-        self.logger_sample = Logger(name, log_file_path=log_file_path, clevel=clevel, Flevel=Flevel, only_file=True)
+        self.log_file_path = log_file_path
+        self.name = name
+        self.clevel = clevel
+        self.log_level = log_level
+        self.logger_sample = Logger(name, log_file_path=self.log_file_path, clevel=clevel, Flevel=Flevel, only_file=True)
         self.logger_sample0 = Logger(name, log_file_path=None, clevel=ERROR, Flevel=ERROR)
 
     def debug(self, message):
@@ -91,6 +95,9 @@ class LoggerSample:
 
     def error(self, message):
         self.logger_sample0.error(message)
+
+    def change_path(self):
+        self.logger_sample = Logger(self.name, log_file_path=self.log_file_path, clevel=self.clevel, Flevel=self.log_level, only_file=True)
 
 
 logger = LoggerSample("build", log_file_path="openEulerTransition_{0}.log".format(
