@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
+import os
 import sys
 from openEulerTransition.logs.log import logger
 from openEulerTransition.actions.config_parser.cli_args_parser import BuildArgsParser
