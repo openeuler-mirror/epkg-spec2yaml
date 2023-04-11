@@ -15,9 +15,7 @@ def lower_first_word(words: str):
     if words == "Macros":
         return "rpmMacros"
     if words.upper() == "URL":
-        return "meta.homepage"
-    if words in ["Description", "License", "Summary"]:
-        return "meta." + words[0].lower() + words[1:]
+        return "homepage"
     if len(words) <= 1:
         return words.lower()
     else:
@@ -354,7 +352,7 @@ def add_string_to_dict(dict1, this_key, line, turn_line=True):
     :param turn_line:
     :return:
     """
-    if this_key in ["files"]:
+    if this_key in ["files", "rpmMacros"]:
         suffix = os.linesep if turn_line else ""
         if this_key in dict1:
             dict1[this_key] += line + suffix
@@ -370,24 +368,29 @@ def divide_rpm_global(macros_text, rpm_global_text):
     target_list = line_list.copy()
     remove_list = []
     for i, line in enumerate(line_list):
-        if re.search("%global \S+ \S+", line) is not None:
+        if re.match("%global \S+\s+\S+", line) is not None:
             if line.endswith("\\"):
                 continue
             if if_flag == else_flag == 0:
-                re_line = re.findall("%global \S+ \S+", line)[0]
-                re_line_list = re_line.split()
-                if len(re_line_list) == 3:
-                    global_key = re_line_list[1]
-                    global_value = re_line_list[2]
-                    rpm_global_text[global_key] = "\"" + global_value + "\""
-                    remove_list.append(i)
+                line_list = line.split()
+                if len(line_list) == 3:
+                    global_key = line_list[1]
+                    global_value = line_list[2]
+                elif len(line_list) > 3:
+                    global_key = line_list[1]
+                    global_value = " ".join(line_list[2:])
+                else:
+                    continue
+                global_value = resolve_inner_quotes(global_value)
+                rpm_global_text[global_key] = "\"" + global_value + "\""
+                remove_list.append(i)
         if line.startswith("%if"):
             if_flag += 1
         elif line.startswith("%else"):
             else_flag += 1
         elif line.strip() == "%endif":
             if_flag -= 1
-            else_flag -= 1
+            else_flag -= 1 if else_flag else 0
     remove_list.reverse()
     for remove_index in remove_list:
         target_list.pop(remove_index)
@@ -408,8 +411,28 @@ def get_reverse_judgement(judgement):
         return judgement.replace("%if %{with ", "%if %{without ")
     elif "%if %{without " in judgement:
         return judgement.replace("%if %{without ", "%if %{with ")
+    elif "%if ! " in judgement:
+        return judgement.replace("%if ! ", "%if ")
     else:
-        return judgement
+        return judgement.replace("%if ", "%if ! ")
+
+
+def resolve_else_judgement(line: str):
+    if "%else %if ! " in line:
+        line = line.replace("%else %if ! ", "%if ")
+    elif "%else %if !" in line:
+        line = line.replace("%else %if !", "%if")
+    if "%else %ifn" in line:
+        line = line.replace("%else %ifn", "%if")
+    if "%else %if " in line:
+        line = line.replace("%else %if ", "%if ! ")
+    elif "%else %ifarch" in line:
+        line = line.replace("%else %ifarch", "%ifnarch")
+    elif "%else %ifos" in line:
+        line = line.replace("%else %ifos", "%ifnos")
+    if "%else %if" in line:
+        line = line.replace("%else %if", "%ifn")
+    return line
 
 
 def divide_out_configure(content: str):
@@ -455,19 +478,29 @@ def get_if_with_parts(line):
     return with_parts, without_parts
 
 
-def check_lua_config(line, mode):
-    """
-    检查是否是复杂配置
-    :param line:
-    :param mode:
-    :return: 是否是lua配置，结束行标志
-    """
-    if re.match("%[{]lua:", line) is not None:
-        return True, "}"
-    if mode:
-        return True, "}"
-    else:
-        return False, ""
+# def check_lua_config(line, mode):
+#     """
+#     检查是否是复杂配置
+#     :param line:
+#     :param mode:
+#     :return: 是否是lua配置，结束行标志
+#     """
+#     if re.match("%[{]lua:", line) is not None:
+#         return True, "}"
+#     if mode:
+#         return True, "}"
+#     else:
+#         return False, ""
+
+
+def calculate_brackets(line):
+    brackets_left_list = re.findall("(\{)|(\()", line)
+    brackets_right_list = re.findall("(})|(\))", line)
+    left_character = re.findall("\\\\\\(", line)
+    left_count = len(brackets_left_list) - len(left_character)
+    right_character = re.findall("\\\\\\)", line)
+    right_count = len(brackets_right_list) - len(right_character)
+    return left_count, right_count
 
 
 def add_lua_config(target: dict, line):
@@ -587,6 +620,7 @@ def divide_several_requires(origin_list):
             continue
         if re.search("\S+ [>=<]+ \S+", line) is not None:
             search_list = re.findall("\S+ [>=<]+ \S+", line)
+            search_list = list(map(lambda x: x.strip(","), search_list))
             target_list += search_list
         elif "," in line:
             temp_list = line.split(",")
@@ -595,3 +629,86 @@ def divide_several_requires(origin_list):
         else:
             target_list += line.split()
     return target_list
+
+
+def change_requires_struct(origin, target, items: dict):
+    """改变依赖的结构"""
+    target_list = items[origin].copy()
+    for build_rq in items[origin]:
+        if "%else %if" in build_rq:
+            build_rq = resolve_else_judgement(build_rq)
+            value = build_rq.split("%if")[0].strip()
+            new_key = target + change_judgement_grammar(build_rq.replace(value, "")).strip()
+            if new_key in items:
+                items[new_key].append(value)
+            else:
+                items[new_key] = [value]
+            target_list.remove(build_rq)
+        if "%if" in build_rq:
+            new_key = target + change_judgement_grammar(build_rq, cut_judge=True)
+            value = build_rq.split("%if")[0].strip()
+            value = divide_several_requires([value])
+            value = list(map(lambda x: change_macros_usage(x), value))
+            if new_key in items:
+                items[new_key] += value
+            else:
+                items[new_key] = value
+            target_list.remove(build_rq)
+        else:
+            pass
+    target_list = divide_several_requires(target_list)
+    target_list = list(map(lambda x: change_macros_usage(x), target_list))
+    items[origin] = target_list
+    return items
+
+
+def change_judgement_grammar(line, cut_judge=False):
+    if cut_judge:
+        keywords = line.split("%if")[0]
+        line = line.replace(keywords, "", 1)
+    judgement = ""
+    # TODO(%if %{with ***}=>when )
+    if "%if %{with" in line:
+        with_parts, without_parts = get_if_with_parts(line)
+        judgement = " when"
+        if len(with_parts):
+            judgement += " +" + " +".join(with_parts)
+        if len(without_parts):
+            judgement += " -" + " -".join(without_parts)
+    # TODO(	%if 0%{?openEuler}=>when %%%{rpmGlobal.openEuler})
+    if re.search("%if\s+[0x]%\{\?[\w|_]}", line) is not None:
+        results = re.findall("%if\s+[0x]%\{\?[\w|_]}", line)
+        conditions = list(map(lambda x: x.split("?")[0].rstrip("}"), results))
+        results = list(map(lambda x: "%%%{rpmGlobal." + x + "}", conditions))
+        judgement += "when " + " ".join(results)
+    # TODO(	%if %{openEuler}=>when %%{rpmGlobal.openEuler})
+    if re.search("%if\s+%\{[\w|_]}", line) is not None:
+        results = re.findall("%if\s+%\{[\w|_]}", line)
+        conditions = list(map(lambda x: x.split("?")[0].rstrip("}"), results))
+        results = list(map(lambda x: "%%{rpmGlobal." + x + "}", conditions))
+        judgement += "when " + " ".join(results)
+    # TODO(%ifarch|%ifos|%ifnarch|%ifnos=>when arch in)
+    if re.search("%ifarch|%ifos|%ifnarch|%ifnos", line) is not None:
+        results = re.findall("%if.+", line)
+        tmp_results = results.copy()
+        for i in tmp_results:
+            if re.search("%ifarch|%ifos|%ifnarch|%ifnos", i) is None:
+                results.remove(i)
+        conditions = list(map(lambda x: x.replace("%ifarch", "when arch in").replace(
+            "%ifnarch", "when arch not in").replace("%ifos", "when os in").replace(
+            "%ifnos", "when os not in"), results))
+        judgement += " ".join(conditions)
+    judgement = change_macros_usage(judgement)
+    return judgement
+
+
+def change_macros_usage(line):
+    # TODO(%{version}-%{release}=>%%{version}-%%{release})
+    if re.search("%\{version}|%\{name}|%\{release}", line):
+        line = line.replace("%{version}", "%%{version}").replace("%{name}", "%%{name}").replace("%{release}", "%%{release}")
+    # TODO(%{atk_version}=>%%{rpmGlobal.atk_version})
+    if re.search(" %\{\w+}", line) is not None:
+        results = re.findall(" %\{\w+}", line)
+        for macro in results:
+            line = line.replace(macro, macro.replace("%{", "%%{rpmGlobal."))
+    return line
