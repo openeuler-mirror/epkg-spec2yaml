@@ -207,7 +207,7 @@ class SpectacleDumper(object):
                                         for member, line in sub_item[1].items():
                                             if member == "description":
                                                 fp.write(cur_indent + TAB * (base + 3) + member + ": |" + os.linesep)
-                                                line_list = sub_item[1].split(os.linesep)
+                                                line_list = line.split(os.linesep)
                                                 for l in line_list:
                                                     fp.write(cur_indent + TAB * (base + 4) + l + os.linesep)
                                             else:
@@ -820,7 +820,7 @@ class SpecParser(object):
         """
         judgement = ""
         keywords = lower_first_word(keywords)
-        if "%if %{with" in value:
+        if "%if" in value:
             judgement = change_judgement_grammar(value)
         num_dict = self.sources_num_dict if keywords == "source" else self.patches_num_dict
         count = 6 if keywords == "source" else 5
