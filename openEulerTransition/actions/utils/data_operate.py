@@ -712,3 +712,17 @@ def change_macros_usage(line):
         for macro in results:
             line = line.replace(macro, macro.replace("%{", "%%{rpmGlobal."))
     return line
+
+
+def check_sub_files(line):
+    line_list = line.split()
+    if line_list and line_list[0] == "files":
+        line_list.remove("files")
+    while "-f" in line_list:
+        index_input = line_list.index("-f") + 1
+        line_list.pop(index_input)
+        line_list.remove("-f")
+    if len(line_list) == 0:
+        return False
+    else:
+        return True
