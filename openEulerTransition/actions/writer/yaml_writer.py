@@ -412,7 +412,8 @@ class Convertor(object):
             del _dict["BuildRoot"]
             _dict["buildRoot"] = buildroot
         for k, v in _dict.items():
-            items.append((k, v))
+            if v:
+                items.append((k, v))
 
         if extra:
             try:
