@@ -706,8 +706,8 @@ def change_judgement_grammar(line, cut_judge=False):
 
 def change_macros_usage(line):
     # TODO(%{version}-%{release}=>%%{version}-%%{release})
-    if re.search("%\{version}|%\{name}|%\{release}", line):
-        line = line.replace("%{version}", "%%{version}").replace("%{name}", "%%{name}").replace("%{release}", "%%{release}")
+    if re.search("%\{version}|%\{name}|%\{release}|%\{epoch}", line):
+        line = line.replace("%{version}", "%%{version}").replace("%{name}", "%%{name}").replace("%{release}", "%%{release}").replace("%{epoch}", "%%{epoch}")
     # TODO(%{atk_version}=>%%{rpmGlobal.atk_version})
     if re.search(" %\{\w+}", line) is not None:
         results = re.findall(" %\{\w+}", line)
