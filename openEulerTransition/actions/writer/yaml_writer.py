@@ -375,7 +375,7 @@ class Convertor(object):
                         for index2, member in the_items.items():
                             target_items[str(index2)] = member
                     items.append((lower_first_word(entry), target_items))
-                elif entry in ["Summary", "Licence", "URL", "Description"]:
+                elif entry in ["Summary", "License", "URL", "Description"]:
                     meta_dict[lower_first_word(entry)] = _dict[entry]
                 else:
                     items.append((lower_first_word(entry), _dict[entry]))
@@ -1168,6 +1168,8 @@ class SpecParser(object):
                         if type(items[header]) == str:
                             while_next = False
                             items[header] += line + os.linesep
+                            if line == "%end":
+                                state = ST_MAIN
                     elif keywords_type == "single":
                         logger.warn("single at error=================>" + line)
                     elif keywords_type == "list":
@@ -1632,8 +1634,15 @@ class SpecParser(object):
         macros_list = self.macros.split(os.linesep)
         target_list = macros_list.copy()
         remove_line_list = []
+        if_flag = 0
         for k, macros_line in enumerate(macros_list):
             if macros_line.endswith("\\"):
+                continue
+            if "%if" in macros_line:
+                if_flag += 1
+            if "%endif" in macros_line:
+                if_flag -= 1
+            if if_flag > 0:
                 continue
             if re.match("%define \w+ [\s\S]+", macros_line) is not None:
                 line_list = macros_line.split()
