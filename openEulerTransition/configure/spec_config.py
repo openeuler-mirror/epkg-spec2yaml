@@ -1,6 +1,7 @@
 SHELL_KEYWORDS = ["build", "install", "prep", "check", "clean", "pre", "preun", "pretrans", "post", "postun",
-                  "posttrans", "configure"]
+                  "posttrans", "configure", "transfiletriggerin", "transfiletriggerpostun", "triggerun"]
 OBS_LINES_KEYWORDS = ["description", "files"]
+RARE_KEYWORDS = ["triggerun", "transfiletriggerin", "transfiletriggerpostun"]
 MAIN_SHELL_KEYWORDS = ["build", "install", "prep", "check", "clean"]
 MACROS_KEYWORDS = ["%package_help"]
 
@@ -19,6 +20,9 @@ HEADERS = ('package',
            'post',
            'files',
            'changelog',
+           'triggerun',
+           'transfiletriggerin',
+           'transfiletriggerpostun',
            'include')
 SINGLES = ('Summary',
            'Name',
@@ -90,7 +94,9 @@ ORDER_ENTRIES = ['Macros',
                  'Suggests',
                  'IncludeSource',
                  'FilesJudgement',
-                 'rpmMacros'
+                 'rpmMacros',
+                 'rpmGlobal',
+                 'useFlag'
                  ]
 # must have keys for 'main' package
 MUSTHAVE = {'Release': '1',
@@ -120,6 +126,7 @@ KEY_SYS = {
             'postun': 'Postun',
             'pretrans': 'Pretrans',
             'posttrans': 'Posttrans',
+            'transfiletrigger\w+': 'transfileTrigger\w+',
             'check': 'Check',
             'prep': 'Prep',
             'include': 'IncludeSource',
