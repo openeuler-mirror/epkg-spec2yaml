@@ -378,7 +378,8 @@ class Convertor(object):
                 elif entry in ["Summary", "License", "URL", "Description"]:
                     meta_dict[lower_first_word(entry)] = _dict[entry]
                 else:
-                    items.append((lower_first_word(entry), _dict[entry]))
+                    if _dict[entry]:
+                        items.append((lower_first_word(entry), _dict[entry]))
                 del _dict[entry]
 
         subpkgs = {}
