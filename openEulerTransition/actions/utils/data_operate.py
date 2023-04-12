@@ -463,6 +463,8 @@ def divide_out_configure(content: str):
         if "configure" in line.lower():
             if "configure" in line:
                 line = line.replace("configure", "configure %%{env.configureFlags}")
+            if not configure_cmd:
+                build += "configure" + os.linesep
             configure_cmd = True
             configure += line + os.linesep
         if not configure_cmd:
