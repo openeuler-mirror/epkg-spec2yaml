@@ -368,7 +368,7 @@ def divide_rpm_global(macros_text, rpm_global_text):
     target_list = line_list.copy()
     remove_list = []
     for i, line in enumerate(line_list):
-        if re.match("%global \S+\s+\S+", line) is not None:
+        if re.match("%global\s+\S+ [\s\S]+", line) is not None:
             if line.endswith("\\"):
                 continue
             if if_flag == else_flag == 0:

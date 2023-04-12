@@ -1644,7 +1644,12 @@ class SpecParser(object):
                 if_flag -= 1
             if if_flag > 0:
                 continue
-            if re.match("%define \w+ [\s\S]+", macros_line) is not None:
+            if re.match("%define\s+\w+ [\s\S]+", macros_line) is not None:
+                line_list = macros_line.split()
+                global_value = " ".join(line_list[2:])
+                self.rpm_global[line_list[1]] = "\"" + resolve_inner_quotes(global_value) + "\""
+                remove_line_list.append(k)
+            elif re.match("%global\s+\w+ [\s\S]+", macros_line) is not None:
                 line_list = macros_line.split()
                 global_value = " ".join(line_list[2:])
                 self.rpm_global[line_list[1]] = "\"" + resolve_inner_quotes(global_value) + "\""
