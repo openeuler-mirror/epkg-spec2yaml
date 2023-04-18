@@ -203,40 +203,6 @@ def translate_keys(_dict):
         _dict['NoAutoProv'] = 'yes'
 
 
-def revise_macros(macros: str, source_dict: dict):
-    """
-    从源数据中修改宏
-    :param macros: 宏
-    :param source_dict: 源数据
-    :return:
-    """
-    for i in range(len(macros)):
-        line = macros[i]
-        if re.search(r"\\\\[0-9|a-z|A-Z|.|(|)|$]", line) is not None:
-            exist_special_words = re.findall(r"\\\\[0-9|a-z|A-Z|.|(|)|$]", line)
-            for a_special_words in exist_special_words:
-                line = line.replace(a_special_words, "\\\\" + a_special_words)
-        if re.search(r"\\[0-9|a-z|A-Z|.|(|)|$]", line) is not None:
-            exist_special_words = re.findall(r"\\[0-9|a-z|A-Z|.|(|)|$]", line)
-            for a_special_words in exist_special_words:
-                start = 0
-                while line.find(a_special_words, start, len(line)) != -1:
-                    sub_index = line.find(a_special_words, start, len(line))
-                    if sub_index > 0 and line[sub_index-1] == "\\":
-                        start = sub_index + 1
-                        continue
-                    line_list = list(line)
-                    line_list.insert(sub_index, "\\")
-                    line = "".join(line_list)
-                    start = line.find(a_special_words, start, len(line)) + 1
-        if not line.startswith("%define") and re.search("%\{version\}", line) or re.search("%\{name\}", line):
-            if 'Version' in source_dict:
-                line = re.sub("%\{version\}", source_dict['Version'][0], line)
-            if 'Name' in source_dict:
-                line = re.sub("%\{name\}", source_dict['Name'][0], line)
-        macros[i] = line
-
-
 def resolve_special_macros_config(line, source_items: dict):
     """
     处理特殊的宏配置
@@ -352,7 +318,11 @@ def add_string_to_dict(dict1, this_key, line, turn_line=True):
     :param turn_line:
     :return:
     """
-    if this_key in ["files", "rpmMacros"]:
+    if this_key in ["include", "description"]:
+        return dict1
+    if this_key in SINGLES:
+        return dict1
+    if True:
         suffix = os.linesep if turn_line else ""
         if this_key in dict1:
             dict1[this_key] += line + suffix
@@ -638,16 +608,17 @@ def change_requires_struct(origin, target, items: dict):
     target_list = items[origin].copy()
     for build_rq in items[origin]:
         if "%else %if" in build_rq:
+            target_list.remove(build_rq)
             build_rq = resolve_else_judgement(build_rq)
             value = build_rq.split("%if")[0].strip()
-            new_key = target + change_judgement_grammar(build_rq.replace(value, "")).strip()
+            new_key = target + " " + change_judgement_grammar(build_rq.replace(value, "")).strip()
             if new_key in items:
                 items[new_key].append(value)
             else:
                 items[new_key] = [value]
-            target_list.remove(build_rq)
-        if "%if" in build_rq:
-            new_key = target + change_judgement_grammar(build_rq, cut_judge=True)
+
+        elif "%if" in build_rq:
+            new_key = target + " " + change_judgement_grammar(build_rq, cut_judge=True)
             value = build_rq.split("%if")[0].strip()
             value = divide_several_requires([value])
             value = list(map(lambda x: change_macros_usage(x), value))
@@ -672,7 +643,7 @@ def change_judgement_grammar(line, cut_judge=False):
     # TODO(%if %{with ***}=>when )
     if "%if %{with" in line:
         with_parts, without_parts = get_if_with_parts(line)
-        judgement = " when"
+        judgement = "when"
         if len(with_parts):
             judgement += " +" + " +".join(with_parts)
         if len(without_parts):
@@ -682,13 +653,13 @@ def change_judgement_grammar(line, cut_judge=False):
         results = re.findall("%if\s+[0x]%\{\?[\w|_]}", line)
         conditions = list(map(lambda x: x.split("?")[0].rstrip("}"), results))
         results = list(map(lambda x: "%%%{rpmGlobal." + x + "}", conditions))
-        judgement += "when " + " ".join(results)
+        judgement += " when " + " ".join(results)
     # TODO(	%if %{openEuler}=>when %%{rpmGlobal.openEuler})
     if re.search("%if\s+%\{[\w|_]}", line) is not None:
         results = re.findall("%if\s+%\{[\w|_]}", line)
         conditions = list(map(lambda x: x.split("?")[0].rstrip("}"), results))
         results = list(map(lambda x: "%%{rpmGlobal." + x + "}", conditions))
-        judgement += "when " + " ".join(results)
+        judgement += " when " + " ".join(results)
     # TODO(%ifarch|%ifos|%ifnarch|%ifnos=>when arch in)
     if re.search("%ifarch|%ifos|%ifnarch|%ifnos", line) is not None:
         results = re.findall("%if.+", line)
@@ -696,10 +667,12 @@ def change_judgement_grammar(line, cut_judge=False):
         for i in tmp_results:
             if re.search("%ifarch|%ifos|%ifnarch|%ifnos", i) is None:
                 results.remove(i)
-        conditions = list(map(lambda x: x.replace("%ifarch", "when arch in").replace(
-            "%ifnarch", "when arch not in").replace("%ifos", "when os in").replace(
-            "%ifnos", "when os not in"), results))
+        conditions = list(map(lambda x: x.replace("%ifarch", " when arch in").replace(
+            "%ifnarch", " when arch not in").replace("%ifos", " when os in").replace(
+            "%ifnos", " when os not in"), results))
         judgement += " ".join(conditions)
+    if "%if" in line and judgement == "":
+        judgement = line.replace("%if !", "when not").replace("%if", "when")
     judgement = change_macros_usage(judgement)
     return judgement
 
@@ -728,3 +701,11 @@ def check_sub_files(line):
         return False
     else:
         return True
+
+
+def right_strip_extra_judge(text):
+    line_list = text.split(os.linesep)
+    last_line = line_list[0]
+    if last_line.startswith("%if"):
+        return os.linesep.join(line_list[:-1])
+    return text
