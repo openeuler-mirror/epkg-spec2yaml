@@ -6,8 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="8919a3b1-d629-4258-8b84-97395ced5de5" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/openEulerTransition/actions/utils/data_operate.py" beforeDir="false" afterPath="$PROJECT_DIR$/openEulerTransition/actions/utils/data_operate.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/openEulerTransition/configure/yaml_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/openEulerTransition/configure/yaml_config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/openEulerTransition/actions/writer/yaml_writer.py" beforeDir="false" afterPath="$PROJECT_DIR$/openEulerTransition/actions/writer/yaml_writer.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

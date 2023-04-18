@@ -375,7 +375,7 @@ class Convertor(object):
                         for index2, member in the_items.items():
                             target_items[str(index2)] = member
                     items.append((lower_first_word(entry), target_items))
-                elif entry in ["Summary", "License", "URL", "Description"]:
+                elif entry in ["Summary", "Licence", "URL", "Description"]:
                     meta_dict[lower_first_word(entry)] = _dict[entry]
                 else:
                     if _dict[entry]:
@@ -536,7 +536,7 @@ class SpecParser(object):
                     subpkg = subpkg.replace("%name", self.items["Name"][0])
                 if subpkg == self.items["Name"][0]:
                     ls.remove("-n")
-                    ls.remove(origin_name)
+                    ls.remove(subpkg)
                     if filesinput != '':
                         if 'FilesInput' not in self.items:
                             self.items['FilesInput'] = filesinput
@@ -823,7 +823,7 @@ class SpecParser(object):
         judgement = ""
         keywords = lower_first_word(keywords)
         if "%if" in value:
-            judgement = change_judgement_grammar(value)
+            judgement = " " + change_judgement_grammar(value)
         num_dict = self.sources_num_dict if keywords == "source" else self.patches_num_dict
         count = 6 if keywords == "source" else 5
         if keywords + judgement in dict1:
@@ -912,7 +912,10 @@ class SpecParser(object):
                 need_left_strip = False
             available_key = header_re.match(line) or single_re.match(line) or require_re.match(line)  # parse key spell
             if available_key:
-                macros_mode = False
+                if macros_mode and need_left_strip:
+                    if "rpmMacros" in items:
+                        items["rpmMacros"] = right_strip_extra_judge(items["rpmMacros"])
+                    macros_mode = False
                 if state == ST_INLINE and header in SHELL_KEYWORDS:
                     if re.match("%\w+", line) is not None:
                         temp_available_key = line.strip().lstrip("%").split()[0]
@@ -939,8 +942,8 @@ class SpecParser(object):
                     if unclosed_brackets != 0:
                         if subpackages_mode:
                             if line.startswith("%global"):
-                                items = add_string_to_dict(items, "rpmGlobal", line)
-                            else:
+                            #     items = add_string_to_dict(items, "rpmGlobal", line)
+                            # else:
                                 items = add_string_to_dict(items, "rpmMacros", line)
                         else:
                             self.macros += line + os.linesep
@@ -955,13 +958,16 @@ class SpecParser(object):
                         left_count, right_count = calculate_brackets(line)
                         unclosed_brackets = left_count + unclosed_brackets - right_count
                         macros_mode = True
-            # lua_mode, end_words = check_lua_config(line, lua_mode)
-            # if lua_mode:
-            #     items = add_lua_config(items, line)
-            #     if line == end_words:
-            #         lua_mode = False
-            #     continue
             if macros_mode:
+                if re.match("%if|%else|%endif", line) is not None:
+                    if "%if" in line:
+                        _if_cond_part.append(line)
+                    elif "%else" in line:
+                        _else_cond_part.append(line)
+                    else:
+                        _if_cond_part.pop()
+                        if _else_cond_part:
+                            _else_cond_part.pop()
                 if subpackages_mode:
                     items = add_string_to_dict(items, "rpmMacros", line)
                 else:
@@ -1092,7 +1098,10 @@ class SpecParser(object):
                     if cond_else.match(line):
                         _else_cond_part.append(line)
                         if while_next and not _else_status:
-                            _else_cond_part[-1] = _if_cond_part[-1] + os.linesep + _else_cond_part[-1]
+                            if len(_if_cond_part) == 0:
+                                _else_cond_part[-1] = if_cond_part[-1] + os.linesep + _else_cond_part[-1]
+                            else:
+                                _else_cond_part[-1] = _if_cond_part[-1] + os.linesep + _else_cond_part[-1]
                         _else_status = True
                         while_next = True
                         while_next_true += 1
@@ -1145,13 +1154,6 @@ class SpecParser(object):
                             items = {}
                         if header not in items:
                             items[header] = ""
-                        # if re.match(r"%patch\d*", line) is not None or re.search("%\{PATCH\d*\}", line) is not None:
-                        #     if not line.startswith("#"):
-                        #         line = self.modify_patch_serial_number(line)
-                        # if re.search(r"%\{SOURCE\d*\}", line) is not None or re.search("%SOURCE\d*", line) is not None \
-                        #         or re.search("%\{S:\d*\}", line) is not None:
-                        #     if not line.startswith("#"):
-                        #         line = self.modify_source_number(line)
                         if header == "prep" and line.startswith("%setup"):
                             if re.search("-b\d+", line):
                                 line = line.replace("-b", "-b ")
@@ -1200,7 +1202,8 @@ class SpecParser(object):
                     else_cond_part.append(line)
                     else_status = True
                 elif cond_endif.match(line):
-                    if_cond_part.pop()
+                    if if_cond_part:
+                        if_cond_part.pop()
                     if else_status:
                         else_cond_part.pop()
                         if len(else_cond_part) == 0:
@@ -1293,6 +1296,8 @@ class SpecParser(object):
                                         sub_files = True
                                         break
                         if opt and (not opt.startswith('-') or '-n' in opt) or sub_files:
+                            if "rpmMacros" in items:
+                                items["rpmMacros"] = right_strip_extra_judge(items["rpmMacros"])
                             # section with sub-pkg specified
                             items = self._switch_subpkg(opt, cond_part=if_cond_part)
                             ls = opt.split()
@@ -1450,6 +1455,10 @@ class SpecParser(object):
         :param main_name:主包名
         :return:
         """
+        condition = ""
+        if sub_name is None:
+            if keywords in self.keywords_if_config:
+                condition = " " + change_judgement_grammar(" ".join(self.keywords_if_config[keywords]))
         if " -n " in value and not whole:
             value = value.split(os.linesep)[0].replace("-n %{name}-", "") + os.linesep + os.linesep.join(
                 value.split(os.linesep)[1:])
@@ -1459,7 +1468,7 @@ class SpecParser(object):
             sub_name = main_name + "-" + sub_name
         if value.startswith("%" + keywords + os.linesep):  # 主包shell语句分解
             function_context = value.replace("%" + keywords + os.linesep, "", 1)
-            self.shell_functions[keywords] = function_context
+            self.shell_functions[keywords + condition] = function_context
         elif (sub_name is not None) and value.startswith("%" + keywords + " " + original_sub_name + os.linesep):  # 子包shell语句分解
             function_context = value.lstrip("%" + original_sub_name + " " + keywords).strip(os.linesep) + os.linesep
             self.shell_functions[keywords + ":" + sub_name] = function_context
@@ -1471,7 +1480,7 @@ class SpecParser(object):
                     "%" + keywords, "", 1) + os.linesep + function_context
             else:
                 function_context = value.replace(first_line, "", 1).strip(os.linesep) + os.linesep
-                self.shell_functions[keywords] = first_line.replace(
+                self.shell_functions[keywords + condition] = first_line.replace(
                     "%" + keywords, "", 1) + os.linesep + function_context
         # else:
         #     if sub_name is not None and " -n " in value:
@@ -1507,9 +1516,9 @@ class SpecParser(object):
                 else:
                     use_flag_key = "useFlag"
                 if use_flag_key not in self.items:
-                    self.items[use_flag_key] = [line.split()[-1]]
+                    self.items[use_flag_key] = {line.split()[-1]: "-"}
                 else:
-                    self.items[use_flag_key].append(line.split()[-1])
+                    self.items[use_flag_key][line.split()[-1]] = "-"
                 remove_line.append(i)
             elif re.search("(%define)|(%global)|(%bcond_with)|(%\{\!\?)|(%undefine)|(%\{\?)|(%\{expand:\s*%)", line) is not None:
                 contain_bcond = False
