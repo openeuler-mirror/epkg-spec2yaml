@@ -439,7 +439,7 @@ def divide_out_configure(content: str):
             configure += line + os.linesep
         if not configure_cmd:
             build += line + os.linesep
-    return configure, build
+    return configure.strip(), build.strip()
 
 
 def get_if_with_parts(line):
@@ -450,21 +450,6 @@ def get_if_with_parts(line):
     return with_parts, without_parts
 
 
-# def check_lua_config(line, mode):
-#     """
-#     检查是否是复杂配置
-#     :param line:
-#     :param mode:
-#     :return: 是否是lua配置，结束行标志
-#     """
-#     if re.match("%[{]lua:", line) is not None:
-#         return True, "}"
-#     if mode:
-#         return True, "}"
-#     else:
-#         return False, ""
-
-
 def calculate_brackets(line):
     brackets_left_list = re.findall("(\{)|(\()", line)
     brackets_right_list = re.findall("(})|(\))", line)
@@ -473,14 +458,6 @@ def calculate_brackets(line):
     right_character = re.findall("\\\\\\)", line)
     right_count = len(brackets_right_list) - len(right_character)
     return left_count, right_count
-
-
-def add_lua_config(target: dict, line):
-    if "luaConfig" in target:
-        target["luaConfig"] += line + os.linesep
-    else:
-        target["luaConfig"] = line + os.linesep
-    return target
 
 
 def add_context(name, text, obj, file_obj: LuaFile):

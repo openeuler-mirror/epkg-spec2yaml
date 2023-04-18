@@ -1471,23 +1471,20 @@ class SpecParser(object):
             sub_name = main_name + "-" + sub_name
         if value.startswith("%" + keywords + os.linesep):  # 主包shell语句分解
             function_context = value.replace("%" + keywords + os.linesep, "", 1)
-            self.shell_functions[keywords + condition] = function_context
+            self.shell_functions[keywords + condition] = function_context.strip()
         elif (sub_name is not None) and value.startswith("%" + keywords + " " + original_sub_name + os.linesep):  # 子包shell语句分解
-            function_context = value.lstrip("%" + original_sub_name + " " + keywords).strip(os.linesep) + os.linesep
+            function_context = value.lstrip("%" + original_sub_name + " " + keywords).strip()
             self.shell_functions[keywords + ":" + sub_name] = function_context
         elif value.startswith("%" + keywords) and keywords in RARE_KEYWORDS:
             first_line = value.split(os.linesep)[0]
             if sub_name:
-                function_context = value.replace(first_line, "", 1).strip(os.linesep) + os.linesep
+                function_context = value.replace(first_line, "", 1).strip()
                 self.shell_functions[keywords + ":" + sub_name] = first_line.replace(
                     "%" + keywords, "", 1) + os.linesep + function_context
             else:
                 function_context = value.replace(first_line, "", 1).strip(os.linesep) + os.linesep
                 self.shell_functions[keywords + condition] = first_line.replace(
-                    "%" + keywords, "", 1) + os.linesep + function_context
-        # else:
-        #     if sub_name is not None and " -n " in value:
-        #         return False
+                    "%" + keywords, "", 1) + os.linesep + function_context.strip()
         if "build" in self.shell_functions and "configure" not in self.shell_functions:
             self.shell_functions["configure"], self.shell_functions["build"] = divide_out_configure(
                 self.shell_functions["build"])
