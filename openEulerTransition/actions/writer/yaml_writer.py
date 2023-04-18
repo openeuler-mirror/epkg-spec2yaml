@@ -941,7 +941,7 @@ class SpecParser(object):
                 else:
                     if unclosed_brackets != 0:
                         if subpackages_mode:
-                            if line.startswith("%global"):
+                            if not line.startswith("%global"):
                             #     items = add_string_to_dict(items, "rpmGlobal", line)
                             # else:
                                 items = add_string_to_dict(items, "rpmMacros", line)
@@ -954,6 +954,7 @@ class SpecParser(object):
                                 items = add_string_to_dict(items, "rpmMacros", if_cond_part[0])
                             else:
                                 self.macros += if_cond_part[0]
+                            _if_cond_part += if_cond_part
                             if_cond_part.clear()
                         left_count, right_count = calculate_brackets(line)
                         unclosed_brackets = left_count + unclosed_brackets - right_count
@@ -972,6 +973,7 @@ class SpecParser(object):
                     items = add_string_to_dict(items, "rpmMacros", line)
                 else:
                     self.macros += line + os.linesep
+                while_next = False
                 continue
             if not available_key:
                 if ":" in line:
