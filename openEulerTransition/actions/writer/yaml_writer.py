@@ -264,7 +264,7 @@ class SpectacleDumper(object):
                 # fs = open(self.opath.replace(".yaml", ".sh"), "w")
                 fs_phase = open("phase.sh", "w")
                 for function_name in self.shell_functions.keys():
-                    if function_name not in ["install", "prep", "build", "clean", "check"]:
+                    if function_name not in ["install", "prep", "build", "clean", "check", "configure"]:
                         fs_runtime = open("runtimePhase.sh", "w")
                         break
                 files_file = open("files.yaml", "w")
@@ -1486,8 +1486,10 @@ class SpecParser(object):
                 self.shell_functions[keywords + condition] = first_line.replace(
                     "%" + keywords, "", 1) + os.linesep + function_context.strip()
         if "build" in self.shell_functions and "configure" not in self.shell_functions:
-            self.shell_functions["configure"], self.shell_functions["build"] = divide_out_configure(
+            configure_content, self.shell_functions["build"] = divide_out_configure(
                 self.shell_functions["build"])
+            if configure_content.strip() != "":
+                self.shell_functions["configure"] = configure_content
 
     def produce_use_flag(self):
         line_list = self.macros.split(os.linesep)
