@@ -966,7 +966,8 @@ class SpecParser(object):
                     elif "%else" in line:
                         _else_cond_part.append(line)
                     else:
-                        _if_cond_part.pop()
+                        if _if_cond_part:
+                            _if_cond_part.pop()
                         if _else_cond_part:
                             _else_cond_part.pop()
                 if subpackages_mode:
@@ -1537,6 +1538,7 @@ class SpecParser(object):
                         remove_line.append(i)
                 else_cond.pop() if else_cond else None
                 back_count = 0
+        remove_line = list(set(remove_line))
         remove_line.reverse()
         for j in remove_line:
             target_list.pop(j)
