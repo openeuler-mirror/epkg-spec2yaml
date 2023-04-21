@@ -1518,9 +1518,9 @@ class SpecParser(object):
                 else:
                     use_flag_key = "useFlag"
                 if use_flag_key not in self.items:
-                    self.items[use_flag_key] = {line.split()[-1]: "-"}
+                    self.items[use_flag_key] = {line.split()[-1]: ""}
                 else:
-                    self.items[use_flag_key][line.split()[-1]] = "-"
+                    self.items[use_flag_key][line.split()[-1]] = ""
                 remove_line.append(i)
             elif re.search("(%define)|(%global)|(%bcond_with)|(%\{\!\?)|(%undefine)|(%\{\?)|(%\{expand:\s*%)", line) is not None:
                 contain_bcond = False
