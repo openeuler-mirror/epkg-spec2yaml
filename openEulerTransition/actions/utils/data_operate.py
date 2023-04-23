@@ -468,11 +468,10 @@ def add_context(name, text, obj, file_obj: LuaFile):
         if name not in MAIN_SHELL_KEYWORDS and (temp_list[0].startswith("-") or temp_list[1].startswith("-")):
             text = text.replace(first_line, target_first, 1)
     if "<lua>" in first_line:
-        name = obj.name
-        file_name = os.path.splitext(name)[0]
+        file_name = os.path.splitext(obj.name)[0]
         mode = "a+" if file_obj.CREATED_LUA[file_name] else "w+"
         file_obj.CREATED_LUA[file_name] = True
-        with open(name.replace(".sh", ".lua"), mode) as f:
+        with open(obj.name.replace(".sh", ".lua"), mode) as f:
             if mode == "w+":
                 f.write("#!/usr/bin/env lua" + os.linesep*2)
             text = add_tab_in_lines(text)
