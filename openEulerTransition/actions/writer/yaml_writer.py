@@ -1505,25 +1505,26 @@ class SpecParser(object):
         for i, line in enumerate(line_list):
             if re.search("%(bcond_with)|(bcond_without) \s+", line) is not None:
                 contain_bcond = True
+                flag_with = "-" if "bcond_without" in line else "+"
                 if line.endswith("\\"):
                     continue
                 if if_cond and len(else_cond) == 0:
-                    use_flag_key = "useFlag " + change_judgement_grammar(if_cond[0])
+                    use_flag_key = "useFlags " + change_judgement_grammar(if_cond[0])
                     remove_line.append(line_list.index(if_cond[0]))
                     back_count += 1
                     if i - back_count not in remove_line:
                         remove_line.append(i - back_count)
                 elif if_cond and else_cond:
-                    use_flag_key = "useFlag " + change_judgement_grammar(get_reverse_judgement(if_cond[0]))
+                    use_flag_key = "useFlags " + change_judgement_grammar(get_reverse_judgement(if_cond[0]))
                     back_count += 1
                     if i - back_count not in remove_line:
                         remove_line.append(i - back_count)
                 else:
-                    use_flag_key = "useFlag"
+                    use_flag_key = "useFlags"
                 if use_flag_key not in self.items:
-                    self.items[use_flag_key] = {line.split()[-1]: ""}
+                    self.items[use_flag_key] = {flag_with + line.split()[-1]: ""}
                 else:
-                    self.items[use_flag_key][line.split()[-1]] = ""
+                    self.items[use_flag_key][flag_with + line.split()[-1]] = ""
                 remove_line.append(i)
             elif re.search("(%define)|(%global)|(%bcond_with)|(%\{\!\?)|(%undefine)|(%\{\?)|(%\{expand:\s*%)", line) is not None:
                 contain_bcond = False
