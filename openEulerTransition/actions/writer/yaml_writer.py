@@ -517,6 +517,8 @@ class SpecParser(object):
         wholename = False
         filesinput = ''
         ls = subpkg.split()
+        if "-f" in ls:
+            filesinput = "#rpm_macro_param:"
         while '-f' in ls:
             this_files_input = ls[ls.index('-f') + 1]
             if "-f" in ls:
@@ -1177,6 +1179,7 @@ class SpecParser(object):
                             items[header] += line + os.linesep
                             if line == "%end":
                                 state = ST_MAIN
+                                continue
                     elif keywords_type == "single":
                         logger.warn("single at error=================>" + line)
                     elif keywords_type == "list":
