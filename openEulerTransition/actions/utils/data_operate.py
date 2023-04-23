@@ -450,21 +450,6 @@ def get_if_with_parts(line):
     return with_parts, without_parts
 
 
-# def check_lua_config(line, mode):
-#     """
-#     检查是否是复杂配置
-#     :param line:
-#     :param mode:
-#     :return: 是否是lua配置，结束行标志
-#     """
-#     if re.match("%[{]lua:", line) is not None:
-#         return True, "}"
-#     if mode:
-#         return True, "}"
-#     else:
-#         return False, ""
-
-
 def calculate_brackets(line):
     brackets_left_list = re.findall("(\{)|(\()", line)
     brackets_right_list = re.findall("(})|(\))", line)
@@ -475,17 +460,13 @@ def calculate_brackets(line):
     return left_count, right_count
 
 
-def add_lua_config(target: dict, line):
-    if "luaConfig" in target:
-        target["luaConfig"] += line + os.linesep
-    else:
-        target["luaConfig"] = line + os.linesep
-    return target
-
-
 def add_context(name, text, obj, file_obj: LuaFile):
     first_line = text.split(os.linesep)[0]
-    if "-p <lua>" in first_line:
+    target_first = "--rpm_macro_param: " + first_line if "<lua>" in first_line else "#rpm_macro_param: " + first_line
+    temp_list = first_line.split()
+    if len(temp_list) > 1 and (temp_list[0].startswith("-") or temp_list[1].startswith("-")):
+        text = text.replace(first_line, target_first, 1)
+    if "<lua>" in first_line:
         name = obj.name
         file_name = os.path.splitext(name)[0]
         mode = "a+" if file_obj.CREATED_LUA[file_name] else "w+"
@@ -552,6 +533,8 @@ def parse_files_input(origin_items, target_items, **kwargs):
     if len(opt) > 1:
         files_input = opt[1:]
         files_input_value = ""
+        if "-f" in files_input:
+            files_input_value = "#rpm_macro_param"
         while '-f' in files_input:
             this_files_input = files_input[files_input.index('-f') + 1].strip()
             files_input_value += " -f " + this_files_input
@@ -577,10 +560,18 @@ def parse_files_input(origin_items, target_items, **kwargs):
 def strip_files_startswith(text):
     if re.match("%files \S+ -f", text) is not None:
         match_words = re.findall("%files \S+ -f", text)[0]
+        match_words = remove_package_name(match_words)
         strip_words = match_words.rstrip("-f").strip()
-        text = text.replace(strip_words, "", 1)
+        text = text.replace(strip_words, "#rpm_macro_param", 1)
     if text.startswith("%files"):
-        text = text.lstrip("%files")
+        # text = text.lstrip("%files")
+        first_line = text.split(os.linesep)[0]
+        target_first = remove_package_name(first_line)
+        text = text.replace(first_line, target_first, 1)
+        if target_first != "%files":
+            text = text.replace("%files", "#rpm_macro_param", 1)
+        else:
+            text = text.replace("%files", "", 1)
     return text
 
 
@@ -712,3 +703,20 @@ def right_strip_extra_judge(text):
     if last_line.startswith("%if"):
         return os.linesep.join(line_list[:-1])
     return text
+
+
+def remove_package_name(line, remove_keywords=False):
+    opts = line.split()
+    target = "" if remove_keywords else opts[0]
+    if len(opts) < 2:
+        return line
+    param_value = False
+    for opt in opts[1:]:
+        if opt.startswith("-"):
+            if opt != "-n":
+                target += " " + opt
+                param_value = True
+        elif param_value:
+            target += " " + opt
+            param_value = False
+    return target
