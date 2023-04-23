@@ -464,8 +464,9 @@ def add_context(name, text, obj, file_obj: LuaFile):
     first_line = text.split(os.linesep)[0]
     target_first = "--rpm_macro_param: " + first_line if "<lua>" in first_line else "#rpm_macro_param: " + first_line
     temp_list = first_line.split()
-    if len(temp_list) > 1 and (temp_list[0].startswith("-") or temp_list[1].startswith("-")):
-        text = text.replace(first_line, target_first, 1)
+    if len(temp_list) > 1:
+        if name not in MAIN_SHELL_KEYWORDS and (temp_list[0].startswith("-") or temp_list[1].startswith("-")):
+            text = text.replace(first_line, target_first, 1)
     if "<lua>" in first_line:
         name = obj.name
         file_name = os.path.splitext(name)[0]
