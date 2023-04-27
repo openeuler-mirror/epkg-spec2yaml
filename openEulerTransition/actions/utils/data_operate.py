@@ -430,6 +430,8 @@ def divide_out_configure(content: str):
             if line.startswith("%if") or line.startswith("%else") or line.startswith("%endif"):
                 configure += line + os.linesep
             elif line.endswith("\\"):
+                if not configure_cmd_multiline:
+                    configure_cmd_multiline = True
                 configure += line + os.linesep
             else:
                 if configure_cmd_multiline:
@@ -453,7 +455,7 @@ def divide_out_configure(content: str):
             configure += line + os.linesep
         if not configure_cmd:
             build += line + os.linesep
-        if configure_cmd and not line.endswith("\\"):
+        if "configure" in line.lower() and not line.endswith("\\"):
             configure_cmd_multiline = False
     return configure_list, build.strip()
 
