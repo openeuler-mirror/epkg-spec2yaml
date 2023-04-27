@@ -412,10 +412,12 @@ def divide_out_configure(content: str):
     :param content:
     :return:
     """
+    configure_list = []
     configure = ""
     build = ""
     configure_cmd = False
     line_list = content.split(os.linesep)
+    configure_num = 0
     for num, line in enumerate(line_list):
         if line.startswith("#"):
             if configure_cmd:
@@ -430,17 +432,24 @@ def divide_out_configure(content: str):
                 configure += line + os.linesep
             else:
                 configure += line + os.linesep
+                if configure_cmd and configure.strip() != "":
+                    configure_list.append(configure.strip())
+                    configure = ""
                 configure_cmd = False
+                continue
         if "configure" in line.lower():
-            if "configure" in line:
-                line = line.replace("configure", "configure %%{env.configureFlags}")
             if not configure_cmd:
-                build += "configure" + os.linesep
+                if configure_num == 0:
+                    build += "configure" + os.linesep
+                    configure_num += 1
+                else:
+                    build += "configure" + str(configure_num) + os.linesep
+                    configure_num += 1
             configure_cmd = True
             configure += line + os.linesep
         if not configure_cmd:
             build += line + os.linesep
-    return configure.strip(), build.strip()
+    return configure_list, build.strip()
 
 
 def get_if_with_parts(line):
@@ -463,8 +472,7 @@ def calculate_brackets(line):
 
 def add_context(name, text, obj, file_obj: LuaFile):
     first_line = text.split(os.linesep)[0]
-    target_first = "--" + RPM_MACRO_PARAM_COMMENT + " " + first_line if "<lua>" in first_line else "#" + \
-                   RPM_MACRO_PARAM_COMMENT + " " + first_line
+    target_first = "--" + RPM_MACRO_PARAM_COMMENT + " " + first_line if "<lua>" in first_line else "#" + RPM_MACRO_PARAM_COMMENT + " " + first_line
     temp_list = first_line.split()
     if len(temp_list) > 1:
         if name not in MAIN_SHELL_KEYWORDS and (temp_list[0].startswith("-") or temp_list[1].startswith("-")):
