@@ -518,7 +518,7 @@ class SpecParser(object):
         filesinput = ''
         ls = subpkg.split()
         if "-f" in ls:
-            filesinput = "#rpm_macro_param:"
+            filesinput = "#" + RPM_MACRO_PARAM_COMMENT
         while '-f' in ls:
             this_files_input = ls[ls.index('-f') + 1]
             if "-f" in ls:

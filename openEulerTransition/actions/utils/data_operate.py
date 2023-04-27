@@ -1,6 +1,7 @@
 import re
 import os
 from openEulerTransition.configure.spec_config import *
+from openEulerTransition.configure.yaml_config import *
 
 
 class LuaFile(object):
@@ -462,7 +463,8 @@ def calculate_brackets(line):
 
 def add_context(name, text, obj, file_obj: LuaFile):
     first_line = text.split(os.linesep)[0]
-    target_first = "--rpm_macro_param: " + first_line if "<lua>" in first_line else "#rpm_macro_param: " + first_line
+    target_first = "--" + RPM_MACRO_PARAM_COMMENT + " " + first_line if "<lua>" in first_line else "#" + \
+                   RPM_MACRO_PARAM_COMMENT + " " + first_line
     temp_list = first_line.split()
     if len(temp_list) > 1:
         if name not in MAIN_SHELL_KEYWORDS and (temp_list[0].startswith("-") or temp_list[1].startswith("-")):
@@ -534,7 +536,7 @@ def parse_files_input(origin_items, target_items, **kwargs):
         files_input = opt[1:]
         files_input_value = ""
         if "-f" in files_input:
-            files_input_value = "#rpm_macro_param:"
+            files_input_value = "#" + RPM_MACRO_PARAM_COMMENT
         while '-f' in files_input:
             this_files_input = files_input[files_input.index('-f') + 1].strip()
             files_input_value += " -f " + this_files_input
@@ -562,14 +564,14 @@ def strip_files_startswith(text):
         match_words = re.findall("%files \S+ -f", text)[0]
         match_words = remove_package_name(match_words)
         strip_words = match_words.rstrip("-f").strip()
-        text = text.replace(strip_words, "#rpm_macro_param:", 1)
+        text = text.replace(strip_words, "#" + RPM_MACRO_PARAM_COMMENT, 1)
     if text.startswith("%files"):
         # text = text.lstrip("%files")
         first_line = text.split(os.linesep)[0]
         target_first = remove_package_name(first_line)
         text = text.replace(first_line, target_first, 1)
         if target_first != "%files":
-            text = text.replace("%files", "#rpm_macro_param:", 1)
+            text = text.replace("%files", "#" + RPM_MACRO_PARAM_COMMENT, 1)
         else:
             text = text.replace("%files", "", 1)
     return text

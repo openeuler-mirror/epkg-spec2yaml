@@ -45,3 +45,5 @@ KEY_SYS = {
             'Autoprov': 'AutoProv',
             'Autoreqprov': 'AutoReqProv',
         }
+
+RPM_MACRO_PARAM_COMMENT = ":rpm_macro_param:"
