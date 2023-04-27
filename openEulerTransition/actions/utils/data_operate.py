@@ -418,6 +418,7 @@ def divide_out_configure(content: str):
     configure_cmd = False
     line_list = content.split(os.linesep)
     configure_num = 0
+    configure_cmd_multiline = True
     for num, line in enumerate(line_list):
         if line.startswith("#"):
             if configure_cmd:
@@ -431,7 +432,10 @@ def divide_out_configure(content: str):
             elif line.endswith("\\"):
                 configure += line + os.linesep
             else:
-                configure += line + os.linesep
+                if configure_cmd_multiline:
+                    configure += line + os.linesep
+                else:
+                    build += line + os.linesep
                 if configure_cmd and configure.strip() != "":
                     configure_list.append(configure.strip())
                     configure = ""
@@ -445,11 +449,12 @@ def divide_out_configure(content: str):
                 else:
                     build += "configure" + str(configure_num) + os.linesep
                     configure_num += 1
-            if line.endswith("\\"):
-                configure_cmd = True
+            configure_cmd = True
             configure += line + os.linesep
         if not configure_cmd:
             build += line + os.linesep
+        if configure_cmd and not line.endswith("\\"):
+            configure_cmd_multiline = False
     return configure_list, build.strip()
 
 
