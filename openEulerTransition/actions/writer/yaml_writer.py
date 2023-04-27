@@ -95,7 +95,8 @@ class SpectacleDumper(object):
                 f_phase.write("#!/usr/bin/env bash\n\n")
                 lua_file = LuaFile()
                 for function_name, function_text in script_data.items():
-                    if function_name in ["install", "prep", "build", "clean", "check", "configure"]:
+                    if function_name in ["install", "prep", "build", "clean", "check", "configure"] or \
+                            function_name.startswith("configure"):
                         lua_file = add_context(function_name, function_text, f_phase, lua_file)
             if f_runtime_phase != sys.stdout:
                 f_runtime_phase.write("#!/usr/bin/env bash\n\n")
