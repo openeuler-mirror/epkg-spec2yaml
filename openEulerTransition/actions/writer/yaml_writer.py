@@ -1489,10 +1489,13 @@ class SpecParser(object):
                 self.shell_functions[keywords + condition] = first_line.replace(
                     "%" + keywords, "", 1) + os.linesep + function_context.strip()
         if "build" in self.shell_functions and "configure" not in self.shell_functions:
-            configure_content, self.shell_functions["build"] = divide_out_configure(
+            configure_contents, self.shell_functions["build"] = divide_out_configure(
                 self.shell_functions["build"])
-            if configure_content.strip() != "":
-                self.shell_functions["configure"] = configure_content
+            for _index, configure_content in enumerate(configure_contents):
+                if _index == 0:
+                    self.shell_functions["configure"] = configure_content
+                else:
+                    self.shell_functions["configure" + str(_index)] = configure_content
 
     def produce_use_flag(self):
         line_list = self.macros.split(os.linesep)
