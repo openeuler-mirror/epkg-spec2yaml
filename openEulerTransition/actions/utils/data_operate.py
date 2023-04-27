@@ -445,7 +445,8 @@ def divide_out_configure(content: str):
                 else:
                     build += "configure" + str(configure_num) + os.linesep
                     configure_num += 1
-            configure_cmd = True
+            if line.endswith("\\"):
+                configure_cmd = True
             configure += line + os.linesep
         if not configure_cmd:
             build += line + os.linesep
