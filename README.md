@@ -74,9 +74,9 @@ Software architecture description
 37. %transfiletriggerun => runtimePhase.sh: transfiletriggerun
 38. %transfiletriggerpostun => runtimePhase.sh: transfiletriggerpostun
 39. %files => files.yaml: files
-40. %package => subPackages
+40. %package => subpackage
 41. %include => includeSource
-42. Source* => sources
+42. Source* => source
 43. Patch* => patchset
 44. Conflict => conflict
 45. %post -p <lua> => runtimePhase.lua: post
@@ -91,295 +91,368 @@ Software architecture description
 #### change grammar
 ****
 条件字段表达式
-* before:
-  + %if %{with ***}
-  + BuildRequires: gcc
-  + %endif
+* before: 
+
+        %if %{with ***}
+        BuildRequires: gcc
+        %endif
 * after:
-  + buildRequires when +***:
-    + gcc
+
+        buildRequires when +***:
+            gcc
 ****
 meta表达式
 * before:
-  + Summary: %{summary}
-  + URL: https://***
-  + %description
-  + .....
+
+        Summary: %{summary}
+        URL: https://***
+        %description
+        .....
 * after:
-  + meta:
-    + summary: %{summary}
-    + homepage: https://***
-    + description: |
-      + ....
+
+        meta:
+            summary: %{summary}
+            homepage: https://***
+            description: |
+            ....
 ***
 版本值带引号
 * before:
-  + Version: 1.0
+
+        Version: 1.0
 * after:
-  + version: "1.0"
+
+        version: "1.0"
 ****
 源文件表达式
 * before:
-  + Source0: ***.tar.gz
-  + Source1: ***.tar.gz.sig
+
+        Source0: ***.tar.gz
+        Source1: ***.tar.gz.sig
 * after:
-  + source:
-    + 0: ***.tar.gz
-    + 1: ***.tar.gz.sig
+
+        source:
+            0: ***.tar.gz
+            1: ***.tar.gz.sig
 ****
 patch表达式
 * before:
-  + Patch9001: ***.patch
-  + Patch9006: ***.patch
+
+        Patch9001: ***.patch
+        Patch9006: ***.patch
 * after:
-  + patchset:
-    + 9001: ***.patch
-    + 9002: ***.patch
+
+        patchset:
+            9001: ***.patch
+            9002: ***.patch
 ****
 宏定义useFlags
 * before:
-  + %bcond_with openEuler
-  + %ifarch %{valgrind_arches} 
-  + %bcond_without valgrind 
-  + %else 
-  + %bcond_with valgrind 
-  + %endif
+
+        %bcond_with openEuler
+        %ifarch %{valgrind_arches} 
+        %bcond_without valgrind 
+        %else 
+        %bcond_with valgrind 
+        %endif
 * after:
-  + useFlags:
-    + -openEuler
-  + useFlags when arch in %{valgrind_arches}
-    + +valgrind
-  + useFlags when arch not in %{valgrind_arches}
-    + -valgrind
+
+        defineFlags:
+            -openEuler:
+        useFlags when arch in %{valgrind_arches}:
+            +valgrind:
+        useFlags when arch not in %{valgrind_arches}:
+            -valgrind:
+
 ****
 宏定义rpmMacros
 * before:
-  + %ifarch %{arm} 
-  + %define target %{_target_cpu}-%{_vendor}-linuxeabi 
-  + %endif
-  + %undefine with_docs
+
+        %ifarch %{arm} 
+        %define target %{_target_cpu}-%{_vendor}-linuxeabi 
+        %endif
+        %undefine with_docs
 * after:
-  + rpmMacros: |
-    + %ifarch %{arm} 
-    + %define target %{_target_cpu}-%{_vendor}-linuxeabi 
-    + %endif
-    + %undefine with_docs
+
+        rpmMacros: |
+            %ifarch %{arm} 
+            %define target %{_target_cpu}-%{_vendor}-linuxeabi 
+            %endif
+            %undefine with_docs
 ****
 宏定义rpmGlobal
 * before:
-  + %define GCC gcc 
-  + %define GXX g++
-  + %global x86_arches %{ix86} x86_64
+
+        %define GCC gcc 
+        %define GXX g++
+        %global x86_arches %{ix86} x86_64
 * after:
-  + rpmGlobal:
-    + GCC: gcc
-    + GXX: g++
-    + x86_arches: "%{ix86} x86_64"
+
+        rpmGlobal:
+        GCC: gcc
+        GXX: g++
+        x86_arches: "%{ix86} x86_64"
 ****
 provides,obsoletes,requires,conflict表达式
 * before:
-  + Obsoletes: nss_db <= 2.28, nss_hesiod <= 2.28
-  + Provides: nss_db = %{version}-%{release}
-  + Requires: audit-libs >= 1.1.3
+
+        Obsoletes: nss_db <= 2.28, nss_hesiod <= 2.28
+        Provides: nss_db = %{version}-%{release}
+        Requires: audit-libs >= 1.1.3
 * after:
-  + obsoletes:
-    - \- nss_db <= 2.28
-    - \- nss_hesiod <= 2.28
-  + provides:
-    - \- nss_db = %{version}-%{release}
-  + requires:
-    - \- audit-libs >= 1.1.3
+
+        obsoletes:
+            - nss_db <= 2.28
+            - nss_hesiod <= 2.28
+        provides:
+            - nss_db = %{version}-%{release}
+        requires:
+            - audit-libs >= 1.1.3
 *****
 子包表达式，子包统一用全称名
 * before:
-  + %package nss-devel
-  + Summary: ...
-  + Requires: ...
-  + %package -n nscd
-  + Summary:  Name caching service daemon. 
-  + Requires: %{name} = %{version}-%{release}
+
+        %package nss-devel
+        Summary: ...
+        Requires: ...
+        %package -n nscd
+        Summary:  Name caching service daemon. 
+        Requires: %{name} = %{version}-%{release}
 * after:
-  + subPackage.glibc-nss-devel:
-    + meta:
-      + summary: ...
-    + requires:
-      + \- ...
-  + subPackage.nscd:
-    + summary: Name caching service daemon. 
-    + requires:
-      + \- "%{name} = %{version}-%{release}"
+
+        subPackage.glibc-nss-devel:
+            meta:
+                summary: ...
+            requires:
+                - ...
+        subPackage.nscd:
+            meta:
+                summary: Name caching service daemon. 
+            requires:
+                - "%{name} = %{version}-%{release}"
 ****
 prep,build,install,check,clean转换到phase.sh脚本中以函数形式表达，build函数中的configure命令单独作为一个函数
 * before：
-  + %prep
-  + ...
-  + %build
-  + ...
-  + %configure ...\
-  + ...\
-  + %{nul}
-  + make
-  + %install
-  + ...
-  + %check
-  + ...
-  + %clean
-  + ...
+
+        %prep
+        ...
+        %build
+        ...
+        %configure ...\
+        ...\
+        %{nul}
+        make
+        %install
+        ...
+        %check
+        ...
+        %clean
+        ...
 * after:
   + phase.sh:（shell脚本文件中以函数形式存在）
-    + prep() {
-      + ...
-    + }
-    + configure() {
-      + %configure ...\
-      + ...\
-      + %{nil}
-    + }
-    + build() {
-      + ...
-      + configure
-      + ...
-    + }
-    + install() {
-      + ...
-    + }
-    + check() {
-      + ...
-    + }
-    + clean() {
-      + ...
-    + }
+
+        prep() {
+            ...
+        }
+        configure() {
+            %configure ...\
+            ...\
+            %{nil}
+        }
+        build() {
+            ...
+            configure
+            ...
+        }
+        install() {
+            ...
+        }
+        check() {
+            ...
+        }
+        clean() {
+            ...
+        }
 ****
-pre,post,triggerin等shell脚本内容转换到runtimePhase.sh文件中以函数形式存在，如果涉及到参数输入，则以#:rpm_macro_param开头
-写在函数内容第一行
+pre,post,triggerin等shell脚本内容转换到runtimePhase.sh文件中以函数形式存在，如果涉及到参数输入，则以#:rpm_macro_param开头并写在函数内容第一行
 * before:
-  + %pre
-  + ...
-  + %post -n nscd
-  + ...
-  + %postun -p /sbin/ldconfig devel
-  + ...
+
+        %pre
+        ...
+        %post -n nscd
+        ...
+        %postun -p /sbin/ldconfig devel
+    ...
 * after:
   + runtimePhase.sh(shell脚本文件中以函数形式存在):
-    + pre() {
-      + ...
-    + }
-    + subPackage.nscd.post() {
-      + ...
-    + }
-    + postun() {
-      + #:rpm_macro_param: -p /sbin/ldconfig
-      + ...
-    + }
+
+        pre() {
+            ...
+        }
+        subPackage.nscd.post() {
+            ...
+        }
+        postun() {
+            #:rpm_macro_param: -p /sbin/ldconfig
+            ...
+        }
 ****
 lua脚本的内容写在runtimePhase.lua中，参数输入以lua注释的方式写在函数内容第一行
 * before:
-  + %pre -p <lua>
-  + -- Check that the running kernel is new enough
-  + ...
-  + if rpm.vercmp(rel, required) < 0 then
-  +   error("FATAL: kernel too old", 0)
-  + end
+
+        %pre -p <lua>
+        -- Check that the running kernel is new enough
+        ...
+        if rpm.vercmp(rel, required) < 0 then
+          error("FATAL: kernel too old", 0)
+        end
 * after:
   + runtimePhase.lua:
-    + function pre() {
-      + --:rpm_macro_param: -p <lua>
-      + -- Check that the running kernel is new enough
-      + ...
-      + if rpm.vercmp(rel, required) < 0 then
-      +   error("FATAL: kernel too old", 0)
-      + end
-    + }
+
+        function pre() {
+          --:rpm_macro_param: -p <lua>
+          -- Check that the running kernel is new enough
+          ...
+          if rpm.vercmp(rel, required) < 0 then
+             error("FATAL: kernel too old", 0)
+          end
+        }
 ***
+files和子包的files都在file.yaml中以多行字符串表达，如果涉及到参数输入，则以#:rpm_macro_param开头写在第一行
 * before:
-  + %files -f glibc.filelist 
-  + %dir %{_prefix}/%{_lib}/audit
-  + %files -f common.filelist common 
-  + %dir %{_prefix}/lib/locale
+
+        %files -f glibc.filelist 
+        %dir %{_prefix}/%{_lib}/audit
+        %files -f common.filelist common 
+        %dir %{_prefix}/lib/locale
 * after:
-  + files.yaml(files的内容统一在files.yaml文件中表达，参数输入以注释:rpm_macro_param:的形式写在内容第一行):
-    + files:
-      + \#:rpm_macro_param: -f glibc.filelist
-      + %dir %{_prefix}/%{_lib}/audit
-    + subPackage.glibc-common.files:
-      + \#:rpm_macro_param: -f glibc.filelist
-      + %dir %{_prefix}/lib/locale
+    + files.yaml:
+
+            files:rpm_macro_param: -f glibc.filelist
+            files:
+                %dir %{_prefix}/%{_lib}/audit
+            subPackage.glibc-common.files:rpm_macro_param: -f glibc.filelist
+            subPackage.glibc-common.files:
+                %dir %{_prefix}/lib/locale
 ***
 子包的宏写在子包的rpmMacros中
 * before:
-  + %package all-langpacks
-  + ...
-  + %{lua:
-  + ...
-  + end
-  + }
+
+        %package all-langpacks
+        ...
+        %{lua:
+        ...
+        end
+        }
 * after:
-  + subpackage.glibc-all-langpacks:
-    + ...
-    + rpmMacros:|
-      + %{lua:
-      + ...
-      + end
-      + }
+
+       subpackage.glibc-all-langpacks:
+            ...
+            rpmMacros:|
+              %{lua:
+              ...
+              end
+              }
 ***
 shell脚本用这种表达式表达bash的路径
 * before:
-  + %build
-  + ...
+
+        %build
+        ...
 * after:
-  + #!/usr/bin/env bash
-  + build() {
-    + ...
-  + }
+
+        #!/usr/bin/env bash
+        build() {
+          ...
+        }
+***
+%if转换成when的表达式，多个条件支持and、&&、or、||、not、!连接
+* before:
+
+        %if %{with abc}
+        %if %{without xyz}
+* after:
+
+        when -abc && +xyz
+        或者
+        when -abc and +xyz
+***
+两个%表示分层定制的宏
+* before:
+
+        %if 0%{?abc}
+* after:
+
+        rpmWhen 0%{?abc}或者when %%{rpmGlobal.abc}
+***
+%if x%{?abc} != x等价于0%{?abc}等价于0%{?abc} != 0
+* before:
+
+        %if x%{?abc} != x
+* after:
+
+        when %%{abc}
+***
+else改为取非的when
+* before:
+
+        %ifarch x86_64
+        Requires: ...
+        else
+        Requires: ...
+* after:
+
+        requires when arch in x86_64: ...
+        requires when arch not in x86_64: ...
 ***
 * before:
-  + %if %{with abc}
-  + %if %{without xyz}
+
+        %ifnarch x86_64
 * after:
-  + when -abc when +xyz
+
+        when arch not in x86_64
+***
+rpmGlobal中定义的宏，引用时用%%{rpmGlobal.***}表示
+* before:
+
+        %if %{valgrind}
+* after:
+
+        when %%{rpmGlobal.valgrind}
+***
+rpm系统定义的宏，引用时用%%%{rpmGlobal.***}表示
+* before:
+
+        %if %{openEuler}
+* after:
+
+        when %%%{rpmGlobal.openEuler}
 ***
 * before:
-  + %if 0%{?abc}
+
+        %if ! 0%{?openEuler}
+        Requires: ...
+        %endif
+        %if ! 0%{?_conf}
+        Requires: ...
+        %endif
 * after:
-  + when %%{abc}
+
+        Requires when not %%%{rpmGlobal.openEuler}: ...
+        Requires rpmWhen ! 0%{?_conf}: ...
+***
+多条件的判断，把%if后的语句当成一个整体，%if转换成when
+* before:
+
+        %if 0%{?openEuler} || 0%{?fedora} || 0%{?rhel}
+* after:
+
+        when 0%{?openEuler} || 0%{?fedora} || 0%{?rhel}
 ***
 * before:
-  + %if x%{?abc} != x
+
+        "%{name}-common = %{version}-%{release}"
 * after:
-  + when %%{abc}
-***
-* before:
-  + %ifarch x86_64
-* after:
-  + when arch in x86_64
-***
-* before:
-  + %ifnarch x86_64
-* after:
-  + when arch not in x86_64
-***
-* before:
-  + %if %{valgrind}
-* after:
-  + when %%{rpmGlobal.valgrind}
-***
-* before:
-  + %if %{openEuler}
-* after:
-  + when %%%{rpmGlobal.openEuler}
-***
-* before:
-  + %if ! 0%{?openEuler}
-* after:
-  + when not %%%{rpmGlobal.openEuler}
-***
-* before:
-  + %if 0%{?openEuler} || 0%{?fedora} || 0%{?rhel}
-* after:
-  + when 0%{?openEuler} || 0%{?fedora} || 0%{?rhel}
-***
-* before:
-  + "%{name}-common = %{version}-%{release}"
-* after:
-  + "%%{name}-common = %%{version}-%%{release}"
+
+        "%%{name}-common = %%{version}-%%{release}"
 ***
