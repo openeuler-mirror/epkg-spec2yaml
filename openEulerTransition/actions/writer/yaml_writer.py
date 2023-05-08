@@ -838,7 +838,7 @@ class SpecParser(object):
         num_dict = self.sources_num_dict if keywords == "source" else self.patches_num_dict
         count = 6 if keywords == "source" else 5
         if keywords + judgement in dict1:
-            if isinstance(dict1[keywords], dict):
+            if isinstance(dict1[keywords + judgement], dict):
                 for num, val in num_dict.items():
                     dict1[keywords + judgement][num[count:]] = val
         else:
