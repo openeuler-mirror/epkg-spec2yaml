@@ -115,7 +115,7 @@ class SpectacleDumper(object):
                     f_files.write(os.linesep)
                 if param_text != "":
                     temp_param_list = param_text.split(os.linesep)
-                    if len(temp_param_list) > 1 and temp_text_list[0] in temp_text_list[1]:
+                    if len(temp_param_list) > 1 and temp_param_list[0] in temp_param_list[1]:
                         temp_param_list.pop(0)
                     if len(temp_param_list) > 0:
                         f_files.write(file_member_key + RPM_MACRO_PARAM_COMMENT + " |" + os.linesep)
