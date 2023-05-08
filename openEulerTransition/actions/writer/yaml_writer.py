@@ -106,14 +106,22 @@ class SpectacleDumper(object):
                         lua_runtime_file = add_context(function_name, function_text, f_runtime_phase, lua_runtime_file)
         if f_files and files_data:
             for file_member_key, file_member_value in files_data.items():
-                f_files.write(file_member_key + ": |" + os.linesep)
-                file_member_value = strip_files_startswith(file_member_value)
-                temp_text_list = file_member_value.split(os.linesep)
-                if temp_text_list[0] in temp_text_list[1]:
-                    temp_text_list.pop(0)
-                for line in temp_text_list:
-                    if line != "":
+                file_member_value, param_text = strip_files_startswith(file_member_value)
+                if file_member_value != "":
+                    f_files.write(file_member_key + ": |" + os.linesep)
+                    value_line_list = file_member_value.strip().split(os.linesep)
+                    for line in value_line_list:
                         f_files.write(TAB + line + os.linesep)
+                    f_files.write(os.linesep)
+                if param_text != "":
+                    temp_param_list = param_text.split(os.linesep)
+                    if len(temp_param_list) > 1 and temp_text_list[0] in temp_text_list[1]:
+                        temp_param_list.pop(0)
+                    if len(temp_param_list) > 0:
+                        f_files.write(file_member_key + RPM_MACRO_PARAM_COMMENT + " |" + os.linesep)
+                        for line in temp_param_list:
+                            if line != "":
+                                f_files.write(TAB + line + os.linesep)
         for key, value in data:
             if not first_line and indent:
                 cur_indent = indent + '  '
@@ -826,7 +834,7 @@ class SpecParser(object):
         judgement = ""
         keywords = lower_first_word(keywords)
         if "%if" in value:
-            judgement = " " + change_judgement_grammar(value)
+            judgement = " " + change_judgement_grammar(value, self.rpm_global)
         num_dict = self.sources_num_dict if keywords == "source" else self.patches_num_dict
         count = 6 if keywords == "source" else 5
         if keywords + judgement in dict1:
@@ -1386,7 +1394,7 @@ class SpecParser(object):
                     del target_data["FilesJudgement"]
                 file_key = original_data["Name"]
                 if "%if" in file_key:
-                    files_judgement += change_judgement_grammar("%if " + " ".join(file_key.split("%if")[1:]))
+                    files_judgement += change_judgement_grammar("%if " + " ".join(file_key.split("%if")[1:]), self.rpm_global)
                     # files_judgement += " when %if" + " when %if".join(file_key.split(" %if")[1:])
                     main_file_key = "files" + files_judgement
                 else:
@@ -1438,7 +1446,7 @@ class SpecParser(object):
                         keywords = sub_member_name.split("%if")[0]
                         del target_data["SubPackages"][sub_member_name]
                         target_data["SubPackages"][keywords + " " + change_judgement_grammar(
-                            sub_member_name, cut_judge=True)] = temp_sub_dict
+                            sub_member_name, self.rpm_global, cut_judge=True)] = temp_sub_dict
         self.items = target_data
 
     def change_several_requires(self):
@@ -1465,7 +1473,7 @@ class SpecParser(object):
         condition = ""
         if sub_name is None:
             if keywords in self.keywords_if_config:
-                condition = " " + change_judgement_grammar(" ".join(self.keywords_if_config[keywords]))
+                condition = " " + change_judgement_grammar(" ".join(self.keywords_if_config[keywords]), self.rpm_global)
         if " -n " in value and not whole:
             value = value.split(os.linesep)[0].replace("-n %{name}-", "") + os.linesep + os.linesep.join(
                 value.split(os.linesep)[1:])
@@ -1506,25 +1514,27 @@ class SpecParser(object):
         remove_line = []
         back_count = 0
         contain_bcond = False
+        rpm_condition = True
         for i, line in enumerate(line_list):
             if re.search("%(bcond_with)|(bcond_without) \s+", line) is not None:
                 contain_bcond = True
                 flag_with = "-" if "bcond_without" in line else "+"
                 if line.endswith("\\"):
                     continue
-                if if_cond and len(else_cond) == 0:
-                    use_flag_key = "useFlags " + change_judgement_grammar(if_cond[0])
+                rpm_condition = check_rpm_condition(if_cond, self.rpm_global)
+                if if_cond and len(else_cond) == 0 and rpm_condition:
+                    use_flag_key = "defineFlags " + change_judgement_grammar(if_cond[0], self.rpm_global)
                     remove_line.append(line_list.index(if_cond[0]))
                     back_count += 1
                     if i - back_count not in remove_line:
                         remove_line.append(i - back_count)
-                elif if_cond and else_cond:
-                    use_flag_key = "useFlags " + change_judgement_grammar(get_reverse_judgement(if_cond[0]))
+                elif if_cond and else_cond and rpm_condition:
+                    use_flag_key = "defineFlags " + change_judgement_grammar(get_reverse_judgement(if_cond[0]), self.rpm_global)
                     back_count += 1
                     if i - back_count not in remove_line:
                         remove_line.append(i - back_count)
                 else:
-                    use_flag_key = "useFlags"
+                    use_flag_key = "defineFlags"
                 if use_flag_key not in self.items:
                     self.items[use_flag_key] = {flag_with + line.split()[-1]: ""}
                 else:
@@ -1541,11 +1551,12 @@ class SpecParser(object):
             elif line.strip() == "%endif":
                 if len(if_cond) > 0:
                     if_cond.pop()
-                    if contain_bcond:
+                    if contain_bcond and rpm_condition:
                         remove_line.append(i)
                 else_cond.pop() if else_cond else None
                 back_count = 0
         remove_line = list(set(remove_line))
+        remove_line.sort()
         remove_line.reverse()
         for j in remove_line:
             target_list.pop(j)
