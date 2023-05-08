@@ -509,14 +509,6 @@ def inline_to_mainline(inline: list, mainline: list):
     return inline, mainline
 
 
-def add_input_to_files(input_value, items):
-    if "files:rpm_macro_param" in items and isinstance(items["files"], str):
-        items["files:rpm_macro_param"] += input_value + os.linesep
-    else:
-        items["files:rpm_macro_param"] = input_value + os.linesep
-    return items
-
-
 def get_line_suffix(if_cond_part, else_cond_part, else_status):
     if len(if_cond_part) > 0 and len(else_cond_part) == 0 and not else_status:
         _line_suffix = " " + " ".join(if_cond_part)
@@ -565,8 +557,6 @@ def parse_files_input(origin_items, target_items, **kwargs):
             if origin_items != target_items and "files" not in origin_items:
                 items = origin_items
                 items["files"] = line + os.linesep
-        if files_input_value != "":
-            target_items = add_input_to_files(files_input_value + get_line_suffix(if_lines, else_lines, else_status), target_items)
     elif len(opt) == 1 and opt[0] == "%files":
         if origin_items != target_items:
             target_items = origin_items
