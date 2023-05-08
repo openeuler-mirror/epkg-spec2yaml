@@ -444,6 +444,8 @@ def divide_out_configure(content: str):
                 configure_cmd = False
                 continue
         if "configure" in line.lower():
+            if "./configure" in line:
+                configure += "%{?add_configure_flags} \\" + os.linesep
             if not configure_cmd:
                 if configure_num == 0:
                     build += "configure" + os.linesep
@@ -508,10 +510,10 @@ def inline_to_mainline(inline: list, mainline: list):
 
 
 def add_input_to_files(input_value, items):
-    if "files" in items and isinstance(items["files"], str):
-        items["files"] += input_value + os.linesep
+    if "files:rpm_macro_param" in items and isinstance(items["files"], str):
+        items["files:rpm_macro_param"] += input_value + os.linesep
     else:
-        items["files"] = input_value + os.linesep
+        items["files:rpm_macro_param"] = input_value + os.linesep
     return items
 
 
@@ -551,8 +553,6 @@ def parse_files_input(origin_items, target_items, **kwargs):
     if len(opt) > 1:
         files_input = opt[1:]
         files_input_value = ""
-        if "-f" in files_input:
-            files_input_value = "#" + RPM_MACRO_PARAM_COMMENT
         while '-f' in files_input:
             this_files_input = files_input[files_input.index('-f') + 1].strip()
             files_input_value += " -f " + this_files_input
@@ -576,21 +576,39 @@ def parse_files_input(origin_items, target_items, **kwargs):
 
 
 def strip_files_startswith(text):
-    if re.match("%files \S+ -f", text) is not None:
-        match_words = re.findall("%files \S+ -f", text)[0]
-        match_words = remove_package_name(match_words)
-        strip_words = match_words.rstrip("-f").strip()
-        text = text.replace(strip_words, "#" + RPM_MACRO_PARAM_COMMENT, 1)
-    if text.startswith("%files"):
-        # text = text.lstrip("%files")
-        first_line = text.split(os.linesep)[0]
-        target_first = remove_package_name(first_line)
-        text = text.replace(first_line, target_first, 1)
-        if target_first != "%files":
-            text = text.replace("%files", "#" + RPM_MACRO_PARAM_COMMENT, 1)
+    param_text = ""
+    file_lines = text.strip().split(os.linesep)
+    content_line_index = 0
+    for line_num, file_line in enumerate(file_lines):
+        if re.match("%files \S+ -f", file_line) is not None:
+            content_line_index += 1
+        elif file_line.startswith("%files"):
+            target_line = remove_package_name(file_line)
+            if "-f" in target_line:
+                content_line_index += 1
         else:
-            text = text.replace("%files", "", 1)
-    return text
+            break
+    if content_line_index < len(file_lines):
+        if file_lines[content_line_index].startswith("%files"):
+            text = os.linesep.join(file_lines[content_line_index + 1:])
+        else:
+            text = os.linesep.join(file_lines[content_line_index:])
+    else:
+        text = ""
+    if content_line_index > 0:
+        for line in file_lines[0:content_line_index]:
+            if re.match("%files \S+ -f", line) is not None:
+                match_words = re.findall("%files \S+ -f", text)[0]
+                match_words = remove_package_name(match_words)
+                strip_words = match_words.rstrip("-f").strip()
+                line = line.replace(strip_words, "", 1)
+                param_text += line + os.linesep
+            if line.startswith("%files"):
+                target_line = remove_package_name(line)
+                if target_line != "%files":
+                    target_line = target_line.replace("%files", "", 1)
+                    param_text += target_line + os.linesep
+    return text, param_text
 
 
 def divide_several_requires(origin_list):
@@ -620,14 +638,14 @@ def change_requires_struct(origin, target, items: dict):
             target_list.remove(build_rq)
             build_rq = resolve_else_judgement(build_rq)
             value = build_rq.split("%if")[0].strip()
-            new_key = target + " " + change_judgement_grammar(build_rq.replace(value, "")).strip()
+            new_key = target + " " + change_judgement_grammar(build_rq.replace(value, ""), {}).strip()
             if new_key in items:
                 items[new_key].append(value)
             else:
                 items[new_key] = [value]
 
         elif "%if" in build_rq:
-            new_key = target + " " + change_judgement_grammar(build_rq, cut_judge=True)
+            new_key = target + " " + change_judgement_grammar(build_rq, {}, cut_judge=True)
             value = build_rq.split("%if")[0].strip()
             value = divide_several_requires([value])
             value = list(map(lambda x: change_macros_usage(x), value))
@@ -644,7 +662,7 @@ def change_requires_struct(origin, target, items: dict):
     return items
 
 
-def change_judgement_grammar(line, cut_judge=False):
+def change_judgement_grammar(line, global_dict, cut_judge=False):
     if cut_judge:
         keywords = line.split("%if")[0]
         line = line.replace(keywords, "", 1)
@@ -664,13 +682,13 @@ def change_judgement_grammar(line, cut_judge=False):
         for condition in conditions:
             if condition in RPM_GLOBAL_MACROS:
                 judgement += " when %%%{rpmGlobal." + condition + "}"
-            else:
-                judgement += " when %{" + condition + "}"
+            elif condition in global_dict:
+                judgement += " when %%{rpmGlobal." + condition + "}"
     # TODO(	%if %{openEuler}=>when %%{rpmGlobal.openEuler})
     if re.search("%if\s+%\{[\w|_]}", line) is not None:
         results = re.findall("%if\s+%\{[\w|_]}", line)
         conditions = list(map(lambda x: x.split("?")[0].rstrip("}"), results))
-        results = list(map(lambda x: "%%{rpmGlobal." + x + "}", conditions))
+        results = list(map(lambda x: add_rpm_global(x), conditions))
         judgement += " when " + " ".join(results)
     # TODO(%ifarch|%ifos|%ifnarch|%ifnos=>when arch in)
     if re.search("%ifarch|%ifos|%ifnarch|%ifnos", line) is not None:
@@ -684,9 +702,61 @@ def change_judgement_grammar(line, cut_judge=False):
             "%ifnos", " when os not in"), results))
         judgement += " ".join(conditions)
     if "%if" in line and judgement == "":
-        judgement = line.replace("%if !", "when not").replace("%if", "when")
+        judgement = change_to_when_or_rpmwhen(line, global_dict)
     judgement = change_macros_usage(judgement)
+    judgement = merge_multi_judgement(judgement)
     return judgement
+
+
+def change_to_when_or_rpmwhen(line, spec_global):
+    word_list = line.split("%if")[1:]
+    target = ""
+    for word in word_list:
+        params = []
+        non = ""
+        rpm_flag = "rpmWhen"
+        if word.strip().startswith("!"):
+            non = "not "
+        params += list(re.findall("\w+", word))
+        for param in params:
+            if param in RPM_GLOBAL_MACROS or param in spec_global:
+                rpm_flag = "when"
+                break
+        if rpm_flag == "rpmWhen":
+            target += rpm_flag + " " + non + word
+        else:
+            target += rpm_flag + " " + non + modify_by_when(word, spec_global)
+    return target
+
+
+def merge_multi_judgement(words):
+    when_count = words.count("when")
+    if when_count > 1:
+        for i in range(1, when_count):
+            words = words.replace("when", "and", i + 1)
+    return words
+
+
+def modify_by_when(word, spec_global):
+    if re.search("\w?%\{\??\w+}", word) is not None:
+        search_words = re.findall("\w?%\{\??\w+}", word)
+        for search_word in search_words:
+            core_word = search_word.split("%{")[1].rstrip("}").lstrip("?")
+            if core_word in RPM_GLOBAL_MACROS:
+                word = word.replace(search_word, "%%%{rpmGlobal." + core_word + "}")
+            elif core_word in spec_global:
+                word = word.replace(search_word, "%%{rpmGlobal." + core_word + "}")
+            else:
+                word = word.replace(search_word, "%%{" + core_word + "}")
+    return word
+
+
+def add_rpm_global(before):
+    if before in RPM_GLOBAL_MACROS:
+        after = "%%%{rpmGlobal." + before + "}"
+    else:
+        after = "%%{rpmGlobal." + before + "}"
+    return after
 
 
 def change_macros_usage(line):
@@ -697,7 +767,9 @@ def change_macros_usage(line):
     if re.search(" %\{\w+}", line) is not None:
         results = re.findall(" %\{\w+}", line)
         for macro in results:
-            line = line.replace(macro, macro.replace("%{", "%%{rpmGlobal."))
+            param = macro.strip().split("%{")[1].strip("}")
+            prefix = "%%%{rpmGlobal." if param in RPM_GLOBAL_MACROS else "%%{rpmGlobal."
+            line = line.replace(macro, macro.replace("%{", prefix))
     return line
 
 
@@ -738,3 +810,19 @@ def remove_package_name(line, remove_keywords=False):
             target += " " + opt
             param_value = False
     return target
+
+
+def check_rpm_condition(judgements, rpm_globals):
+    rpm_condition = True
+    for judgement in judgements:
+        if "%{with " in judgement or "%{without " in judgement or "%ifarch" in judgement:
+            rpm_condition = True
+            continue
+        if re.search("%\{\??[\w_]+}", judgement) is not None:
+            conditions = re.findall("%\{\??[\w_]+}", judgement)
+            for condition in conditions:
+                condition = condition.lstrip("%{?").rstrip("}")
+                if condition not in RPM_GLOBAL_MACROS or condition not in rpm_globals:
+                    rpm_condition = False
+                    break
+    return rpm_condition
