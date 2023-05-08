@@ -1,7 +1,7 @@
 # adapter-transition
 
 #### Description
-用来放统一构建的转换工具
+Conversion tool used to store unified builds
 
 #### Software Architecture
 Software architecture description
@@ -90,7 +90,7 @@ Software architecture description
 
 #### change grammar
 ****
-条件字段表达式
+Condition field expression
 * before: 
 
         %if %{with ***}
@@ -101,7 +101,7 @@ Software architecture description
         buildRequires when +***:
             gcc
 ****
-meta表达式
+"meta" expression
 * before:
 
         Summary: %{summary}
@@ -116,7 +116,7 @@ meta表达式
             description: |
             ....
 ***
-版本值带引号
+Version Values with Quotation Marks
 * before:
 
         Version: 1.0
@@ -124,7 +124,7 @@ meta表达式
 
         version: "1.0"
 ****
-源文件表达式
+Source expression
 * before:
 
         Source0: ***.tar.gz
@@ -135,7 +135,7 @@ meta表达式
             0: ***.tar.gz
             1: ***.tar.gz.sig
 ****
-patch表达式
+Patch expression
 * before:
 
         Patch9001: ***.patch
@@ -146,7 +146,7 @@ patch表达式
             9001: ***.patch
             9002: ***.patch
 ****
-宏定义useFlags
+defineFlags expression
 * before:
 
         %bcond_with openEuler
@@ -159,13 +159,13 @@ patch表达式
 
         defineFlags:
             -openEuler:
-        useFlags when arch in %{valgrind_arches}:
+        defineFlags when arch in %%%{rpmGlobal.valgrind_arches}:
             +valgrind:
-        useFlags when arch not in %{valgrind_arches}:
+        defineFlags when arch not in %%%{rpmGlobal.valgrind_arches}:
             -valgrind:
 
 ****
-宏定义rpmMacros
+rpmMacros expression
 * before:
 
         %ifarch %{arm} 
@@ -180,7 +180,7 @@ patch表达式
             %endif
             %undefine with_docs
 ****
-宏定义rpmGlobal
+rpmGlobal expression
 * before:
 
         %define GCC gcc 
@@ -193,7 +193,7 @@ patch表达式
         GXX: g++
         x86_arches: "%{ix86} x86_64"
 ****
-provides,obsoletes,requires,conflict表达式
+provides,obsoletes,requires and conflict expression
 * before:
 
         Obsoletes: nss_db <= 2.28, nss_hesiod <= 2.28
@@ -209,7 +209,7 @@ provides,obsoletes,requires,conflict表达式
         requires:
             - audit-libs >= 1.1.3
 *****
-子包表达式，子包统一用全称名
+Subpackage expression,subpackages are named to the full name.
 * before:
 
         %package nss-devel
@@ -231,7 +231,9 @@ provides,obsoletes,requires,conflict表达式
             requires:
                 - "%{name} = %{version}-%{release}"
 ****
-prep,build,install,check,clean转换到phase.sh脚本中以函数形式表达，build函数中的configure命令单独作为一个函数
+The prep, build, install, check, and clean commands are converted into functions in the phase.sh script.
+The configure command in the build function is an independent function,If the configure command is in the
+./configure format, "%{?add_configure_flags}\" is added to the previous line by default.
 * before：
 
         %prep
@@ -249,7 +251,7 @@ prep,build,install,check,clean转换到phase.sh脚本中以函数形式表达，
         %clean
         ...
 * after:
-  + phase.sh:（shell脚本文件中以函数形式存在）
+  + phase.sh:(its exist as a function in the shell scripts)
 
         prep() {
             ...
@@ -274,7 +276,9 @@ prep,build,install,check,clean转换到phase.sh脚本中以函数形式表达，
             ...
         }
 ****
-pre,post,triggerin等shell脚本内容转换到runtimePhase.sh文件中以函数形式存在，如果涉及到参数输入，则以#:rpm_macro_param开头并写在函数内容第一行
+The contents of shell scripts such as pre, post, and triggerin are converted into functions in the runtimePhase.sh file.
+If parameter input is involved, the contents start with #:rpm_macro_param and are written in the first line of the
+function content.
 * before:
 
         %pre
@@ -284,7 +288,7 @@ pre,post,triggerin等shell脚本内容转换到runtimePhase.sh文件中以函数
         %postun -p /sbin/ldconfig devel
     ...
 * after:
-  + runtimePhase.sh(shell脚本文件中以函数形式存在):
+  + runtimePhase.sh:
 
         pre() {
             ...
@@ -297,7 +301,8 @@ pre,post,triggerin等shell脚本内容转换到runtimePhase.sh文件中以函数
             ...
         }
 ****
-lua脚本的内容写在runtimePhase.lua中，参数输入以lua注释的方式写在函数内容第一行
+The content of the lua script is written in runtimePhase.lua. The parameter input is written in the first line of the
+function content in lua comment mode.
 * before:
 
         %pre -p <lua>
@@ -318,7 +323,8 @@ lua脚本的内容写在runtimePhase.lua中，参数输入以lua注释的方式�
           end
         }
 ***
-files和子包的files都在file.yaml中以多行字符串表达，如果涉及到参数输入，则以#:rpm_macro_param开头写在第一行
+Files and files of subpackages are expressed in multi-line character strings in file.yaml.
+If parameter input is involved, write them in the first line starting with #:rpm_macro_param.
 * before:
 
         %files -f glibc.filelist 
@@ -335,7 +341,7 @@ files和子包的files都在file.yaml中以多行字符串表达，如果涉及�
             subPackage.glibc-common.files:
                 %dir %{_prefix}/lib/locale
 ***
-子包的宏写在子包的rpmMacros中
+The macros of the subpackage are written in the rpmMacros of the subpackage.
 * before:
 
         %package all-langpacks
@@ -354,7 +360,7 @@ files和子包的files都在file.yaml中以多行字符串表达，如果涉及�
               end
               }
 ***
-shell脚本用这种表达式表达bash的路径
+The shell script uses this expression to express the path of the bash.
 * before:
 
         %build
@@ -366,18 +372,18 @@ shell脚本用这种表达式表达bash的路径
           ...
         }
 ***
-%if转换成when的表达式，多个条件支持and、&&、or、||、not、!连接
+Expression converted from "%if" to "when". Multiple conditions can be concatenated with and, &&, or, | |, not, and!.
 * before:
 
         %if %{with abc}
         %if %{without xyz}
 * after:
 
-        when -abc && +xyz
+        when +abc && -xyz
         或者
-        when -abc and +xyz
+        when +abc and -xyz
 ***
-两个%表示分层定制的宏
+"%%" represent macros of Layered-Customization.
 * before:
 
         %if 0%{?abc}
@@ -385,7 +391,7 @@ shell脚本用这种表达式表达bash的路径
 
         rpmWhen 0%{?abc}或者when %%{rpmGlobal.abc}
 ***
-%if x%{?abc} != x等价于0%{?abc}等价于0%{?abc} != 0
+"%if x%{?abc} != x" equal to "0%{?abc}" equal to "0%{?abc} != 0"
 * before:
 
         %if x%{?abc} != x
@@ -393,7 +399,7 @@ shell脚本用这种表达式表达bash的路径
 
         when %%{abc}
 ***
-else改为取非的when
+"else" is changed to "when not" expression.
 * before:
 
         %ifarch x86_64
@@ -412,7 +418,7 @@ else改为取非的when
 
         when arch not in x86_64
 ***
-rpmGlobal中定义的宏，引用时用%%{rpmGlobal.***}表示
+Macro defined in rpmGlobal, represented by %%{rpmGlobal.***}
 * before:
 
         %if %{valgrind}
@@ -420,7 +426,7 @@ rpmGlobal中定义的宏，引用时用%%{rpmGlobal.***}表示
 
         when %%{rpmGlobal.valgrind}
 ***
-rpm系统定义的宏，引用时用%%%{rpmGlobal.***}表示
+Macro defined by the rpm system, represented by %%%{rpmGlobal.***}
 * before:
 
         %if %{openEuler}
@@ -441,7 +447,7 @@ rpm系统定义的宏，引用时用%%%{rpmGlobal.***}表示
         Requires when not %%%{rpmGlobal.openEuler}: ...
         Requires rpmWhen ! 0%{?_conf}: ...
 ***
-多条件的判断，把%if后的语句当成一个整体，%if转换成when
+For multi-condition judgment, the statement after "%if" is regarded as a whole, and "%if" is converted into when or rpmWhen.
 * before:
 
         %if 0%{?openEuler} || 0%{?fedora} || 0%{?rhel}
