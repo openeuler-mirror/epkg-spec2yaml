@@ -485,7 +485,7 @@ def add_context(name, text, obj, file_obj: LuaFile):
     target_first = "--" + RPM_MACRO_PARAM_COMMENT + " " + first_line if "<lua>" in first_line else "#" + RPM_MACRO_PARAM_COMMENT + " " + first_line
     temp_list = first_line.split()
     if len(temp_list) > 1:
-        if name not in MAIN_SHELL_KEYWORDS and (temp_list[0].startswith("-") or temp_list[1].startswith("-")):
+        if name not in MAIN_SHELL_KEYWORDS + ["configure"] and (temp_list[0].startswith("-") or temp_list[1].startswith("-")):
             text = text.replace(first_line, target_first, 1)
     if "<lua>" in first_line:
         file_name = os.path.splitext(obj.name)[0]
@@ -507,6 +507,14 @@ def inline_to_mainline(inline: list, mainline: list):
     if len(inline) != 0 and len(mainline) == 0:
         return mainline, inline
     return inline, mainline
+
+
+def add_input_to_files(input_value, items):
+    if "files" in items and isinstance(items["files"], str):
+        items["files"] += input_value, os.linesep
+    else:
+        items["files"] = input_value + os.linesep
+    return items
 
 
 def get_line_suffix(if_cond_part, else_cond_part, else_status):
@@ -557,6 +565,9 @@ def parse_files_input(origin_items, target_items, **kwargs):
             if origin_items != target_items and "files" not in origin_items:
                 items = origin_items
                 items["files"] = line + os.linesep
+        if files_input_value != "":
+            target_items = add_input_to_files(files_input_value + get_line_suffix(if_lines, else_lines, else_status),
+                                              target_items)
     elif len(opt) == 1 and opt[0] == "%files":
         if origin_items != target_items:
             target_items = origin_items
