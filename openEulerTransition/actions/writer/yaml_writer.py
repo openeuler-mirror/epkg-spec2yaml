@@ -102,7 +102,8 @@ class SpectacleDumper(object):
                 f_runtime_phase.write("#!/usr/bin/env bash\n\n")
                 lua_runtime_file = LuaFile()
                 for function_name, function_text in script_data.items():
-                    if function_name not in ["install", "prep", "build", "clean", "check", "configure"]:
+                    if function_name not in ["install", "prep", "build", "clean", "check", "configure"] and \
+                            function_name.startswith("configure"):
                         lua_runtime_file = add_context(function_name, function_text, f_runtime_phase, lua_runtime_file)
         if f_files and files_data:
             for file_member_key, file_member_value in files_data.items():
