@@ -566,7 +566,7 @@ def parse_files_input(origin_items, target_items, **kwargs):
                 items = origin_items
                 items["files"] = line + os.linesep
         if files_input_value != "":
-            target_items = add_input_to_files(files_input_value + get_line_suffix(if_lines, else_lines, else_status),
+            target_items = add_input_to_files("files " + files_input_value + get_line_suffix(if_lines, else_lines, else_status),
                                               target_items)
     elif len(opt) == 1 and opt[0] == "%files":
         if origin_items != target_items:
