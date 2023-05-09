@@ -103,7 +103,7 @@ class SpectacleDumper(object):
                 lua_runtime_file = LuaFile()
                 for function_name, function_text in script_data.items():
                     if function_name not in ["install", "prep", "build", "clean", "check", "configure"] and \
-                            function_name.startswith("configure"):
+                            not function_name.startswith("configure"):
                         lua_runtime_file = add_context(function_name, function_text, f_runtime_phase, lua_runtime_file)
         if f_files and files_data:
             for file_member_key, file_member_value in files_data.items():
@@ -274,7 +274,8 @@ class SpectacleDumper(object):
                 # fs = open(self.opath.replace(".yaml", ".sh"), "w")
                 fs_phase = open("phase.sh", "w")
                 for function_name in self.shell_functions.keys():
-                    if function_name not in ["install", "prep", "build", "clean", "check", "configure"]:
+                    if function_name not in ["install", "prep", "build", "clean", "check", "configure"] and \
+                            not function_name.startswith("configure"):
                         fs_runtime = open("runtimePhase.sh", "w")
                         break
                 files_file = open("files.yaml", "w")
