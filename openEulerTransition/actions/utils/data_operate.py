@@ -319,7 +319,7 @@ def add_string_to_dict(dict1, this_key, line, turn_line=True):
     :param turn_line:
     :return:
     """
-    if this_key in ["include", "description"]:
+    if this_key in ["include", "description", "package"]:
         return dict1
     if this_key in SINGLES:
         return dict1
@@ -631,22 +631,26 @@ def divide_several_requires(origin_list):
     return target_list
 
 
-def change_requires_struct(origin, target, items: dict):
+def change_requires_struct(origin, target, items: dict, global_dict=None, macros_text=""):
     """改变依赖的结构"""
+    if global_dict is None:
+        global_dict = {}
     target_list = items[origin].copy()
     for build_rq in items[origin]:
         if "%else %if" in build_rq:
             target_list.remove(build_rq)
             build_rq = resolve_else_judgement(build_rq)
             value = build_rq.split("%if")[0].strip()
-            new_key = target + " " + change_judgement_grammar(build_rq.replace(value, ""), {}).strip()
+            new_key = target + " " + change_judgement_grammar(build_rq.replace(value, ""), global_dict,
+                                                              macros_text=macros_text).strip()
             if new_key in items:
                 items[new_key].append(value)
             else:
                 items[new_key] = [value]
 
         elif "%if" in build_rq:
-            new_key = target + " " + change_judgement_grammar(build_rq, {}, cut_judge=True)
+            new_key = target + " " + change_judgement_grammar(build_rq, global_dict, cut_judge=True,
+                                                              macros_text=macros_text)
             value = build_rq.split("%if")[0].strip()
             value = divide_several_requires([value])
             value = list(map(lambda x: change_macros_usage(x), value))
@@ -663,7 +667,7 @@ def change_requires_struct(origin, target, items: dict):
     return items
 
 
-def change_judgement_grammar(line, global_dict, cut_judge=False):
+def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text=""):
     if cut_judge:
         keywords = line.split("%if")[0]
         line = line.replace(keywords, "", 1)
@@ -703,13 +707,13 @@ def change_judgement_grammar(line, global_dict, cut_judge=False):
             "%ifnos", " when os not in"), results))
         judgement += " ".join(conditions)
     if "%if" in line and judgement == "":
-        judgement = change_to_when_or_rpmwhen(line, global_dict)
+        judgement = change_to_when_or_rpmwhen(line, global_dict, macros_text)
     judgement = change_macros_usage(judgement)
     judgement = merge_multi_judgement(judgement)
     return judgement
 
 
-def change_to_when_or_rpmwhen(line, spec_global):
+def change_to_when_or_rpmwhen(line, spec_global, spec_macros):
     word_list = line.split("%if")[1:]
     target = ""
     for word in word_list:
@@ -723,6 +727,9 @@ def change_to_when_or_rpmwhen(line, spec_global):
             if param in RPM_GLOBAL_MACROS or param in spec_global:
                 rpm_flag = "when"
                 break
+            elif re.search("%define\s+" + param, spec_macros) is not None or re.search("%global\s+" + param, spec_macros):
+                rpm_flag = "when"
+                break
         if rpm_flag == "rpmWhen":
             target += rpm_flag + " " + non + word
         else:
@@ -733,8 +740,9 @@ def change_to_when_or_rpmwhen(line, spec_global):
 def merge_multi_judgement(words):
     when_count = words.count("when")
     if when_count > 1:
-        for i in range(1, when_count):
-            words = words.replace("when", "and", i + 1)
+        words = words.replace("when", "<when>")
+        words = words.replace("<when>", "when", 1)
+        words = words.replace("<when>", "and")
     return words
 
 
@@ -761,6 +769,8 @@ def add_rpm_global(before):
 
 
 def change_macros_usage(line):
+    if line.startswith("rpmWhen"):
+        return line
     # TODO(%{version}-%{release}=>%%{version}-%%{release})
     if re.search("%\{version}|%\{name}|%\{release}|%\{epoch}", line):
         line = line.replace("%{version}", "%%{version}").replace("%{name}", "%%{name}").replace("%{release}", "%%{release}").replace("%{epoch}", "%%{epoch}")
