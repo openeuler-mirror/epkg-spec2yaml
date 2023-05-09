@@ -511,7 +511,7 @@ def inline_to_mainline(inline: list, mainline: list):
 
 def add_input_to_files(input_value, items):
     if "files" in items and isinstance(items["files"], str):
-        items["files"] += input_value, os.linesep
+        items["files"] += input_value + os.linesep
     else:
         items["files"] = input_value + os.linesep
     return items
