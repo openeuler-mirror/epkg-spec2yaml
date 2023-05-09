@@ -420,7 +420,7 @@ def divide_out_configure(content: str):
     configure_num = 0
     configure_cmd_multiline = True
     for num, line in enumerate(line_list):
-        if line.startswith("#"):
+        if line.startswith("#") or line.startswith("%global") or line.startswith("%define"):
             if configure_cmd:
                 configure += line + os.linesep
             else:
