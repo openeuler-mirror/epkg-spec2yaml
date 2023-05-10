@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 import copy
 from openEulerTransition.logs.log import logger
@@ -1448,7 +1447,7 @@ class SpecParser(object):
                         keywords = sub_member_name.split("%if")[0]
                         del target_data["SubPackages"][sub_member_name]
                         target_data["SubPackages"][keywords + " " + change_judgement_grammar(
-                            sub_member_name, self.rpm_global, macros_text=self.macros, cut_judge=True)] = temp_sub_dict
+                            sub_member_name, self.rpm_global, cut_judge=True, macros_text=self.macros)] = temp_sub_dict
         self.items = target_data
         self.check_shell_functions()
 
@@ -1503,14 +1502,17 @@ class SpecParser(object):
                 function_context = value.replace(first_line, "", 1).strip(os.linesep) + os.linesep
                 self.shell_functions[keywords + condition] = first_line.replace(
                     "%" + keywords, "", 1) + os.linesep + function_context.strip()
-        if "build" in self.shell_functions and "configure" not in self.shell_functions:
-            configure_contents, self.shell_functions["build"] = divide_out_configure(
-                self.shell_functions["build"])
-            for _index, configure_content in enumerate(configure_contents):
-                if _index == 0:
-                    self.shell_functions["configure"] = configure_content
-                else:
-                    self.shell_functions["configure" + str(_index)] = configure_content
+        tmp_functions = self.shell_functions.copy()
+        no_configure = True
+        for keywords in tmp_functions:
+            if keywords.startswith("configure"):
+                no_configure = False
+                break
+        if no_configure:
+            if "build" in self.shell_functions:
+                configure_contents, self.shell_functions["build"] = divide_out_configure(self.shell_functions["build"])
+                for configure_cmd_flags, configure_content in enumerate(configure_contents):
+                    self.shell_functions["configure_cmd_flags"] = configure_content
 
     def produce_use_flag(self):
         line_list = self.macros.split(os.linesep)
@@ -1716,8 +1718,8 @@ class SpecParser(object):
                 else:
                     break
             while if_count < endif_count:
-                last_line = line_list[0]
-                if last_line.startswith("%endif"):
+                first_line = line_list[0]
+                if first_line.startswith("%endif"):
                     self.shell_functions[name] = os.linesep.join(line_list[1:])
                     line_list.pop(0)
                 else:

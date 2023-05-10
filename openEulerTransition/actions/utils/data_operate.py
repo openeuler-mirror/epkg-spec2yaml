@@ -412,13 +412,14 @@ def divide_out_configure(content: str):
     :param content:
     :return:
     """
-    configure_list = []
+    configure_items = {}
     configure = ""
     build = ""
     configure_cmd = False
     line_list = content.split(os.linesep)
     configure_num = 0
     configure_cmd_multiline = True
+    configure_cmd_flags = ""
     for num, line in enumerate(line_list):
         if line.startswith("#") or line.startswith("%global") or line.startswith("%define"):
             if configure_cmd:
@@ -426,6 +427,9 @@ def divide_out_configure(content: str):
             else:
                 build += line + os.linesep
             continue
+        if line.startswith("pushd"):
+            str_list = re.findall("\w+", line)
+            configure_cmd_flags = str_list[-1]
         if configure_cmd:
             if line.startswith("%if") or line.startswith("%else") or line.startswith("%endif"):
                 configure += line + os.linesep
@@ -439,7 +443,13 @@ def divide_out_configure(content: str):
                 else:
                     build += line + os.linesep
                 if configure_cmd and configure.strip() != "":
-                    configure_list.append(configure.strip())
+                    if configure_cmd_flags:
+                        key_name = "configure_" + configure_cmd_flags
+                    elif configure_num > 0:
+                        key_name = "configure_" + str(configure_num)
+                    else:
+                        key_name = "configure"
+                    configure_items[key_name] = configure.strip()
                     configure = ""
                 configure_cmd = False
                 continue
@@ -447,19 +457,21 @@ def divide_out_configure(content: str):
             if "./configure" in line:
                 configure += "%{?add_configure_flags} \\" + os.linesep
             if not configure_cmd:
-                if configure_num == 0:
-                    build += "configure" + os.linesep
-                    configure_num += 1
+                if configure_cmd_flags:
+                    build += "configure_" + configure_cmd_flags + os.linesep
                 else:
-                    build += "configure" + str(configure_num) + os.linesep
-                    configure_num += 1
+                    if configure_num == 0:
+                        build += "configure" + os.linesep
+                    else:
+                        build += "configure_" + str(configure_num) + os.linesep
+                configure_num += 1
             configure_cmd = True
             configure += line + os.linesep
         if not configure_cmd:
             build += line + os.linesep
         if "configure" in line.lower() and not line.endswith("\\"):
             configure_cmd_multiline = False
-    return configure_list, build.strip()
+    return configure_items, build.strip()
 
 
 def get_if_with_parts(line):
@@ -653,7 +665,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
                                                               macros_text=macros_text)
             value = build_rq.split("%if")[0].strip()
             value = divide_several_requires([value])
-            value = list(map(lambda x: change_macros_usage(x), value))
+            value = list(map(lambda x: change_macros_usage(x, global_dict, macros_text), value))
             if new_key in items:
                 items[new_key] += value
             else:
@@ -662,7 +674,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
         else:
             pass
     target_list = divide_several_requires(target_list)
-    target_list = list(map(lambda x: change_macros_usage(x), target_list))
+    target_list = list(map(lambda x: change_macros_usage(x, global_dict, macros_text), target_list))
     items[origin] = target_list
     return items
 
@@ -708,7 +720,7 @@ def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text="")
         judgement += " ".join(conditions)
     if "%if" in line and judgement == "":
         judgement = change_to_when_or_rpmwhen(line, global_dict, macros_text)
-    judgement = change_macros_usage(judgement)
+    judgement = change_macros_usage(judgement, global_dict, macros_text)
     judgement = merge_multi_judgement(judgement)
     return judgement
 
@@ -727,7 +739,7 @@ def change_to_when_or_rpmwhen(line, spec_global, spec_macros):
             if param in RPM_GLOBAL_MACROS or param in spec_global:
                 rpm_flag = "when"
                 break
-            elif re.search("%define\s+" + param, spec_macros) is not None or re.search("%global\s+" + param, spec_macros):
+            elif re.search("%define\s+" + param, spec_macros) is not None or re.search("%global\s+" + param, spec_macros) is not None:
                 rpm_flag = "when"
                 break
         if rpm_flag == "rpmWhen":
@@ -768,7 +780,9 @@ def add_rpm_global(before):
     return after
 
 
-def change_macros_usage(line):
+def change_macros_usage(line, rpm_global=None, rpm_macros=""):
+    if rpm_global is None:
+        rpm_global = {}
     if line.startswith("rpmWhen"):
         return line
     # TODO(%{version}-%{release}=>%%{version}-%%{release})
@@ -779,7 +793,12 @@ def change_macros_usage(line):
         results = re.findall(" %\{\w+}", line)
         for macro in results:
             param = macro.strip().split("%{")[1].strip("}")
-            prefix = "%%%{rpmGlobal." if param in RPM_GLOBAL_MACROS else "%%{rpmGlobal."
+            if param in RPM_GLOBAL_MACROS:
+                prefix = "%%%{rpmGlobal."
+            elif param in rpm_global or param in rpm_macros:
+                prefix = "%%{rpmGlobal."
+            else:
+                prefix = "%{"
             line = line.replace(macro, macro.replace("%{", prefix))
     return line
 
