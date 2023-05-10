@@ -1511,8 +1511,8 @@ class SpecParser(object):
         if no_configure:
             if "build" in self.shell_functions:
                 configure_contents, self.shell_functions["build"] = divide_out_configure(self.shell_functions["build"])
-                for configure_cmd_flags, configure_content in enumerate(configure_contents):
-                    self.shell_functions["configure_cmd_flags"] = configure_content
+                for configure_cmd_flags, configure_content in configure_contents.items():
+                    self.shell_functions[configure_cmd_flags] = configure_content
 
     def produce_use_flag(self):
         line_list = self.macros.split(os.linesep)
