@@ -430,6 +430,8 @@ def divide_out_configure(content: str):
         if line.startswith("pushd"):
             str_list = re.findall("\w+", line)
             configure_cmd_flags = str_list[-1]
+        elif line == "popd":
+            configure_cmd_flags = ""
         if configure_cmd:
             if line.startswith("%if") or line.startswith("%else") or line.startswith("%endif"):
                 configure += line + os.linesep
@@ -445,8 +447,8 @@ def divide_out_configure(content: str):
                 if configure_cmd and configure.strip() != "":
                     if configure_cmd_flags:
                         key_name = "configure_" + configure_cmd_flags
-                    elif configure_num > 0:
-                        key_name = "configure_" + str(configure_num)
+                    elif configure_num > 1:
+                        key_name = "configure_" + str(configure_num - 1)
                     else:
                         key_name = "configure"
                     configure_items[key_name] = configure.strip()
@@ -497,7 +499,7 @@ def add_context(name, text, obj, file_obj: LuaFile):
     target_first = "--" + RPM_MACRO_PARAM_COMMENT + " " + first_line if "<lua>" in first_line else "#" + RPM_MACRO_PARAM_COMMENT + " " + first_line
     temp_list = first_line.split()
     if len(temp_list) > 1:
-        if name not in MAIN_SHELL_KEYWORDS + ["configure"] and (temp_list[0].startswith("-") or temp_list[1].startswith("-")):
+        if name not in MAIN_SHELL_KEYWORDS and not name.startswith("configure") and (temp_list[0].startswith("-") or temp_list[1].startswith("-")):
             text = text.replace(first_line, target_first, 1)
     if "<lua>" in first_line:
         file_name = os.path.splitext(obj.name)[0]
