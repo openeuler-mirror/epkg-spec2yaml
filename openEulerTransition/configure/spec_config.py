@@ -36,7 +36,6 @@ SINGLES = ('Summary',
            'Prefix',
            'License',
            "Release",
-           "Recommends",
            "ExclusiveArch")
 REQUIRES = ('BuildRequires',
             'Requires',

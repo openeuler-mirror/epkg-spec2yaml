@@ -319,7 +319,7 @@ def add_string_to_dict(dict1, this_key, line, turn_line=True):
     :param turn_line:
     :return:
     """
-    if this_key in ["include", "description", "package"]:
+    if this_key in ["include", "description", "package", "Recommends"]:
         return dict1
     if this_key in SINGLES:
         return dict1
@@ -745,7 +745,7 @@ def change_to_when_or_rpmwhen(line, spec_global, spec_macros):
                 rpm_flag = "when"
                 break
         if rpm_flag == "rpmWhen":
-            target += rpm_flag + " " + non + word
+            target += rpm_flag + " " + word
         else:
             target += rpm_flag + " " + non + modify_by_when(word, spec_global)
     return target
