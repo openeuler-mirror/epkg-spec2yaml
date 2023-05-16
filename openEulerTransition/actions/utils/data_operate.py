@@ -509,7 +509,7 @@ def add_context(name, text, obj, file_obj: LuaFile):
             if mode == "w+":
                 f.write("#!/usr/bin/env lua" + os.linesep*2)
             text = add_tab_in_lines(text)
-            f.write("function " + name + "()" + os.linesep + text + os.linesep)
+            f.write("function " + name + "()" + os.linesep + text + "end" + os.linesep*2)
             f.close()
         return file_obj
     text = add_tab_in_lines(text)
