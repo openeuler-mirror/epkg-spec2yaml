@@ -691,9 +691,11 @@ def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text="")
         with_parts, without_parts = get_if_with_parts(line)
         judgement = "when"
         if len(with_parts):
-            judgement += " +" + " +".join(with_parts)
+            judgement += " +" + " and +".join(with_parts)
         if len(without_parts):
-            judgement += " -" + " -".join(without_parts)
+            if with_parts:
+                judgement += " and"
+            judgement += " -" + " and -".join(without_parts)
     # TODO(	%if 0%{?openEuler}=>when %%%{rpmGlobal.openEuler})
     if re.search("%if\s+[0x]%\{\?[\w|_]}", line) is not None:
         results = re.findall("%if\s+[0x]%\{\?[\w|_]}", line)
