@@ -1495,11 +1495,11 @@ class SpecParser(object):
         elif value.startswith("%" + keywords) and keywords in RARE_KEYWORDS:
             first_line = value.split(os.linesep)[0]
             if sub_name:
+                function_context = value.replace(first_line, "", 1).strip()
                 params = first_line.split()
                 if len(params) > 1 and original_sub_name == params[1]:
                     params.remove(original_sub_name)
                     first_line = " ".join(params)
-                function_context = value.replace(first_line, "", 1).strip()
                 self.shell_functions[keywords + ":" + sub_name] = first_line.replace(
                     "%" + keywords, "", 1) + os.linesep + function_context
             else:
