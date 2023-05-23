@@ -1185,10 +1185,10 @@ class SpecParser(object):
                                 line = new_setup.strip()
                         if type(items[header]) == str:
                             while_next = False
-                            items[header] += line + os.linesep
                             if line == "%end":
                                 state = ST_MAIN
                                 continue
+                            items[header] += line + os.linesep
                     elif keywords_type == "single":
                         logger.warn("single at error=================>" + line)
                     elif keywords_type == "list":
