@@ -1427,10 +1427,11 @@ class SpecParser(object):
                             del target_data["SubPackages"][sub_member_name]["files"]
                         if member_key == "Summary" and len(member_value) == 1 and member_value[0].startswith("`"):
                             target_data["SubPackages"][sub_member_name][member_key] = ["_" + member_value[0]]
-                        if member_key in NEED_QUOTATION_KEYWORDS:
+                        origin_member_key = member_key.split()[0] if " when " in member_key else member_key
+                        if origin_member_key.title() in NEED_QUOTATION_KEYWORDS:
                             target_data = add_quotation_from_member(member_key, self.items,
                                                                     sub_name=sub_member_name, target_items=target_data)
-                        if member_key in SHELL_KEYWORDS:
+                        if origin_member_key in SHELL_KEYWORDS:
                             self.divide_into_shell(member_key, target_data["SubPackages"][
                                 sub_member_name][member_key], sub_name=sub_member_name.split()[0].strip(),
                                                    whole=whole_name, main_name=original_data["Name"][0])
