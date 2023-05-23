@@ -1630,7 +1630,10 @@ class SpecParser(object):
                 v = nv
 
             if k in SINGLES:
-                ck_items[k] = v[0]
+                if isinstance(v, str):
+                    ck_items[k] = v
+                else:
+                    ck_items[k] = v[0]
             else:
                 ck_items[k] = v
 
