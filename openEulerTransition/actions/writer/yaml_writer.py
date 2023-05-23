@@ -1428,7 +1428,7 @@ class SpecParser(object):
                         if member_key == "Summary" and len(member_value) == 1 and member_value[0].startswith("`"):
                             target_data["SubPackages"][sub_member_name][member_key] = ["_" + member_value[0]]
                         origin_member_key = member_key.split()[0] if " when " in member_key else member_key
-                        if origin_member_key.title() in NEED_QUOTATION_KEYWORDS:
+                        if origin_member_key.title() in NEED_QUOTATION_KEYWORDS or member_key in NEED_QUOTATION_KEYWORDS:
                             target_data = add_quotation_from_member(member_key, self.items,
                                                                     sub_name=sub_member_name, target_items=target_data)
                         if origin_member_key in SHELL_KEYWORDS:
