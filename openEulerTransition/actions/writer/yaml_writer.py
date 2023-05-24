@@ -885,6 +885,8 @@ class SpecParser(object):
         in_package_help = False
         macros_mode = False
         for line in open(filename):
+            if "%%" in line:
+                line = line.replace("%%", "\\%\\%").replace("\\%%", "\\%\\%")
             if unclosed_brackets < 0:
                 unclosed_brackets = 0
             if cat_eof_mode and header:
