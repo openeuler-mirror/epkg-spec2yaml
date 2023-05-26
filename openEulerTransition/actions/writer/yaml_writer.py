@@ -1410,21 +1410,16 @@ class SpecParser(object):
                         sub_member_dict["rpmMacros"], sub_member_dict["rpmGlobal"] = divide_rpm_global(
                             sub_member_dict.get("rpmMacros"), {})
                     whole_name = "AsWholeName" in original_data["SubPackages"][sub_member_name].keys()
-                    sub_files_judgement = ""
-                    if "FilesJudgement" in sub_member_dict:
-                        temp_sub_member_list = copy.deepcopy(sub_member_dict["FilesJudgement"])
-                        for judgement_words in temp_sub_member_list:
-                            if judgement_words in sub_member_name:
-                                sub_member_dict["FilesJudgement"].remove(judgement_words)
-                        if sub_member_dict["FilesJudgement"]:
-                            sub_files_judgement += " when " + " when ".join(sub_member_dict["FilesJudgement"])
-                        del target_data["SubPackages"][sub_member_name]["FilesJudgement"]
                     if "%if" in sub_member_name:
                         target_data = clear_sub_extra_judge(sub_member_name, self.items, target_items=target_data)
                     sub_file_name = target_data["Name"][0] + "-" + sub_member_name.split("%if")[0].strip() \
                         if not whole_name else sub_member_name.strip()
                     for member_key, member_value in sub_member_dict.items():
                         if member_key == "files":
+                            if "%if" in sub_member_name:
+                                sub_files_judgement = " " + change_judgement_grammar(sub_member_name, self.rpm_global, cut_judge=True, macros_text=self.macros)
+                            else:
+                                sub_files_judgement = ""
                             self.files["subpackage." + sub_file_name + ".files" + sub_files_judgement] = member_value
                             del target_data["SubPackages"][sub_member_name]["files"]
                         if member_key == "Summary" and len(member_value) == 1 and member_value[0].startswith("`"):
