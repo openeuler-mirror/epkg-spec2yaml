@@ -1528,7 +1528,7 @@ class SpecParser(object):
         for i, line in enumerate(line_list):
             if re.search("%(bcond_with)|(bcond_without) \s+", line) is not None:
                 contain_bcond = True
-                flag_with = "-" if "bcond_without" in line else "+"
+                flag_with = "+" if "bcond_without" in line else "-"
                 if line.endswith("\\"):
                     continue
                 rpm_condition = check_rpm_condition(if_cond, self.rpm_global)
