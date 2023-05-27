@@ -826,12 +826,13 @@ class SpecParser(object):
                 line = line.replace(p, val)
         return line
 
-    def add_source_or_patch(self, dict1, keywords, value):
+    def add_source_or_patch(self, dict1, keywords, value, number=""):
         """
         新增source和patch
         :param dict1:
         :param keywords:
         :param value:
+        :param number:
         :return:
         """
         judgement = ""
@@ -843,7 +844,8 @@ class SpecParser(object):
         if keywords + judgement in dict1:
             if isinstance(dict1[keywords + judgement], dict):
                 for num, val in num_dict.items():
-                    dict1[keywords + judgement][num[count:]] = val
+                    if number == num[count:]:
+                        dict1[keywords + judgement][number] = val
         else:
             for num, val in num_dict.items():
                 dict1[keywords + judgement] = {num[count:]: val}
@@ -884,6 +886,7 @@ class SpecParser(object):
         unclosed_brackets = 0
         in_package_help = False
         macros_mode = False
+        num = ""
         for line in open(filename):
             if "%%" in line:
                 line = line.replace("%%", "\\%\\%").replace("\\%%", "\\%\\%")
@@ -1261,7 +1264,7 @@ class SpecParser(object):
                     key = update_keywords(key)
                     val = find_quotes_from_words(val + line_suffix)
                     if key in ["Sources", "Patches"]:
-                        items = self.add_source_or_patch(items, key, val)
+                        items = self.add_source_or_patch(items, key, val, num)
                     else:
                         if key not in items:
                             items[key] = [val]
