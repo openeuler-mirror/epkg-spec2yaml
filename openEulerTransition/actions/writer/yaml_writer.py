@@ -119,7 +119,11 @@ class SpectacleDumper(object):
                     if len(temp_param_list) > 1 and temp_param_list[0] in temp_param_list[1]:
                         temp_param_list.pop(0)
                     if len(temp_param_list) > 0:
-                        f_files.write(file_member_key + RPM_MACRO_PARAM_COMMENT + " |" + os.linesep)
+                        if " " in file_member_key:
+                            tmp_key, tmp_judge = file_member_key.strip().split(" ", 1)
+                            f_files.write(tmp_key + RPM_MACRO_PARAM_COMMENT + " " + tmp_judge + " |" + os.linesep)
+                        else:
+                            f_files.write(file_member_key + RPM_MACRO_PARAM_COMMENT + " |" + os.linesep)
                         for line in temp_param_list:
                             if line != "":
                                 f_files.write(TAB + line + os.linesep)
