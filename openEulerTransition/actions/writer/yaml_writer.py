@@ -121,7 +121,7 @@ class SpectacleDumper(object):
                     if len(temp_param_list) > 0:
                         if " " in file_member_key:
                             tmp_key, tmp_judge = file_member_key.strip().split(" ", 1)
-                            f_files.write(tmp_key + RPM_MACRO_PARAM_COMMENT + " " + tmp_judge + " |" + os.linesep)
+                            f_files.write(tmp_key + ":rpm_macro_param " + tmp_judge + ": |" + os.linesep)
                         else:
                             f_files.write(file_member_key + RPM_MACRO_PARAM_COMMENT + " |" + os.linesep)
                         for line in temp_param_list:
