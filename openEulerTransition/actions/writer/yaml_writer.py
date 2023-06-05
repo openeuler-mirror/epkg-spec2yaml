@@ -962,7 +962,7 @@ class SpecParser(object):
                     # shell lines or inline mode pass
                     macros_mode = False
                     pass
-                elif header == "description" and line == "%{summary}.":
+                elif header == "description" and line in SPEC_DESCRIPTION_MACROS:
                     items[header] += line + os.linesep
                 else:
                     if unclosed_brackets != 0:
