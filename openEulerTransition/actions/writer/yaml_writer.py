@@ -1487,7 +1487,7 @@ class SpecParser(object):
         for host_flag in host_flags:
             if "defineFlags" not in self.items:
                 self.items["defineFlags"] = {}
-            if host_flags not in self.items["defineFlags"]:
+            if host_flag not in self.items["defineFlags"]:
                 self.items["defineFlags"][host_flag] = ""
 
     def divide_into_shell(self, keywords, value: str, sub_name=None, whole=False, main_name=None):
