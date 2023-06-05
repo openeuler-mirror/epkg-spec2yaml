@@ -477,8 +477,8 @@ def divide_out_configure(content: str):
 
 
 def get_if_with_parts(line):
-    with_parts = re.findall("%if %[{]with \w+}", line)
-    without_parts = re.findall("%if %[{]without \w+}", line)
+    with_parts = re.findall("%if %\{with \w+}", line)
+    without_parts = re.findall("%if %\{without \w+}", line)
     with_parts = list(map(lambda x: x.replace("%if %{with", "").replace("}", "").strip(), with_parts))
     without_parts = list(map(lambda x: x.replace("%if %{without", "").replace("}", "").strip(), without_parts))
     return with_parts, without_parts
@@ -649,6 +649,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
     """改变依赖的结构"""
     if global_dict is None:
         global_dict = {}
+    add_define_flags = []
     target_list = items[origin].copy()
     for build_rq in items[origin]:
         if "%else %if" in build_rq:
@@ -657,16 +658,18 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
             value = build_rq.split("%if")[0].strip()
             if value.startswith("%"):
                 value = "\"" + value.replace("\"", "\\\"") + "\""
-            new_key = target + " " + change_judgement_grammar(build_rq.replace(value, ""), global_dict,
-                                                              macros_text=macros_text).strip()
+            add_judgement, add_define_flags = change_judgement_grammar(build_rq.replace(value, ""), global_dict,
+                                     macros_text=macros_text)
+            new_key = target + " " + add_judgement.strip()
             if new_key in items:
                 items[new_key].append(value)
             else:
                 items[new_key] = [value]
 
         elif "%if" in build_rq:
-            new_key = target + " " + change_judgement_grammar(build_rq, global_dict, cut_judge=True,
-                                                              macros_text=macros_text)
+            add_judgement, add_define_flags = change_judgement_grammar(build_rq, global_dict, cut_judge=True,
+                                                                       macros_text=macros_text)
+            new_key = target + " " + add_judgement
             value = build_rq.split("%if")[0].strip()
             value = divide_several_requires([value])
             value = list(map(lambda x: change_macros_usage(x, global_dict, macros_text), value))
@@ -683,7 +686,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
     target_list = divide_several_requires(target_list)
     target_list = list(map(lambda x: change_macros_usage(x, global_dict, macros_text), target_list))
     items[origin] = target_list
-    return items
+    return items, add_define_flags
 
 
 def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text=""):
@@ -691,8 +694,9 @@ def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text="")
         keywords = line.split("%if")[0]
         line = line.replace(keywords, "", 1)
     judgement = ""
+    add_define_flags = []
     # TODO(%if %{with ***}=>when )
-    if "%if %{with" in line:
+    if re.search("%if %\{with", line) or re.search("%if %\{without", line):
         with_parts, without_parts = get_if_with_parts(line)
         judgement = "when"
         if len(with_parts):
@@ -701,6 +705,13 @@ def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text="")
             if with_parts:
                 judgement += " and"
             judgement += " -" + " and -".join(without_parts)
+    elif re.search("%if\s+%\{\?_with_\w+:\s*1", line):
+        results = re.findall("%if\s+%\{\?_with_\w+:\s*1", line)
+        conditions = list(map(lambda x: "+" + x.split("_with_")[1].split(":")[0].rstrip("}"), results))
+        judgement = "when"
+        for condition in conditions:
+            add_define_flags.append(condition)
+            judgement += " " + condition
     # TODO(	%if 0%{?openEuler}=>when %%%{rpmGlobal.openEuler})
     if re.search("%if\s+[0x]%\{\?[\w|_]}", line) is not None:
         results = re.findall("%if\s+[0x]%\{\?[\w|_]}", line)
@@ -731,7 +742,7 @@ def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text="")
         judgement = change_to_when_or_rpmwhen(line, global_dict, macros_text)
     judgement = change_macros_usage(judgement, global_dict, macros_text)
     judgement = merge_multi_judgement(judgement)
-    return judgement
+    return judgement, add_define_flags
 
 
 def change_to_when_or_rpmwhen(line, spec_global, spec_macros):
