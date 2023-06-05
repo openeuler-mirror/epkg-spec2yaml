@@ -1472,8 +1472,9 @@ class SpecParser(object):
     def change_several_requires(self):
         for change_key, target_key in LIST_KEY_REPLACE.items():
             if change_key in self.items and isinstance(self.items[change_key], list):
-                self.items = change_requires_struct(change_key, target_key, self.items, global_dict=self.rpm_global,
+                self.items, add_define_flags = change_requires_struct(change_key, target_key, self.items, global_dict=self.rpm_global,
                                                     macros_text=self.macros)
+                self.add_define_flags_item(add_define_flags)
         if "SubPackages" in self.items:
             for sub_name, sub_pkg in self.items["SubPackages"].items():
                 for chang_sub_key, target_sub_key in LIST_KEY_REPLACE.items():
