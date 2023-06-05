@@ -848,10 +848,14 @@ class SpecParser(object):
         if keywords + judgement in dict1:
             if isinstance(dict1[keywords + judgement], dict):
                 for num, val in num_dict.items():
+                    if isinstance(val, str) and val.startswith("%"):
+                        val = "\"" + val.replace("\"", "\\\"") + "\""
                     if number == num[count:]:
                         dict1[keywords + judgement][number] = val
         else:
             for num, val in num_dict.items():
+                if isinstance(val, str) and val.startswith("%"):
+                    val = "\"" + val.replace("\"", "\\\"") + "\""
                 dict1[keywords + judgement] = {num[count:]: val}
         return dict1
 
