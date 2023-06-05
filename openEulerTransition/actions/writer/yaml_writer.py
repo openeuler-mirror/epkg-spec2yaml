@@ -966,6 +966,7 @@ class SpecParser(object):
                     pass
                 elif header == "description" and line in SPEC_DESCRIPTION_MACROS:
                     items[header] += line + os.linesep
+                    continue
                 else:
                     if unclosed_brackets != 0:
                         if subpackages_mode:
@@ -1479,9 +1480,10 @@ class SpecParser(object):
             for sub_name, sub_pkg in self.items["SubPackages"].items():
                 for chang_sub_key, target_sub_key in LIST_KEY_REPLACE.items():
                     if chang_sub_key in sub_pkg and isinstance(sub_pkg[chang_sub_key], list):
-                        sub_pkg = change_requires_struct(chang_sub_key, target_sub_key, sub_pkg,
+                        sub_pkg, add_define_flags = change_requires_struct(chang_sub_key, target_sub_key, sub_pkg,
                                                          global_dict=self.rpm_global, macros_text=self.macros)
                         self.items["SubPackages"][sub_name] = sub_pkg
+                        self.add_define_flags_item(add_define_flags)
 
     def add_define_flags_item(self, host_flags: list):
         for host_flag in host_flags:
