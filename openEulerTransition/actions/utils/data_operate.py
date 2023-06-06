@@ -613,10 +613,7 @@ def strip_files_startswith(text):
     if content_line_index > 0:
         for line in file_lines[0:content_line_index]:
             if re.match("%files \S+ -f", line) is not None:
-                match_words = re.findall("%files \S+ -f", line)[0]
-                match_words = remove_package_name(match_words)
-                strip_words = match_words.rstrip("-f").strip()
-                line = line.replace(strip_words, "", 1)
+                line = " ".join(line.split()[2:])
                 param_text += line + os.linesep
             if line.startswith("%files"):
                 target_line = remove_package_name(line)
