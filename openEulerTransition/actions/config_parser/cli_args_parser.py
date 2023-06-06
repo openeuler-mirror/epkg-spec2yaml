@@ -30,11 +30,13 @@ class ArgsParser:
         self.type = _type
 
         cmd_args = {
+            'trans': '_trans_file',
             'conf': '_conf_file',
             'parse': '_parse_file',
             'shell': '_shell_script',
             'python': '_python_script',
             'target': '_target_type',
+            'log': '_log_file',
         }
 
         if self.type == 'openEuler':
@@ -45,6 +47,13 @@ class ArgsParser:
             logger.error("%s\n            Reason:%s\n        EXCEPTION_RESPONSE:%s\n" % (
                 EXCEPTION_CODE[600], 'Invalid Command Line', EXCEPTION_RESPONSE[1]))
             raise Exception(EXCEPTION_CODE[600], 'Invalid Command Line')
+
+    def _trans_file(self):
+        self._parser.add_option(
+            '--trans', '-t',
+            dest="yaml_file",
+            type="string", default=None,
+            help='Trans file.')
 
     def _parse_file(self):
         self._parser.add_option(
@@ -69,7 +78,7 @@ class ArgsParser:
 
     def _target_type(self):
         self._parser.add_option(
-            '--target', '-t',
+            '--target', '-g',
             dest="target_type",
             type="string", default="spec",
             help='File type.')
@@ -80,6 +89,14 @@ class ArgsParser:
             dest="conf_file",
             type="string", default=None,
             help='Conf file.'
+        )
+
+    def _log_file(self):
+        self._parser.add_option(
+            '--logpath', '-l',
+            dest="log_path",
+            type="string", default="",
+            help='Log path.'
         )
 
     def parser(self):
