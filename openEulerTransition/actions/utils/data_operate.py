@@ -2,6 +2,7 @@ import re
 import os
 from openEulerTransition.configure.spec_config import *
 from openEulerTransition.configure.yaml_config import *
+from openEulerTransition.configure.macros_config import *
 
 
 class LuaFile(object):
