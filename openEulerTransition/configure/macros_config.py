@@ -5,7 +5,7 @@ RPM_SYSTEM_MACROS = {
                      "Summary: Documents for %{name}" + os.linesep +
                      "BuildArch: noarch" + os.linesep +
                      "Requires: man info" + os.linesep +
-                     "%description" + os.linesep +
+                     "%description help" + os.linesep +
                      "Man pages and other related documents for %{name}." + os.linesep,
     "%{?systemd_requires}": "Requires(post): systemd" + os.linesep +
                             "Requires(preun): systemd" + os.linesep +
