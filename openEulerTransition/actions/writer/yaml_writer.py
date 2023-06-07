@@ -505,8 +505,6 @@ class YamlWriter:
 def pre_treatment(content):
     if "%%" in content:
         content = content.replace("%%", "\\%\\%").replace("\\%%", "\\%\\%")
-    if "\t" in content:
-        content = content.replace("\t", "")
     for system_macros in RPM_SYSTEM_MACROS:
         if os.linesep + system_macros in content:
             content = content.replace(os.linesep + system_macros,
