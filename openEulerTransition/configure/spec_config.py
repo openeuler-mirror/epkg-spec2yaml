@@ -115,8 +115,6 @@ SPEC_EXTRA_KEYS = {
         'PreMakeExtras': ('build', 'pre'),
     }
 
-SPEC_DESCRIPTION_MACROS = ["%{summary}.", "%{name}."]
-
 RPM_GLOBAL_MACROS = {
     "GNAT_arches": "%{GPRbuild_arches} %{generic_arches}",
     "GPRbuild_arches": "%{generic_arches}",

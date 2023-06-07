@@ -963,9 +963,12 @@ class SpecParser(object):
                     # shell lines or inline mode pass
                     macros_mode = False
                     pass
-                elif header == "description" and line in SPEC_DESCRIPTION_MACROS:
-                    items[header] += line + os.linesep
-                    continue
+                elif header == "description":
+                    if re.match("%\{\w+}", line):
+                        word = re.findall("%\{\w+}", line)[0].replace("%{", "").replace("}", "")
+                        if word.capitalize() in SINGLES or word in self.macros or word in self.rpm_global:
+                            items[header] += line + os.linesep
+                            continue
                 else:
                     if unclosed_brackets != 0:
                         if subpackages_mode:
@@ -1715,6 +1718,8 @@ class SpecParser(object):
         if_flag = 0
         for k, macros_line in enumerate(macros_list):
             if macros_line.endswith("\\"):
+                continue
+            elif macros_line.endswith("%{expand:"):
                 continue
             if "%if" in macros_line:
                 if_flag += 1

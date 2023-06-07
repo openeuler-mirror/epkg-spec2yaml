@@ -205,28 +205,6 @@ def translate_keys(_dict):
         _dict['NoAutoProv'] = 'yes'
 
 
-def resolve_special_macros_config(line, source_items: dict):
-    """
-    处理特殊的宏配置
-    :param line:
-    :param source_items:
-    :return:
-    """
-    if line == "%package_help":
-        if "SubPackages" in source_items:
-            source_items["SubPackages"]["help"] = {"Summary": ["Documents for %{name}"],
-                                                   "BuildArch": ["noarch"],
-                                                   "Requires": ["man info"],
-                                                   "Description":
-                                                       "Man pages and other related documents for %{name}."}
-        else:
-            source_items["SubPackages"] = {"help": {"Summary": ["Documents for %{name}"],
-                                                    "BuildArch": ["noarch"],
-                                                    "Requires": ["man info"],
-                                                    "Description":
-                                                        "Man pages and other related documents for %{name}."}}
-
-
 def remove_duplicate(_dict):
     """
     配置去重
@@ -340,6 +318,8 @@ def divide_rpm_global(macros_text, rpm_global_text):
     target_list = line_list.copy()
     remove_list = []
     for i, line in enumerate(line_list):
+        if line.endswith("%{expand:"):
+            continue
         if re.match("%global\s+\S+ [\s\S]+", line) is not None:
             if line.endswith("\\"):
                 continue
@@ -474,6 +454,8 @@ def divide_out_configure(content: str):
             build += line + os.linesep
         if "configure" in line.lower() and not line.endswith("\\"):
             configure_cmd_multiline = False
+    if configure != "" and configure_items == {}:
+        configure_items["configure"] = configure.strip()
     return configure_items, build.strip()
 
 
