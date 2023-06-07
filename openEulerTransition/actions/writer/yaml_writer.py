@@ -505,10 +505,12 @@ class YamlWriter:
 def pre_treatment(content):
     if "%%" in content:
         content = content.replace("%%", "\\%\\%").replace("\\%%", "\\%\\%")
+    if "\t" in content:
+        content = content.replace("\t", "")
     for system_macros in RPM_SYSTEM_MACROS:
-        if os.linesep + system_macros + os.linesep in content:
-            content = content.replace(os.linesep + system_macros + os.linesep,
-                                      os.linesep + RPM_SYSTEM_MACROS.get(system_macros) + os.linesep)
+        if os.linesep + system_macros in content:
+            content = content.replace(os.linesep + system_macros,
+                                      os.linesep + RPM_SYSTEM_MACROS.get(system_macros))
     return content
 
 
@@ -914,8 +916,8 @@ class SpecParser(object):
             if unclosed_brackets < 0:
                 unclosed_brackets = 0
             if cat_eof_mode and header:
-                items[header] += line
-                if line == "EOF" + os.linesep:
+                items[header] += line + os.linesep
+                if line == "EOF":
                     cat_eof_mode = False
                 continue
             real_key = ""
@@ -1015,8 +1017,6 @@ class SpecParser(object):
                         temp_line = line.replace(line.split(":")[0], line.split(":")[0].capitalize().strip())
                         available_key = header_re.match(temp_line) or single_re.match(
                             temp_line) or require_re.match(temp_line)
-                    else:
-                        header = real_key
             if available_key:
                 if header_re.match(line):
                     if "%package" in line:
@@ -1685,7 +1685,8 @@ class SpecParser(object):
         # check for global macros
         if self.macros:
             self.change_define2global()
-            ck_items['extra']['macros'] = self.macros
+            if self.macros.strip() != "":
+                ck_items['extra']['macros'] = self.macros
         if self.rpm_global:
             ck_items['rpmGlobal'] = self.rpm_global
 
