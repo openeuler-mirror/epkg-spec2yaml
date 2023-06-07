@@ -612,8 +612,8 @@ def divide_several_requires(origin_list):
         if "%if" in line:
             target_list.append(line)
             continue
-        if re.search("\S+ [>=<]+ \S+", line) is not None:
-            search_list = re.findall("\S+ [>=<]+ \S+", line)
+        if re.search("\S+\s+[>=<]+\s+\S+", line) is not None:
+            search_list = re.findall("\S+\s+[>=<]+\s+\S+", line)
             search_list = list(map(lambda x: x.strip(","), search_list))
             target_list += search_list
         elif "," in line:
