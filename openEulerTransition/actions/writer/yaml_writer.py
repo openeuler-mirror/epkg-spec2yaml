@@ -1373,11 +1373,6 @@ class SpecParser(object):
         self.macros, self.rpm_global = divide_rpm_global(self.macros, self.rpm_global)
         self.produce_use_flag()
         target_data = copy.deepcopy(original_data)
-        if "Version" in original_data.keys() and original_data["Version"]:
-            if type(original_data["Version"]) == str and original_data["Version"].startswith("%"):
-                target_data = add_quotation_from_member("Version", self.items, target_items=target_data)
-            elif type(original_data["Version"]) == list and original_data["Version"][0].startswith("%"):
-                target_data = add_quotation_from_member("Version", self.items, target_items=target_data)
         for _key, _value in original_data.items():
             if _key in NEED_QUOTATION_KEYWORDS:
                 target_data = add_quotation_from_member(_key, self.items, target_items=target_data)
