@@ -1188,21 +1188,6 @@ class SpecParser(object):
                             items = {}
                         if header not in items:
                             items[header] = ""
-                        if header == "prep" and line.startswith("%setup"):
-                            if re.search("-b\d+", line):
-                                line = line.replace("-b", "-b ")
-                            if re.search("\d+", line):
-                                setup_list = line.split()
-                                new_setup = ""
-                                for s in setup_list:
-                                    if re.match("^\d+", s):
-                                        num = re.sub("^0+", "", s)
-                                        if num == "":
-                                            num = "0"
-                                        val = self.sources_num_dict["SOURCE" + num]
-                                        s = val[6:]
-                                    new_setup = new_setup + s + " "
-                                line = new_setup.strip()
                         if type(items[header]) == str:
                             while_next = False
                             if line == "%end":
