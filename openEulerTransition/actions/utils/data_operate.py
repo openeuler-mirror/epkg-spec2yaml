@@ -298,7 +298,7 @@ def add_string_to_dict(dict1, this_key, line, turn_line=True):
     :param turn_line:
     :return:
     """
-    if this_key in ["include", "description", "package", "Recommends"]:
+    if this_key in ["include", "description", "package", "Recommends", "ExclusiveArch"]:
         return dict1
     if this_key in SINGLES:
         return dict1
