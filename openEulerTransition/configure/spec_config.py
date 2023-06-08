@@ -35,8 +35,7 @@ SINGLES = ('Summary',
            'Patch',
            'Prefix',
            'License',
-           "Release",
-           "ExclusiveArch")
+           "Release")
 REQUIRES = ('BuildRequires',
             'Requires',
             'Requires(post)',
@@ -51,6 +50,7 @@ REQUIRES = ('BuildRequires',
             'Conflicts',
             'BuildConflicts',
             'FilesJudgement',
+            "ExclusiveArch",
             )
 SKIPS = ('BuildRoot',)
 

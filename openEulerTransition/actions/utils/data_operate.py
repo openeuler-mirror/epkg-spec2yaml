@@ -1,8 +1,8 @@
 import re
-import os
 from openEulerTransition.configure.spec_config import *
 from openEulerTransition.configure.yaml_config import *
 from openEulerTransition.configure.macros_config import *
+from openEulerTransition.logs.log import logger
 
 
 class LuaFile(object):
@@ -805,16 +805,36 @@ def change_macros_usage(line, rpm_global=None, rpm_macros=""):
 
 def check_sub_files(line):
     line_list = line.split()
-    if line_list and line_list[0] == "files":
-        line_list.remove("files")
-    while "-f" in line_list:
-        index_input = line_list.index("-f") + 1
-        line_list.pop(index_input)
-        line_list.remove("-f")
+    if line_list and line_list[0] == "%files":
+        line_list.remove("%files")
+    line_list = remove_files_param(line_list)
     if len(line_list) == 0:
         return False
     else:
         return True
+
+
+def get_sub_name_from_line(line, keywords):
+    line_list = line.split()
+    if line_list and line_list[0] == keywords:
+        line_list.remove(keywords)
+    line_list = remove_files_param(line_list)
+    if "-n" in line_list:
+        if len(line_list) >= line_list.index("-n") + 2:
+            return line_list[line_list.index("-n") + 1]
+        else:
+            logger.error("error format in this line: " + line)
+            return line_list[-1]
+    else:
+        return line_list[-1]
+
+
+def remove_files_param(opt):
+    while "-f" in opt:
+        index_input = opt.index("-f") + 1
+        opt.pop(index_input)
+        opt.remove("-f")
+    return opt
 
 
 def right_strip_extra_judge(text):

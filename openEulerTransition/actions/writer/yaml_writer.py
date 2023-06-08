@@ -1,7 +1,6 @@
 import os
 import sys
 import copy
-from openEulerTransition.logs.log import logger
 from openEulerTransition.actions.utils.file_operate import Chdir
 from openEulerTransition.actions.utils.data_operate import *
 from openEulerTransition.configure.spec_config import *
@@ -558,13 +557,14 @@ class SpecParser(object):
             create = True
         if '-n' in ls:
             try:
-                origin_name = subpkg
                 subpkg = ls[ls.index('-n') + 1]
                 if "%name" in subpkg:
                     subpkg = subpkg.replace("%name", self.items["Name"][0])
+                elif "%{name}" in subpkg:
+                    subpkg = subpkg.replace("%{name}", self.items["Name"][0])
                 if subpkg == self.items["Name"][0]:
+                    ls.pop(ls.index('-n') + 1)
                     ls.remove("-n")
-                    ls.remove(subpkg)
                     if filesinput != '':
                         if 'FilesInput' not in self.items:
                             self.items['FilesInput'] = filesinput
@@ -1072,6 +1072,9 @@ class SpecParser(object):
                         _else_cond_part, else_cond_part = inline_to_mainline(_else_cond_part, else_cond_part)
                         header = cur_block = "files"
                         if check_sub_files(line):
+                            sub_name = get_sub_name_from_line(line, "%files")
+                            items = self._switch_subpkg(sub_name)
+                        else:
                             items = self.items
                         items[cur_block] = line + os.linesep
                         items = parse_files_input(self.items, items, line=line, if_lines=if_cond_part,
@@ -1297,7 +1300,9 @@ class SpecParser(object):
                                 if "AsWholeName" not in self.items["SubPackages"][sub_name]:
                                     whole_sub_name = sub_name if "-n" in opt.split() else self.items["Name"][0] + "-" + sub_name
                                 if whole_sub_name.replace("%{name}", self.items["Name"][0]) in opt.replace(
-                                        "%{name}", self.items["Name"][0]) and header == "files":
+                                        "%{name}", self.items["Name"][0]) and header in OBS_LINES_KEYWORDS:
+                                    if "%{name}" in opt and "%{name}" not in whole_sub_name:
+                                        opt = opt.replace("%{name}", self.items["Name"][0])
                                     if sub_name == "file":
                                         if len(line.split()) > 1 and line.split()[1] == "file":
                                             sub_files = True
