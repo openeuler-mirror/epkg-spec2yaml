@@ -1445,7 +1445,7 @@ class SpecParser(object):
                         del target_data["SubPackages"][sub_member_name]["FilesInput"]
                     if "%if" in sub_member_name:
                         temp_sub_dict = target_data["SubPackages"][sub_member_name]
-                        keywords = sub_member_name.split("%if")[0]
+                        keywords = sub_member_name.split("%if")[0].strip()
                         del target_data["SubPackages"][sub_member_name]
                         add_judgement, add_define_flags = change_judgement_grammar(
                             sub_member_name, self.rpm_global, cut_judge=True, macros_text=self.macros)
