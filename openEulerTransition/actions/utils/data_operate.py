@@ -640,7 +640,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
                 value = "\"" + value.replace("\"", "\\\"") + "\""
             add_judgement, add_define_flags = change_judgement_grammar(build_rq.replace(value, ""), global_dict,
                                      macros_text=macros_text)
-            new_key = target + " " + add_judgement.strip()
+            new_key = target + add_judgement
             if new_key in items:
                 items[new_key].append(value)
             else:
@@ -649,7 +649,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
         elif "%if" in build_rq:
             add_judgement, add_define_flags = change_judgement_grammar(build_rq, global_dict, cut_judge=True,
                                                                        macros_text=macros_text)
-            new_key = target + " " + add_judgement
+            new_key = target + add_judgement
             value = build_rq.split("%if")[0].strip()
             value = divide_several_requires([value])
             value = list(map(lambda x: change_macros_usage(x, global_dict, macros_text), value))
@@ -697,16 +697,20 @@ def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text="")
         results = re.findall("%if\s+[0x]%\{\?[\w|_]}", line)
         conditions = list(map(lambda x: x.split("?")[0].rstrip("}"), results))
         for condition in conditions:
+            if judgement != "":
+                judgement += " "
             if condition in RPM_GLOBAL_MACROS:
-                judgement += " when %%%{rpmGlobal." + condition + "}"
+                judgement += "when %%%{rpmGlobal." + condition + "}"
             elif condition in global_dict:
-                judgement += " when %%{rpmGlobal." + condition + "}"
+                judgement += "when %%{rpmGlobal." + condition + "}"
     # TODO(	%if %{openEuler}=>when %%{rpmGlobal.openEuler})
     if re.search("%if\s+%\{[\w|_]}", line) is not None:
+        if judgement != "":
+            judgement += " "
         results = re.findall("%if\s+%\{[\w|_]}", line)
         conditions = list(map(lambda x: x.split("?")[0].rstrip("}"), results))
         results = list(map(lambda x: add_rpm_global(x), conditions))
-        judgement += " when " + " ".join(results)
+        judgement += "when " + " ".join(results)
     # TODO(%ifarch|%ifos|%ifnarch|%ifnos=>when arch in)
     if re.search("%ifarch|%ifos|%ifnarch|%ifnos", line) is not None:
         results = re.findall("%if.+", line)
@@ -714,15 +718,19 @@ def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text="")
         for i in tmp_results:
             if re.search("%ifarch|%ifos|%ifnarch|%ifnos", i) is None:
                 results.remove(i)
-        conditions = list(map(lambda x: x.replace("%ifarch", " when arch in").replace(
-            "%ifnarch", " when arch not in").replace("%ifos", " when os in").replace(
-            "%ifnos", " when os not in"), results))
+        conditions = list(map(lambda x: x.replace("%ifarch", "when arch in").replace(
+            "%ifnarch", "when arch not in").replace("%ifos", "when os in").replace(
+            "%ifnos", "when os not in"), results))
+        if judgement != "":
+            judgement += " "
         judgement += " ".join(conditions)
     if "%if" in line and judgement == "":
         judgement = change_to_when_or_rpmwhen(line, global_dict, macros_text)
     judgement = change_macros_usage(judgement, global_dict, macros_text)
     judgement = merge_multi_judgement(judgement)
-    return judgement, add_define_flags
+    if not judgement.startswith(" ") and judgement != "":
+        judgement = " " + judgement.strip()
+    return judgement.rstrip(), add_define_flags
 
 
 def change_to_when_or_rpmwhen(line, spec_global, spec_macros):
@@ -745,7 +753,11 @@ def change_to_when_or_rpmwhen(line, spec_global, spec_macros):
         if rpm_flag == "rpmWhen":
             target += rpm_flag + " " + word
         else:
-            target += rpm_flag + " " + non + modify_by_when(word, spec_global)
+            modified_condition = modify_by_when(word, spec_global)
+            if modified_condition.lstrip().startswith("!"):
+                target += rpm_flag + modified_condition.replace("!", "", 1)
+            else:
+                target += rpm_flag + " " + non + modified_condition
     return target
 
 
