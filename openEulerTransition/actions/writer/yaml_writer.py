@@ -1495,7 +1495,7 @@ class SpecParser(object):
             for subpackage in self.items["SubPackages"]:
                 if re.match(sub_name + "\s+%if", subpackage):
                     condition = change_judgement_grammar(subpackage, self.rpm_global, cut_judge=True,
-                                                         macros_text=self.macros)
+                                                         macros_text=self.macros)[0]
                     break
         if " -n " in value and not whole:
             value = value.split(os.linesep)[0].replace("-n %{name}-", "") + os.linesep + os.linesep.join(
