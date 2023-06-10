@@ -103,9 +103,11 @@ def resolve_inner_quotes(_line):
     :param _line:
     :return:
     """
-    can_trans = not ((_line.startswith("\"") and _line.endswith("\"")) or (
-            _line.startswith("\'") and _line.endswith("\'")))
-    if can_trans and ("\"" in _line and "\\\"" not in _line):
+    if _line.startswith("\"") and _line.endswith("\""):
+        _line = _line[1:-1]
+    elif _line.startswith("\'") and _line.endswith("\'"):
+        _line = _line[1:-1]
+    if "\"" in _line and "\\\"" not in _line:
         _line = _line.replace("\"", "\\\"")
     return _line
 
