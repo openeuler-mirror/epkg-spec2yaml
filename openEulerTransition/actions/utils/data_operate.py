@@ -97,15 +97,27 @@ def add_quotation_from_member(keywords, default_items, sub_name=None, target_ite
     return target_items
 
 
+def remove_marginals_quotes(_line):
+    """
+    去掉边缘的引号
+    :param _line:
+    :return:
+    """
+    if _line.startswith("\"") and _line.endswith("\""):
+        _line = _line[1:-1]
+    elif _line.startswith("\'") and _line.endswith("\'"):
+        _line = _line[1:-1]
+    return _line
+
+
 def resolve_inner_quotes(_line):
     """
     处理字符串内部的引号
     :param _line:
     :return:
     """
-    can_trans = not ((_line.startswith("\"") and _line.endswith("\"")) or (
-            _line.startswith("\'") and _line.endswith("\'")))
-    if can_trans and ("\"" in _line and "\\\"" not in _line):
+    _line = remove_marginals_quotes(_line)
+    if "\"" in _line and "\\\"" not in _line:
         _line = _line.replace("\"", "\\\"")
     return _line
 
@@ -634,7 +646,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
     for build_rq in items[origin]:
         if "%else %if" in build_rq:
             target_list.remove(build_rq)
-            build_rq = resolve_else_judgement(build_rq)
+            build_rq = resolve_else_judgement(remove_marginals_quotes(build_rq))
             value = build_rq.split("%if")[0].strip()
             if value.startswith("%"):
                 value = "\"" + value.replace("\"", "\\\"") + "\""
@@ -647,6 +659,8 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
                 items[new_key] = [value]
 
         elif "%if" in build_rq:
+            target_list.remove(build_rq)
+            build_rq = remove_marginals_quotes(build_rq)
             add_judgement, add_define_flags = change_judgement_grammar(build_rq, global_dict, cut_judge=True,
                                                                        macros_text=macros_text)
             new_key = target + add_judgement
@@ -660,7 +674,6 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
                 items[new_key] += value
             else:
                 items[new_key] = value
-            target_list.remove(build_rq)
         else:
             pass
     target_list = divide_several_requires(target_list)
