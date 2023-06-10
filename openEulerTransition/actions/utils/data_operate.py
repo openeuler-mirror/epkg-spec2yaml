@@ -693,9 +693,9 @@ def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text="")
             add_define_flags.append(condition)
             judgement += " " + condition
     # TODO(	%if 0%{?openEuler}=>when %%%{rpmGlobal.openEuler})
-    if re.search("%if\s+[0x]%\{\?[\w|_]}", line) is not None:
-        results = re.findall("%if\s+[0x]%\{\?[\w|_]}", line)
-        conditions = list(map(lambda x: x.split("?")[0].rstrip("}"), results))
+    if re.search("%if\s+[0x]%\{\?[\w|_]+}", line) is not None:
+        results = re.findall("%if\s+[0x]%\{\?[\w|_]+}", line)
+        conditions = list(map(lambda x: x.split("?")[1].rstrip("}"), results))
         for condition in conditions:
             if judgement != "":
                 judgement += " "
@@ -703,12 +703,14 @@ def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text="")
                 judgement += "when %%%{rpmGlobal." + condition + "}"
             elif condition in global_dict:
                 judgement += "when %%{rpmGlobal." + condition + "}"
+            else:
+                judgement += "rpmWhen 0%{?" + condition + "}"
     # TODO(	%if %{openEuler}=>when %%{rpmGlobal.openEuler})
-    if re.search("%if\s+%\{[\w|_]}", line) is not None:
+    if re.search("%if\s+%\{[\w|_]+}", line) is not None:
         if judgement != "":
             judgement += " "
-        results = re.findall("%if\s+%\{[\w|_]}", line)
-        conditions = list(map(lambda x: x.split("?")[0].rstrip("}"), results))
+        results = re.findall("%if\s+%\{[\w|_]+}", line)
+        conditions = list(map(lambda x: x.split("{")[1].rstrip("}"), results))
         results = list(map(lambda x: add_rpm_global(x), conditions))
         judgement += "when " + " ".join(results)
     # TODO(%ifarch|%ifos|%ifnarch|%ifnos=>when arch in)
