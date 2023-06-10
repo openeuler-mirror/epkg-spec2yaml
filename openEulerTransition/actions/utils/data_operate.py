@@ -676,7 +676,7 @@ def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text="")
     judgement = ""
     add_define_flags = []
     # TODO(%if %{with ***}=>when )
-    if re.search("%if %\{with", line) or re.search("%if %\{without", line):
+    if re.search("%if %\{with ", line) or re.search("%if %\{without ", line):
         with_parts, without_parts = get_if_with_parts(line)
         judgement = "when"
         if len(with_parts):
