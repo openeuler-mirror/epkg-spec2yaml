@@ -1267,7 +1267,9 @@ class SpecParser(object):
 
                     # special case for Source and Patch
                     key = update_keywords(key)
+                    single_add_judge = False
                     if key in SINGLES and line_suffix != "":
+                        single_add_judge = True
                         if line_suffix.strip().startswith("%else"):
                             line_suffix = get_reverse_judgement(line_suffix.replace("%else", ""))
                         judgement = change_judgement_grammar(line_suffix, self.rpm_global, macros_text=self.macros)[0]
@@ -1279,6 +1281,8 @@ class SpecParser(object):
                         val = find_quotes_from_words(val + line_suffix)
                     if key in ["Sources", "Patches"]:
                         items = self.add_source_or_patch(items, key, val, num)
+                    elif single_add_judge:
+                        items[key] = val
                     else:
                         if key not in items:
                             items[key] = [val]
@@ -1700,7 +1704,14 @@ class SpecParser(object):
 
         # check must-have keys
         for key, default in MUSTHAVE.items():
-            if key not in ck_items:
+            if key in ck_items:
+                continue
+            need_default = False
+            for must_key in MUSTHAVE:
+                if must_key.startswith(lower_first_word(key)):
+                    need_default = True
+                    break
+            if need_default:
                 ck_items[key] = default
 
         # check for global macros
