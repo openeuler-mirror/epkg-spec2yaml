@@ -426,7 +426,7 @@ def divide_out_configure(content: str):
         elif line == "popd":
             configure_cmd_flags = ""
         if configure_cmd:
-            if line.startswith("%if") or line.startswith("%else") or line.startswith("%endif"):
+            if line.strip().startswith("%if") or line.strip().startswith("%else") or line.strip().startswith("%endif"):
                 configure += line + os.linesep
             elif line.endswith("\\"):
                 if not configure_cmd_multiline:

@@ -1268,6 +1268,8 @@ class SpecParser(object):
                         judgement = change_judgement_grammar(line_suffix, self.rpm_global, macros_text=self.macros)[0]
                         key = lower_first_word(key) + judgement
                         val = find_quotes_from_words(val)
+                        if val.startswith("%"):
+                            val = "\"" + resolve_inner_quotes(val) + "\""
                     else:
                         val = find_quotes_from_words(val + line_suffix)
                     if key in ["Sources", "Patches"]:
