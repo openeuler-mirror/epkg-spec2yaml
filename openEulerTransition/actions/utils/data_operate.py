@@ -116,7 +116,7 @@ def resolve_inner_quotes(_line):
     :param _line:
     :return:
     """
-    _line = remove_marginals_quotes(_line)
+    # _line = remove_marginals_quotes(_line)
     if "\"" in _line and "\\\"" not in _line:
         _line = _line.replace("\"", "\\\"")
     return _line
@@ -172,7 +172,7 @@ def parse_case_spell(word, source_items):
         temp_keys_list.append(_key2)
     for _key3 in ORDER_ENTRIES:
         temp_keys_list.append(_key3)
-    for _key4 in SKIPS:
+    for _key4 in SEVERAL:
         temp_keys_list.append(_key4)
     for temp_key in temp_keys_list:
         if word.lower() == temp_key.lower():
@@ -312,7 +312,7 @@ def add_string_to_dict(dict1, this_key, line, turn_line=True):
     """
     if this_key in ["include", "description", "package", "Recommends", "ExclusiveArch"]:
         return dict1
-    if this_key in SINGLES:
+    if this_key in SINGLES + SEVERAL:
         return dict1
     if True:
         suffix = os.linesep if turn_line else ""
@@ -632,6 +632,8 @@ def divide_several_requires(origin_list):
             temp_list = line.split(",")
             temp_list = list(map(lambda x: x.strip(), temp_list))
             target_list += temp_list
+        elif re.search("\(.* .*\)", line):
+            target_list.append(line)
         else:
             target_list += line.split()
     return target_list

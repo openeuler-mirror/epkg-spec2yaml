@@ -31,11 +31,12 @@ SINGLES = ('Summary',
            'URL',
            'Group',
            'BuildArch',
-           'Source',
-           'Patch',
+           'BuildRoot',
            'Prefix',
            'License',
            "Release")
+SEVERAL = ('Source',
+           'Patch',)
 REQUIRES = ('BuildRequires',
             'Requires',
             'Requires(post)',
@@ -52,7 +53,6 @@ REQUIRES = ('BuildRequires',
             'FilesJudgement',
             "ExclusiveArch",
             )
-SKIPS = ('BuildRoot',)
 
 ORDER_ENTRIES = ['Macros',
                  'Name',

@@ -882,7 +882,7 @@ class SpecParser(object):
         cond_endif = re.compile('^%endif.*')
         directive = re.compile('^([\w()]+)[ \t]*:[ \t]*(.*)')
         header_re = re.compile('^%(' + '|'.join(HEADERS) + ')\s*(.*)')
-        single_re = re.compile('^(' + '|'.join(SINGLES) + ')\s*(.*)')
+        single_re = re.compile('^(' + '|'.join(SINGLES + SEVERAL) + ')\s*(.*)')
         require_re = re.compile('^(' + '|'.join(REQUIRES) + ')\s*(.*)')
 
         state = ST_MAIN
@@ -1255,14 +1255,21 @@ class SpecParser(object):
                     key = update_keywords(key, val)
                     case_spell_result = parse_case_spell(key, self.items)
                     key = key.replace("requires", "Requires") if case_spell_result else key
-                    if key not in SINGLES and key not in REQUIRES and key not in ORDER_ENTRIES and key not in SKIPS:
+                    if key not in SINGLES and key not in REQUIRES and key not in ORDER_ENTRIES and key not in SEVERAL:
                         may_parse = not (parse_case_spell(key, self.items))
                         if not may_parse:
                             key = key.capitalize()
 
                     # special case for Source and Patch
                     key = update_keywords(key)
-                    val = find_quotes_from_words(val + line_suffix)
+                    if key in SINGLES and line_suffix != "":
+                        if line_suffix.strip().startswith("%else"):
+                            line_suffix = get_reverse_judgement(line_suffix.replace("%else", ""))
+                        judgement = change_judgement_grammar(line_suffix, self.rpm_global, macros_text=self.macros)
+                        key = lower_first_word(key) + judgement
+                        val = find_quotes_from_words(val)
+                    else:
+                        val = find_quotes_from_words(val + line_suffix)
                     if key in ["Sources", "Patches"]:
                         items = self.add_source_or_patch(items, key, val, num)
                     else:
@@ -1619,7 +1626,6 @@ class SpecParser(object):
             ck_items['Name'] = pkg_name
 
         for k, v in items.items():
-            # if k in SKIPS or k in HEADERS or k == 'SubPackages':
             if k in SHELL_KEYWORDS and is_sub:
                 ck_items[k] = [v]
                 continue
@@ -1651,7 +1657,7 @@ class SpecParser(object):
                     nv.append(vi)
                 v = nv
 
-            if k in SINGLES:
+            if k in (SINGLES + SEVERAL):
                 if isinstance(v, str):
                     ck_items[k] = v
                 else:
