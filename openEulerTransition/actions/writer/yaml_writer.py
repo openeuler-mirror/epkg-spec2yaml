@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import copy
 from openEulerTransition.actions.utils.file_operate import Chdir
@@ -504,6 +505,10 @@ class YamlWriter:
 def pre_treatment(content):
     if "%%" in content:
         content = content.replace("%%", "\\%\\%").replace("\\%%", "\\%\\%")
+    if re.search(r"\\\w", content):
+        escape_characters = re.findall(r"\\\w", content)
+        for character in escape_characters:
+            content = content.replace(character, "\\" + character)
     for system_macros in RPM_SYSTEM_MACROS:
         if os.linesep + system_macros in content:
             content = content.replace(os.linesep + system_macros,
