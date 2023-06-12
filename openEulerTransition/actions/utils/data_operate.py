@@ -624,7 +624,9 @@ def divide_several_requires(origin_list):
         if "%if" in line:
             target_list.append(line)
             continue
-        if re.search("\S+\s+[>=<]+\s+\S+", line) is not None:
+        if re.search("\(.* .*\)", line):
+            target_list.append(line)
+        elif re.search("\S+\s+[>=<]+\s+\S+", line) is not None:
             search_list = re.findall("\S+\s+[>=<]+\s+\S+", line)
             search_list = list(map(lambda x: x.strip(","), search_list))
             target_list += search_list
@@ -632,8 +634,6 @@ def divide_several_requires(origin_list):
             temp_list = line.split(",")
             temp_list = list(map(lambda x: x.strip(), temp_list))
             target_list += temp_list
-        elif re.search("\(.* .*\)", line):
-            target_list.append(line)
         else:
             target_list += line.split()
     return target_list
