@@ -1265,7 +1265,7 @@ class SpecParser(object):
                     if key in SINGLES and line_suffix != "":
                         if line_suffix.strip().startswith("%else"):
                             line_suffix = get_reverse_judgement(line_suffix.replace("%else", ""))
-                        judgement = change_judgement_grammar(line_suffix, self.rpm_global, macros_text=self.macros)
+                        judgement = change_judgement_grammar(line_suffix, self.rpm_global, macros_text=self.macros)[0]
                         key = lower_first_word(key) + judgement
                         val = find_quotes_from_words(val)
                     else:
