@@ -1339,7 +1339,9 @@ class SpecParser(object):
                             if "rpmMacros" in items:
                                 items["rpmMacros"] = right_strip_extra_judge(items["rpmMacros"])
                             # section with sub-pkg specified
-                            items = self._switch_subpkg(opt, cond_part=if_cond_part)
+                            tmp_items = self._switch_subpkg(opt, cond_part=if_cond_part)
+                            if tmp_items is not None:
+                                items = tmp_items
                             ls = opt.split()
                             if "-n" in ls:
                                 sub_pkg = ls[ls.index('-n') + 1]
