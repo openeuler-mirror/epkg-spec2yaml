@@ -632,6 +632,8 @@ def divide_several_requires(origin_list):
             target_list += search_list
         elif "," in line:
             temp_list = line.split(",")
+            if "" in temp_list:
+                temp_list.remove("")
             temp_list = list(map(lambda x: x.strip(), temp_list))
             target_list += temp_list
         else:
@@ -745,6 +747,8 @@ def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text="")
         judgement = change_to_when_or_rpmwhen(line, global_dict, macros_text)
     judgement = change_macros_usage(judgement, global_dict, macros_text)
     judgement = merge_multi_judgement(judgement)
+    if "%if " in judgement:
+        judgement = judgement.replace("%if ", "rpmWhen ")
     if not judgement.startswith(" ") and judgement != "":
         judgement = " " + judgement.strip()
     return judgement.rstrip(), add_define_flags
