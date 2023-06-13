@@ -858,6 +858,7 @@ class SpecParser(object):
         judgement = ""
         keywords = lower_first_word(keywords)
         if "%if" in value:
+            value = remove_marginals_quotes(value)
             judgement, add_define_flags = change_judgement_grammar(value, self.rpm_global, macros_text=self.macros)
             self.add_define_flags_item(add_define_flags)
         num_dict = self.sources_num_dict if keywords == "source" else self.patches_num_dict
@@ -872,7 +873,7 @@ class SpecParser(object):
         else:
             for num, val in num_dict.items():
                 if isinstance(val, str) and val.startswith("%"):
-                    val = "\"" + val.replace("\"", "\\\"") + "\""
+                    val = "\"" + resolve_inner_quotes(val) + "\""
                 dict1[keywords + judgement] = {num[count:]: val}
         return dict1
 
