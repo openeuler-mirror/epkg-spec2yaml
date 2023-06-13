@@ -533,12 +533,13 @@ class SpecParser(object):
         self.files = {}
         self.changelog = ""
 
-    def _switch_subpkg(self, subpkg, create=False, cond_part=None):
+    def _switch_subpkg(self, subpkg, create=False, cond_part=None, default=None):
         """
         识别子包配置
         :param subpkg:子包名
         :param create:是否需要创建
         :param cond_part:是否带判断
+        :param default: 默认值
         :return:
         """
         # whether '-n subpkg'?
@@ -608,7 +609,7 @@ class SpecParser(object):
 
         if subpkg_new and not create:
             logger.warn('un-declared subpkg %s found in spec' % subpkg)
-            return None
+            return default
 
         if subpkg_new:
             if 'SubPackages' not in self.items:
@@ -1077,7 +1078,7 @@ class SpecParser(object):
                         header = cur_block = "files"
                         if check_sub_files(line):
                             sub_name = get_sub_name_from_line(line, "%files")
-                            items = self._switch_subpkg(sub_name)
+                            items = self._switch_subpkg(sub_name, default=items)
                         else:
                             items = self.items
                         items[cur_block] = line + os.linesep
@@ -1302,9 +1303,9 @@ class SpecParser(object):
                         if not opt:
                             raise SpecFormatError(line)
                         if if_cond_part:
-                            items = self._switch_subpkg(opt, True, if_cond_part)
+                            items = self._switch_subpkg(opt, True, if_cond_part, default=items)
                         else:
-                            items = self._switch_subpkg(opt, True, if_cond_part)
+                            items = self._switch_subpkg(opt, True, if_cond_part, default=items)
                     else:
                         # inline sections of other headers
                         state = ST_INLINE
@@ -1339,9 +1340,7 @@ class SpecParser(object):
                             if "rpmMacros" in items:
                                 items["rpmMacros"] = right_strip_extra_judge(items["rpmMacros"])
                             # section with sub-pkg specified
-                            tmp_items = self._switch_subpkg(opt, cond_part=if_cond_part)
-                            if tmp_items is not None:
-                                items = tmp_items
+                            items = self._switch_subpkg(opt, cond_part=if_cond_part, default=items)
                             ls = opt.split()
                             if "-n" in ls:
                                 sub_pkg = ls[ls.index('-n') + 1]
