@@ -763,6 +763,7 @@ def change_to_when_or_rpmwhen(line, spec_global, spec_macros):
             target += " "
         if re.search("\(.*%.*\)", word):
             target += "rpmWhen " + word.strip()
+            continue
         params = []
         non = ""
         rpm_flag = "rpmWhen"
