@@ -268,7 +268,6 @@ def esc_value(val):
     if val.startswith('%') or \
             val.startswith('*') or \
             ": " in val or \
-            ":\t" in val or \
             val.endswith(':'):
         quote_char = ""
         extra_escape = "\\" if val.endswith("\\") else ""
@@ -278,6 +277,8 @@ def esc_value(val):
             elif '\"' not in val and "\'" in val:
                 quote_char = '\"'
         return quote_char + val + extra_escape + quote_char
+    elif "\t" in val:
+        return val.replace("\t", "  ")
     else:
         return val
 
@@ -758,6 +759,10 @@ def change_to_when_or_rpmwhen(line, spec_global, spec_macros):
     word_list = line.split("%if")[1:]
     target = ""
     for word in word_list:
+        if target != "" and not target.endswith(" "):
+            target += " "
+        if re.search("\(.*%.*\)", word):
+            target += "rpmWhen " + word.strip()
         params = []
         non = ""
         rpm_flag = "rpmWhen"
@@ -772,13 +777,13 @@ def change_to_when_or_rpmwhen(line, spec_global, spec_macros):
                 rpm_flag = "when"
                 break
         if rpm_flag == "rpmWhen":
-            target += rpm_flag + " " + word
+            target += rpm_flag + " " + word.strip()
         else:
             modified_condition = modify_by_when(word, spec_global)
             if modified_condition.lstrip().startswith("!"):
-                target += rpm_flag + modified_condition.replace("!", "", 1)
+                target += rpm_flag + modified_condition.replace("!", "", 1).strip()
             else:
-                target += rpm_flag + " " + non + modified_condition
+                target += rpm_flag + " " + non + modified_condition.strip()
     return target
 
 
