@@ -956,6 +956,10 @@ class SpecParser(object):
                     if "Summary" in line or "BuildArch" in line or "Requires" in line or "description" in line or line not in SHELL_KEYWORDS:
                         in_package_help = False
                         items = self.items
+            elif line.startswith("name:") and "Name" not in self.items and macros_mode:
+                if (not cat_eof_mode) and unclosed_brackets == 0:
+                    available_key = True
+                    macros_mode = False
             if unclosed_brackets != 0:
                 left_count, right_count = calculate_brackets(line)
                 unclosed_brackets = left_count + unclosed_brackets - right_count
@@ -1513,7 +1517,8 @@ class SpecParser(object):
                                                            macros_text=self.macros)[0]
         else:
             for subpackage in self.items["SubPackages"]:
-                if re.match(sub_name + "\s+%if", subpackage):
+                pattern = re.escape(sub_name + "\s+%if")
+                if re.match(pattern, subpackage):
                     condition = change_judgement_grammar(subpackage, self.rpm_global, cut_judge=True,
                                                          macros_text=self.macros)[0]
                     break
