@@ -880,11 +880,11 @@ class SpecParser(object):
     def check_macros_escapes(self):
         if "\\%\\%" in self.macros:
             self.macros = self.macros.replace("\\%\\%", "\\\\%\\\\%")
-            pattern = re.compile(r"\\[\(.\)]")
-            if re.search(pattern, self.macros):
-                find_list = re.findall(pattern, self.macros)
-                for word in find_list:
-                    self.macros = self.macros.replace(word, "\\" + word)
+        pattern = re.compile(r"\\[\(.\)]")
+        if re.search(pattern, self.macros):
+            find_list = re.findall(pattern, self.macros)
+            for word in find_list:
+                self.macros = self.macros.replace(word, "\\" + word)
 
     def read(self, filename):
         """
