@@ -780,7 +780,7 @@ def change_to_when_or_rpmwhen(line, spec_global, spec_macros):
         if rpm_flag == "rpmWhen":
             target += rpm_flag + " " + word.strip()
         else:
-            modified_condition = modify_by_when(word, spec_global)
+            modified_condition = modify_by_when(word, spec_global, spec_macros)
             if modified_condition.lstrip().startswith("!"):
                 target += rpm_flag + modified_condition.replace("!", "", 1).strip()
             else:
@@ -797,15 +797,15 @@ def merge_multi_judgement(words):
     return words
 
 
-def modify_by_when(word, spec_global):
+def modify_by_when(word, spec_global, spec_macros=""):
     if re.search("\w?%\{\??\w+}", word) is not None:
         search_words = re.findall("\w?%\{\??\w+}", word)
         for search_word in search_words:
             core_word = search_word.split("%{")[1].rstrip("}").lstrip("?")
             if core_word in RPM_GLOBAL_MACROS:
-                word = word.replace(search_word, "%%%{rpmGlobal." + core_word + "}")
-            elif core_word in spec_global:
-                word = word.replace(search_word, "%%{rpmGlobal." + core_word + "}")
+                word = "%%%{rpmGlobal." + core_word + "}"
+            elif core_word in spec_global or core_word in spec_macros:
+                word = "%%{rpmGlobal." + core_word + "}"
             else:
                 word = word.replace(search_word, "%%{" + core_word + "}")
     return word
