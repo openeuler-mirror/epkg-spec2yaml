@@ -774,7 +774,7 @@ def change_to_when_or_rpmwhen(line, spec_global, spec_macros):
             if param in RPM_GLOBAL_MACROS or param in spec_global:
                 rpm_flag = "when"
                 break
-            elif re.search("%define\s+" + param, spec_macros) is not None or re.search("%global\s+" + param, spec_macros) is not None:
+            elif re.search("\n%define\s+" + param + " ", spec_macros) is not None or re.search("\n%global\s+" + param + " ", spec_macros) is not None:
                 rpm_flag = "when"
                 break
         if rpm_flag == "rpmWhen":
