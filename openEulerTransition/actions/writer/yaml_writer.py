@@ -506,7 +506,7 @@ def pre_treatment(content):
     if "%%" in content:
         content = content.replace("%%", "\\%\\%").replace("\\%%", "\\%\\%")
     if re.search(r"\\+\w", content):
-        escape_characters = re.findall(r"\\+\w", content)
+        escape_characters = list(set(re.findall(r"\\+\w", content)))
         for character in escape_characters:
             content = content.replace(character, character.replace("\\", "\\\\"))
     for system_macros in RPM_SYSTEM_MACROS:
@@ -882,7 +882,7 @@ class SpecParser(object):
             self.macros = self.macros.replace("\\%\\%", "\\\\%\\\\%")
         pattern = re.compile(r"\\+[(.)]")
         if re.search(pattern, self.macros):
-            find_list = re.findall(pattern, self.macros)
+            find_list = list(set(re.findall(pattern, self.macros)))
             for word in find_list:
                 self.macros = self.macros.replace(word, word.replace("\\", "\\\\"))
 
