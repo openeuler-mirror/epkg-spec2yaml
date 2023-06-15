@@ -880,7 +880,7 @@ class SpecParser(object):
     def check_macros_escapes(self):
         if "\\%\\%" in self.macros:
             self.macros = self.macros.replace("\\%\\%", "\\\\%\\\\%")
-        pattern = re.compile(r"\\+[(.)]")
+        pattern = re.compile(r"\\+[(.){}]")
         if re.search(pattern, self.macros):
             find_list = list(set(re.findall(pattern, self.macros)))
             for word in find_list:
@@ -988,12 +988,17 @@ class SpecParser(object):
                         if word.capitalize() in SINGLES or word in self.macros or word in self.rpm_global:
                             items[header] += line + os.linesep
                             continue
+                    elif re.match("%define|%global ", line):
+                        macros_mode = True
+                        if subpackages_mode:
+                            items = add_string_to_dict(items, "rpmMacros", line)
+                        else:
+                            self.macros += line + os.linesep
+                        continue
                 else:
                     if unclosed_brackets != 0:
                         if subpackages_mode:
                             if not line.startswith("%global"):
-                            #     items = add_string_to_dict(items, "rpmGlobal", line)
-                            # else:
                                 items = add_string_to_dict(items, "rpmMacros", line)
                         else:
                             self.macros += line + os.linesep
