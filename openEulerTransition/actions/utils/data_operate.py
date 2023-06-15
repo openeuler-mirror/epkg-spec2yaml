@@ -274,7 +274,7 @@ def esc_value(val):
         if not ((val.startswith("\"") and val.endswith("\"")) or (val.startswith("\'") and val.endswith("\'"))):
             if '\"' in val and "\'" not in val:
                 quote_char = '\''
-            elif '\"' not in val and "\'" in val:
+            elif '\"' not in val:
                 quote_char = '\"'
         return quote_char + val + extra_escape + quote_char
     elif "\t" in val:
