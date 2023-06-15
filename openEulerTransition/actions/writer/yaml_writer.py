@@ -505,10 +505,10 @@ class YamlWriter:
 def pre_treatment(content):
     if "%%" in content:
         content = content.replace("%%", "\\%\\%").replace("\\%%", "\\%\\%")
-    if re.search(r"\\\w", content):
-        escape_characters = re.findall(r"\\\w", content)
+    if re.search(r"\\+\w", content):
+        escape_characters = re.findall(r"\\+\w", content)
         for character in escape_characters:
-            content = content.replace(character, "\\" + character)
+            content = content.replace(character, character.replace("\\", "\\\\"))
     for system_macros in RPM_SYSTEM_MACROS:
         if os.linesep + system_macros in content:
             content = content.replace(os.linesep + system_macros,
@@ -880,11 +880,11 @@ class SpecParser(object):
     def check_macros_escapes(self):
         if "\\%\\%" in self.macros:
             self.macros = self.macros.replace("\\%\\%", "\\\\%\\\\%")
-        pattern = re.compile(r"\\[\(.\)]")
+        pattern = re.compile(r"\\+[(.)]")
         if re.search(pattern, self.macros):
             find_list = re.findall(pattern, self.macros)
             for word in find_list:
-                self.macros = self.macros.replace(word, "\\" + word)
+                self.macros = self.macros.replace(word, word.replace("\\", "\\\\"))
 
     def read(self, filename):
         """
