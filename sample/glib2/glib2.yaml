@@ -1,0 +1,91 @@
+meta:
+    summary: The core library that forms the basis for projects such as GTK+ and GNOME
+    homepage: "http://www.gtk.org"
+    description: |
+        GLib is a bundle of three (formerly five) low-level system libraries
+        written in C and developed mainly by GNOME. GLib's code was separated
+        from GTK, so it can be used by software other than GNOME and has been
+        developed in parallel ever since.
+name: glib2
+version: "2.72.2"
+release: 3
+license: LGPLv2+
+buildRequires:
+    - "chrpath"
+    - "gcc"
+    - "gcc-c++"
+    - "gettext"
+    - "perl-interpreter"
+    - "glibc-devel"
+    - "libattr-devel"
+    - "libselinux-devel"
+    - "meson"
+    - "systemtap-sdt-devel pkgconfig(libelf) pkgconfig(libffi)"
+    - "pkgconfig(libpcre) pkgconfig(mount) pkgconfig(zlib)"
+    - "python3-devel"
+provides:
+    - "%%{name}-fam = %%{version}-%%{release}"
+    - "bundled(gnulib)"
+    - "bundled(gvdb)"
+    - "bundled(libcharset)"
+    - "bundled(xdgmime)"
+obsoletes:
+    - "%%{name}-fam < %%{version}-%%{release}"
+conflicts:
+    - "gcr < 3.28.1"
+recommends:
+    - shared-mime-info
+source:
+    0: https://download.gnome.org/sources/glib/2.71/glib-%{version}.tar.xz
+
+patchset:
+    6000: backport-add-version-macros-for-GLib-2.74.patch
+    6001: backport-gtype-Add-G_TYPE_FLAG_NONE.patch
+    6002: backport-gioenums-Add-G_TLS_CERTIFICATE_FLAGS_NONE.patch
+    6003: backport-gtestutils-Add-G_TEST_SUBPROCESS_DEFAULT.patch
+    6004: backport-gsignal-Add-G_CONNECT_DEFAULT.patch
+    6005: backport-giomodule-test-Dont-pass-a-magic-number-to-g_test_trap_subprocess.patch
+    6006: backport-giochannel-Add-G_IO_FLAG_NONE.patch
+    6007: backport-gmarkup-Add-G_MARKUP_PARSE_FLAGS_NONE.patch
+    6008: backport-gregex-Add-G_REGEX_DEFAULT-G_REGEX_MATCH_DEFAULT.patch
+    6009: backport-replace-pcre1-with-pcre2.patch
+    6010: backport-gregex-format-specifier-for-localized-error-message.patch
+    6011: backport-gregex-ensure-we-translate-the-errcode.patch
+    6012: backport-gregex-Free-match-info-if-offset-matching-recalc-failed.patch
+    6013: backport-gregex-use-G_REGEX_OPTIMIZE-flag-to-enable-JIT-compilation.patch
+    6014: backport-gregex-use-g_debug-instead-of-g_warning-in-case-JIT-is-not-available.patch
+    6015: backport-gregex-do-not-set-match-and-recursion-limits-on-match-context.patch
+    6016: backport-gregex-add-original-test-case.patch
+    6017: backport-gregex-use-correct-size-for-pcre2_pattern_info.patch
+buildRequires when arch not in i686:
+    - desktop-file-utils
+    - shared-mime-info
+    - gtk-doc
+buildRequires when arch not in i686 rpmWhen %{?openEuler:1}0:
+    - pkgconfig(sysprof-capture-4)
+subpackage.glib2-devel:
+    meta:
+        summary: Development and test files for the GLib library
+        description: |
+            Development and test files for the GLib library.
+
+    requires:
+        - "%%{name} = %%{version}-%%{release}"
+        - "gdb-headless"
+    provides:
+        - "%%{name}-static = %%{version}-%%{release}"
+        - "%%{name}-tests = %%{version}-%%{release}"
+    obsoletes:
+        - "%%{name}-static < %%{version}-%%{release}"
+        - "%%{name}-tests < %%{version}-%%{release}"
+subpackage.glib2-help when arch not in i686:
+    meta:
+        description: |
+            help document for the glib2 package.
+
+    summary when arch not in i686: help document for the glib2 package
+    buildArch when arch not in i686: noarch
+    provides when arch not in i686:
+        - '"%%{name}-doc = %%{version}-%%{release}"'
+    obsoletes when arch not in i686:
+        - '"%%{name}-doc < %%{version}-%%{release}"'

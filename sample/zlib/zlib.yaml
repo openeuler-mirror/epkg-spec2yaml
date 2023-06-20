@@ -1,0 +1,68 @@
+meta:
+    summary: A lossless data-compression library
+    homepage: "http://www.zlib.net"
+    description: |
+        Zlib is a free, general-purpose, not covered by any patents, lossless data-compression
+        library for use on virtually any computer hardware and operating system. The zlib data
+        format is itself portable across platforms.
+name: zlib
+version: "1.2.11"
+release: 23
+license: zlib and Boost
+buildRequires:
+    - "automake"
+    - "autoconf"
+    - "libtool"
+source:
+    0: http://www.zlib.net/zlib-%{version}.tar.xz
+
+patchset:
+    0: zlib-1.2.5-minizip-fixuncrypt.patch
+    1: 0001-Neon-Optimized-hash-chain-rebase.patch
+    2: 0002-Porting-optimized-longest_match.patch
+    3: 0003-arm64-specific-build-patch.patch
+    4: 0004-zlib-Optimize-CRC32.patch
+    5: zlib-1.2.11-SIMD.patch
+    6: 0005-Accelerate-Adler32-using-arm64-SVE-instructions.patch
+    6000: fix-undefined-buffer-detected-by-oss-fuzz.patch
+    6001: backport-0001-CVE-2018-25032.patch
+    6002: backport-0002-CVE-2018-25032.patch
+    6003: backport-0001-CVE-2022-37434.patch
+    6004: backport-0002-CVE-2022-37434.patch
+subpackage.zlib-devel:
+    meta:
+        summary: Header files and libraries for Zlib development
+        description: |
+            This package contains the static library, the header files, the tests user case and other
+            development content.
+
+    requires:
+        - "%%{name} = %%{version}-%%{release}"
+    provides:
+        - "zlib-static"
+    obsoletes:
+        - "zlib-static"
+subpackage.zlib-help:
+    meta:
+        summary: Help documentation related to zlib
+        description: |
+            This package includes help documentation and manuals related to zlib.
+
+    buildArch: noarch
+subpackage.minizip:
+    meta:
+        summary: Encapsulates the operations related to zip files
+        description: |
+            Minizip is the upper library of zlib, which encapsulates the operations related to zip files.
+
+    requires:
+        - "%%{name} = %%{version}-%%{release}"
+subpackage.minizip-devel:
+    meta:
+        summary: The development-related content related to minizip
+        description: |
+            This package contains the development-related content related to minizip.
+
+    requires:
+        - "minizip = %%{version}-%%{release}"
+        - "%%{name}-devel = %%{version}-%%{release}"

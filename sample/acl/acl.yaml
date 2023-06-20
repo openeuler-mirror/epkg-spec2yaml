@@ -1,0 +1,51 @@
+meta:
+    summary: Commands for manipulating POSIX access control lists
+    homepage: "https://savannah.nongnu.org/projects/acl"
+    description: |
+        This package contains commands for manipulating POSIX access control lists,
+        and the libacl.so dynamic library which contains the POSIX 1003.1e draft
+        standard 17 functions for manipulating access control lists.
+name: acl
+version: "2.3.1"
+release: 1
+license: GPLv2+
+buildRequires:
+    - "libattr-devel"
+    - "gawk"
+    - "libtool"
+    - "gettext"
+
+source:
+    0: http://download.savannah.nongnu.org/releases/acl/%{name}-%{version}.tar.gz
+    1: http://download.savannah.nongnu.org/releases/acl/%{name}-%{version}.tar.gz.sig
+    2: agruen-key.gpg
+subpackage.libacl:
+    meta:
+        summary: Library for supporting access control list
+        description: |
+            This package contains the library for manipulating access control list.
+
+    license: LGPLv2+
+    conflicts:
+        - "filesystem < 3"
+subpackage.libacl-devel:
+    meta:
+        summary: Files necessary to develop applications with libacl
+        description: |
+            This package contains header files for the POSIX ACL library.
+
+    license: LGPLv2+
+    requires:
+        - "libacl = %%{version}-%%{release}"
+    obsoletes:
+        - "acl-devel < %%{version}-%%{release}"
+subpackage.acl-help:
+    meta:
+        summary: Documents for %{name}
+        description: |
+            Man pages and other related documents for %{name}.
+
+    requires:
+        - "man"
+        - "info"
+    buildArch: noarch
