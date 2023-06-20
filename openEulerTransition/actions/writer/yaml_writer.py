@@ -1390,13 +1390,12 @@ class SpecParser(object):
                     except Exception as e:
                         logger.info(str(e))
         self.change_several_requires()
-        self.collation_original_data(self.items, filename)
+        self.collation_original_data(self.items)
 
-    def collation_original_data(self, original_data: dict, file_name: str):
+    def collation_original_data(self, original_data: dict):
         """
         整理原始数据
         :param original_data:
-        :param file_name:
         :return:
         """
         if "changelog" in original_data:

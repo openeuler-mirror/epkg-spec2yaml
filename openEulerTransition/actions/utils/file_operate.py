@@ -8,19 +8,19 @@
 import os
 import shutil
 import glob
-import yaml
 import re
 import json
+from datetime import date, datetime
 import codecs
 import platform
 import jinja2
-from datetime import date, datetime
+import yaml
 from openEulerTransition.logs.log import logger
 from collections import OrderedDict
 from openEulerTransition.logs.error_info import EXCEPTION_CODE
 
 
-class Path:
+class Path(object):
     @staticmethod
     def join(path, *paths):
         """拼接路径"""
@@ -103,10 +103,7 @@ def check_conf_file(path):
 
 def check_spec_file(path):
     if os.path.isfile(path):
-        if path.endswith(".spec"):
-            return True
-        else:
-            return False
+        return path.endswith(".spec")
 
 
 def make_sure_dir(*args, **kwargs):
@@ -175,7 +172,7 @@ def write_yaml(content, to_file, default_flow_style=False, default_style=" ", ke
             _ordered_yaml_dump(content, new_file, default_flow_style=default_flow_style)
 
 
-def read_yaml(source, from_file=True, jina_template=True, keep_order=True, include=False):
+def read_yaml(source, from_file=True, jina_template=True, keep_order=True):
 
     if source is None:
         raise NameError('Yaml file path cannot be None!')
@@ -187,7 +184,7 @@ def read_yaml(source, from_file=True, jina_template=True, keep_order=True, inclu
 
     if jina_template:
         yaml_content = content
-        for i in range(4):
+        for _ in range(4):
             yaml_content = _ordered_jina_yaml_template(source, str(yaml_content), keep_order)
     else:
         yaml_content = _ordered_yaml_load(content) if keep_order else yaml.safe_load(content)
@@ -200,7 +197,7 @@ def _ordered_jina_yaml_template(yaml_file, content, keep_order):
     yaml_dir_name = os.path.dirname(yaml_file)
     data_dict = _ordered_yaml_load(content) if keep_order else yaml.safe_load(content)
     if 'systemEnv' in data_dict:
-        if type(data_dict['systemEnv']) != list:
+        if isinstance(data_dict['systemEnv'], list):
             logger.error("=====systemEnv的格式不对，请检查你的yaml file: {}配置=====".format(yaml_file))
             raise Exception(EXCEPTION_CODE[601], data_dict['systemEnv'])
         sys_env_dict = {}
@@ -238,7 +235,7 @@ class ComplexEncoder(json.JSONEncoder):
                 and specify the cls parameter to ComplexEncoder. The code is as follows:
     """
 
-    def default(self, obj):
+    def _default(self, obj):
         if isinstance(obj, datetime):
             return obj.strftime('%Y-%m-%d %H:%M:%S')
         elif isinstance(obj, date):
@@ -257,8 +254,8 @@ def read_json(path):
         return json.load(fin)
 
 
-def _ordered_yaml_load(content, loader=yaml.Loader, object_pairs_hook=OrderedDict):
-    class OrderedLoader(loader):
+def _ordered_yaml_load(content, object_pairs_hook=OrderedDict):
+    class OrderedLoader(yaml.Loader):
         pass
 
     def construct_mapping(ldr, node):
@@ -271,8 +268,8 @@ def _ordered_yaml_load(content, loader=yaml.Loader, object_pairs_hook=OrderedDic
     return yaml.safe_load(content)
 
 
-def _ordered_yaml_dump(data, stream=None, dumper=yaml.SafeDumper, default_flow_style=False):
-    class OrderedDumper(dumper):
+def _ordered_yaml_dump(data, stream=None, default_flow_style=False):
+    class OrderedDumper(yaml.SafeDumper):
         pass
 
     def _dict_representer(dpr, data):
