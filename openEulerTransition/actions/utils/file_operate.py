@@ -176,13 +176,10 @@ def write_yaml(content, to_file, default_flow_style=False, default_style=" ", ke
 
 
 def read_yaml(source, from_file=True, jina_template=True, keep_order=True, include=False):
-    if include:
-        source = include_yaml(source)
 
     if source is None:
         raise NameError('Yaml file path cannot be None!')
-    if not os.path.exists(source):
-        raise FileNotFoundError("Sorry! We don't find " + source + ".")
+    assert os.path.exists(source), "Sorry! We don't find " + source + "."
 
     if from_file:
         with open(source, encoding='UTF-8') as f:

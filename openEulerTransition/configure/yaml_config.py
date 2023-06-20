@@ -37,7 +37,7 @@ KEY_SYS = {
             'postun': 'Postun',
             'pretrans': 'Pretrans',
             'posttrans': 'Posttrans',
-            'transfiletrigger\w+': 'transfileTrigger\w+',
+            'transfiletrigger': 'transfileTrigger',
             'check': 'Check',
             'prep': 'Prep',
             'include': 'IncludeSource',
