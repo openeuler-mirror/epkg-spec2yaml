@@ -1,26 +1,4 @@
-files: |
-    %defattr(-,root,root)
-    %doc AUTHORS NEWS README
-    %license COPYING
-    %{_libdir}/*.so.*
-    %dir %{_libdir}/gio
-    %ghost %{_libdir}/gio/modules/giomodule.cache
-
-    %dir %{_datadir}/glib-2.0
-    %dir %{_datadir}/bash-completion
-    %{_datadir}/bash-completion/completions/gapplication
-    %{_datadir}/bash-completion/completions/gdbus
-    %{_datadir}/bash-completion/completions/gio
-    %{_datadir}/bash-completion/completions/gsettings
-
-    %{_bindir}/gio
-    %{_bindir}/gio-querymodules*
-    %{_bindir}/glib-compile-schemas
-    %{_bindir}/gsettings
-    %{_bindir}/gdbus
-    %{_bindir}/gapplication
-
-subpackage.devel.files: |
+subpackage.glib2-devel.files: |
     %{_libdir}/lib*.so
     %{_libdir}/glib-2.0
     %{_libdir}/pkgconfig/*
@@ -29,7 +7,7 @@ subpackage.devel.files: |
     %{_libexecdir}/installed-tests
     %exclude %{_libexecdir}/installed-tests/glib/cert-tests
     %exclude %{_libexecdir}/installed-tests/glib/tls-certificate
-
+    
     %{_datadir}/aclocal/*
     %{_datadir}/glib-2.0/*
     %{_datadir}/bash-completion/completions/gresource
@@ -38,7 +16,7 @@ subpackage.devel.files: |
     %{_datadir}/systemtap/
     %{_datadir}/installed-tests
     %exclude %{_datadir}/installed-tests/glib/tls-certificate.test
-
+    
     %{_bindir}/glib-genmarshal
     %{_bindir}/glib-gettextize
     %{_bindir}/glib-mkenums
@@ -49,7 +27,33 @@ subpackage.devel.files: |
     %{_bindir}/gresource
     %attr (0755, root, root) %{_bindir}/gtester-report
 
-subpackage.help.files: |
+subpackage.glib2-help.files when arch not in i686: |
     %defattr(-,root,root)
     %{_mandir}/man1/*
     %doc %{_datadir}/gtk-doc/html/*
+
+files: |
+    %defattr(-,root,root)
+    %doc AUTHORS NEWS README
+    %license COPYING
+    %{_libdir}/*.so.*
+    %dir %{_libdir}/gio
+    %ghost %{_libdir}/gio/modules/giomodule.cache
+    
+    %dir %{_datadir}/glib-2.0
+    %dir %{_datadir}/bash-completion
+    %{_datadir}/bash-completion/completions/gapplication
+    %{_datadir}/bash-completion/completions/gdbus
+    %{_datadir}/bash-completion/completions/gio
+    %{_datadir}/bash-completion/completions/gsettings
+    
+    %{_bindir}/gio
+    %{_bindir}/gio-querymodules*
+    %{_bindir}/glib-compile-schemas
+    %{_bindir}/gsettings
+    %{_bindir}/gdbus
+    %{_bindir}/gapplication
+
+files:rpm_macro_param: |
+     -f glib20.lang
+

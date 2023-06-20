@@ -8,23 +8,19 @@
 import os
 import shutil
 import glob
-import yaml
 import re
 import json
+from datetime import date, datetime
 import codecs
 import platform
 import jinja2
-from datetime import date, datetime
-
+import yaml
 from openEulerTransition.logs.log import logger
-from os.path import join, basename
 from collections import OrderedDict
 from openEulerTransition.logs.error_info import EXCEPTION_CODE
-import threading
-import configparser
 
 
-class Path:
+class Path(object):
     @staticmethod
     def join(path, *paths):
         """拼接路径"""
@@ -96,6 +92,7 @@ class Chdir:
     def __exit__(self, exc_type, exc_value, exc_tb):
         os.chdir(self.back)
 
+
 def check_conf_file(path):
     if os.path.isfile(path):
         if path.endswith(".conf"):
@@ -103,20 +100,10 @@ def check_conf_file(path):
         else:
             return False
 
-def check_yaml_file(path):
-    if os.path.isfile(path):
-        if path.endswith(".yaml") or path.endswith(".yml"):
-            return True
-        else:
-            return False
-
 
 def check_spec_file(path):
     if os.path.isfile(path):
-        if path.endswith(".spec"):
-            return True
-        else:
-            return False
+        return path.endswith(".spec")
 
 
 def make_sure_dir(*args, **kwargs):
@@ -185,14 +172,11 @@ def write_yaml(content, to_file, default_flow_style=False, default_style=" ", ke
             _ordered_yaml_dump(content, new_file, default_flow_style=default_flow_style)
 
 
-def read_yaml(source, from_file=True, jina_template=True, keep_order=True, include=False):
-    if include:
-        source = include_yaml(source)
+def read_yaml(source, from_file=True, jina_template=True, keep_order=True):
 
     if source is None:
         raise NameError('Yaml file path cannot be None!')
-    if not os.path.exists(source):
-        raise FileNotFoundError("Sorry! We don't find " + source + ".")
+    assert os.path.exists(source), "Sorry! We don't find " + source + "."
 
     if from_file:
         with open(source, encoding='UTF-8') as f:
@@ -200,7 +184,7 @@ def read_yaml(source, from_file=True, jina_template=True, keep_order=True, inclu
 
     if jina_template:
         yaml_content = content
-        for i in range(4):
+        for _ in range(4):
             yaml_content = _ordered_jina_yaml_template(source, str(yaml_content), keep_order)
     else:
         yaml_content = _ordered_yaml_load(content) if keep_order else yaml.safe_load(content)
@@ -213,7 +197,7 @@ def _ordered_jina_yaml_template(yaml_file, content, keep_order):
     yaml_dir_name = os.path.dirname(yaml_file)
     data_dict = _ordered_yaml_load(content) if keep_order else yaml.safe_load(content)
     if 'systemEnv' in data_dict:
-        if type(data_dict['systemEnv']) != list:
+        if isinstance(data_dict['systemEnv'], list):
             logger.error("=====systemEnv的格式不对，请检查你的yaml file: {}配置=====".format(yaml_file))
             raise Exception(EXCEPTION_CODE[601], data_dict['systemEnv'])
         sys_env_dict = {}
@@ -251,7 +235,7 @@ class ComplexEncoder(json.JSONEncoder):
                 and specify the cls parameter to ComplexEncoder. The code is as follows:
     """
 
-    def default(self, obj):
+    def _default(self, obj):
         if isinstance(obj, datetime):
             return obj.strftime('%Y-%m-%d %H:%M:%S')
         elif isinstance(obj, date):
@@ -270,8 +254,8 @@ def read_json(path):
         return json.load(fin)
 
 
-def _ordered_yaml_load(content, loader=yaml.Loader, object_pairs_hook=OrderedDict):
-    class OrderedLoader(loader):
+def _ordered_yaml_load(content, object_pairs_hook=OrderedDict):
+    class OrderedLoader(yaml.Loader):
         pass
 
     def construct_mapping(ldr, node):
@@ -284,8 +268,8 @@ def _ordered_yaml_load(content, loader=yaml.Loader, object_pairs_hook=OrderedDic
     return yaml.safe_load(content)
 
 
-def _ordered_yaml_dump(data, stream=None, dumper=yaml.SafeDumper, default_flow_style=False):
-    class OrderedDumper(dumper):
+def _ordered_yaml_dump(data, stream=None, default_flow_style=False):
+    class OrderedDumper(yaml.SafeDumper):
         pass
 
     def _dict_representer(dpr, data):
@@ -295,137 +279,3 @@ def _ordered_yaml_dump(data, stream=None, dumper=yaml.SafeDumper, default_flow_s
 
     OrderedDumper.add_representer(OrderedDict, _dict_representer)
     return yaml.dump(data, stream, OrderedDumper, default_flow_style=default_flow_style, width=1000, allow_unicode=True)
-
-
-def copy_rename(f, to, rename=""):
-    # 设置中间临时文件夹进行处理
-    tmp = "renamedir"
-    make_sure_dir(tmp)
-    shutil.copy2(f, tmp)
-    os.rename(join(tmp, basename(f)), join(tmp, rename))
-    logger.debug("[copy_rename]rename from %s ======>> %s" %
-                 (join(tmp, basename(f)), join(tmp, rename)))
-    shutil.copy2(join(tmp, rename), to)
-    logger.debug("[copy_rename]move from %s ======>> %s" %
-                 (join(tmp, rename), to))
-
-
-def config_parser(file_path):
-    """
-    分析ini 文件
-    :param file_path: 文件路径
-    """
-    cf = configparser.ConfigParser()
-    cf.read(file_path, encoding="utf-8")
-    d = dict(cf._sections)
-    for k in d:
-        d[k] = dict(d[k])
-    return d
-
-
-def calc_filesize(filename):
-    return os.stat(filename).st_size
-
-
-def get_files_fist(path):
-    result = list()
-    if os.path.isfile(path):
-        result.append(path)
-    elif os.path.isdir(path):
-        for dirpath, dirnames, filenames in os.walk(path, followlinks=True):
-            for filename in filenames:
-                file_path = os.path.join(dirpath, filename)
-                result.append(file_path)
-        result.sort()
-    else:
-        print("it's a special file(socket,FIFO,device file)")
-    return result
-
-
-def write_to_file(contents, dest_file):
-    fp = open(dest_file, "w")
-
-    for content in contents:
-        str0 = str(content)
-        str1 = str0.replace("\\\\", "/")
-        fp.write(str1)
-        fp.write(os.linesep)
-    fp.close()
-
-
-def find_path_with_reg(cur_path, reg_exp: str):
-    """
-    :param cur_path:
-    :param reg_exp: "tmp*/ww*/a*.yaml"
-    :return:
-    """
-    res_paths = []
-    path_lst = re.split(r'[/ \\]', cur_path) + re.split(r'[/ \\]', reg_exp)
-    patt_lst = [i for i in path_lst if i]
-    size = len(patt_lst)
-    for this_path in get_alldirs_of_path(cur_path):
-        this_lst = re.split(r'[/ \\]', this_path)
-        if len(this_lst) != size or not math_path(patt_lst, this_lst):
-            continue
-        res_paths.append(this_path)
-    return res_paths
-
-
-def get_alldirs_of_path(cur_path):
-    """
-    root 表示当前正在访问的文件夹路径
-    dirs 表示该文件夹下的子目录名list
-    files 表示该文件夹下的文件list
-    :param cur_path:
-    :return: 路径列表
-    """
-    tmp = list()
-    for root, dirs, files in os.walk(cur_path, followlinks=True):
-        tmp.extend([os.path.join(root, f) for f in files])
-        tmp.extend([os.path.join(root, d) for d in dirs])
-    return tmp
-
-
-def math_path(patt_lst, this_lst):
-    """
-    支持正则表达式的路径匹配
-    :param patt_lst: 模式分割列表
-    :param this_lst: 路径分割列表
-    :return:
-    """
-    for i in range(len(this_lst)):
-        if not re.findall(patt_lst[i], this_lst[i]):
-            return None
-    return True
-
-
-def merge_file(paths_lst, new_file):
-    print(paths_lst, new_file)
-    with open(new_file, mode='a', encoding="utf-8") as file:
-        file.seek(0)
-        file.truncate()
-        for path in paths_lst:
-            with open(path, encoding="utf-8") as child:
-                child_data = child.read()
-                file.write(child_data)
-            file.write(os.linesep)
-    return new_file
-
-
-def include_yaml(path):
-    new_file_path = os.path.dirname(os.path.abspath(path))
-    new_file = Path.join(new_file_path, '..', 'tmp_include_result.yaml')
-    data = read_yaml(path, jina_template=False, include=False)
-
-    if data.get('include') and isinstance(data.get('include'), list):
-        include_lst = data.get('include')
-        include_lst.append(path)
-        return merge_file(include_lst, new_file)
-    return path
-
-
-def merge_yaml(paths_lst):
-    new_file_path = os.path.dirname(os.path.abspath(paths_lst[-1]))
-    # file_name = str(time.time()).replace('.', '')
-    new_file = 'tmp_include_result' + str(threading.currentThread().ident) + '.yaml'
-    return merge_file(paths_lst, new_file)

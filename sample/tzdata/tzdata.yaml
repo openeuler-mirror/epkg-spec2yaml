@@ -1,41 +1,42 @@
+meta:
+    summary: Timezone data
+    homepage: "https://www.iana.org/time-zones"
+    description: |
+        This package contains data files with rules for various timezones around
+        the world.
 name: tzdata
-meta.summary: Timezone data
-version: 2022a
+version: "2022a"
 release: 6
-meta.license: Public Domain
-meta.homepage: https://www.iana.org/time-zones
-sources:
-    - https://data.iana.org/time-zones/releases/tzdata%{version}.tar.gz
-    - https://data.iana.org/time-zones/releases/tzcode%{version}.tar.gz
-    - javazic.tar.gz
-    - javazic-1.8-37392f2f5d59.tar.xz
-patchset:
-    - backport-Iran-will-stop-DST-in-2023.patch
-    - backport-Chile-s-DST-is-delayed-by-a-week-in-September-2022.patch
-    - backport-Palestine-transitions-are-now-Saturdays-at-02-00.patch
-    - backport-Tweak-expression-of-Palestine-transition.patch
-    - bugfix-0001-add-Beijing-timezone.patch
-    - remove-country-selection-from-tzselect-steps.patch
-    - remove-ROC-timezone.patch
-    - rename-Macau-to-Macao.patch
-    - remove-El_Aaiun-timezone.patch
-    - remove-Israel-timezone.patch
-    - skip-check_web-testcase.patch
-meta.description: |
-    This package contains data files with rules for various timezones around
-    the world.
+license: Public Domain
 buildRequires:
-    - gawk
-    - glibc
-    - perl-interpreter
-    - java-devel
-    - glibc-common >= 2.5.90-7
-    
+    - "gawk"
+    - "glibc"
+    - "perl-interpreter"
+    - "java-devel"
+    - "glibc-common >= 2.5.90-7"
+source:
+    0: https://data.iana.org/time-zones/releases/tzdata%{version}.tar.gz
+    1: https://data.iana.org/time-zones/releases/tzcode%{version}.tar.gz
+    2: javazic.tar.gz
+    3: javazic-1.8-37392f2f5d59.tar.xz
+
+patchset:
+    6000: backport-Iran-will-stop-DST-in-2023.patch
+    6001: backport-Chile-s-DST-is-delayed-by-a-week-in-September-2022.patch
+    6002: backport-Palestine-transitions-are-now-Saturdays-at-02-00.patch
+    6003: backport-Tweak-expression-of-Palestine-transition.patch
+    9000: bugfix-0001-add-Beijing-timezone.patch
+    9001: remove-country-selection-from-tzselect-steps.patch
+    9002: remove-ROC-timezone.patch
+    9003: rename-Macau-to-Macao.patch
+    9004: remove-El_Aaiun-timezone.patch
+    9005: remove-Israel-timezone.patch
+    9006: skip-check_web-testcase.patch
 Buildarchitectures:
     - noarch
-subpackage:
-    java:
-      meta.summary: Timezone data for Java
-      meta.description: This package contains timezone information for use by Java runtimes.
+subpackage.tzdata-java:
+    meta:
+        summary: Timezone data for Java
+        description: |
+            This package contains timezone information for use by Java runtimes.
 
-env.configureFlags: |

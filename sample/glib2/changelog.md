@@ -153,3 +153,4 @@ need function g_memdup2 which needs glib2 ≥2.67.3 to instead of g_memdup
 
 * Thu Sep 19 2019 Lijin Yang <yanglijin@huawei.com> - 2.58.1-2
 - Package init
+

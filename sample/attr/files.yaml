@@ -1,10 +1,3 @@
-files: |
-    %doc doc/CHANGES
-    %license doc/COPYING*
-    %{_bindir}/*
-    %{_libdir}/libattr.so.*
-    %config(noreplace) %{_sysconfdir}/xattr.conf
-
 subpackage.libattr-devel.files: |
     %{_libdir}/libattr.so
     %{_libdir}/pkgconfig/*.pc
@@ -12,6 +5,17 @@ subpackage.libattr-devel.files: |
     %{_libdir}/libattr.la
     %{_includedir}/attr
 
-subpackage.help.files: |
+subpackage.attr-help.files: |
     %{_mandir}/man1/*
     %{_mandir}/man3/*
+
+files: |
+    %doc doc/CHANGES
+    %license doc/COPYING*
+    %{_bindir}/*
+    %{_libdir}/libattr.so.*
+    %config(noreplace) %{_sysconfdir}/xattr.conf
+
+files:rpm_macro_param: |
+     -f %{name}.lang
+

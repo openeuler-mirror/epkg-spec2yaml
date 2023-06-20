@@ -1,55 +1,32 @@
-files: |
-    %dir %{_libdir}/named
-    %{_libdir}/named/*.so
-    %config(noreplace) %verify(not md5 size mtime) %{_sysconfdir}/sysconfig/named
-    %config(noreplace) %attr(0644,root,named) %{_sysconfdir}/named.root.key
-    %config(noreplace) %{_sysconfdir}/logrotate.d/named
-    %{_tmpfilesdir}/named.conf
-    %{_sysconfdir}/rwtab.d/named
-    %{_unitdir}/named.service
-    %{_unitdir}/named-setup-rndc.service
-    %{_sbindir}/named-journalprint
-    %{_sbindir}/named-checkconf
-    %{_bindir}/named-rrchecker
-    %{_bindir}/mdig
-    %{_sbindir}/named
-    %{_sbindir}/rndc*
-    %{_libexecdir}/generate-rndc-key.sh
-    %{_mandir}/man1/mdig.1*
-    %{_mandir}/man1/named-rrchecker.1*
-    %{_mandir}/man5/named.conf.5*
-    %{_mandir}/man5/rndc.conf.5*
-    %{_mandir}/man8/rndc.8*
-    %{_mandir}/man8/named.8*
-    %{_mandir}/man8/named-checkconf.8*
-    %{_mandir}/man8/rndc-confgen.8*
-    %{_mandir}/man8/named-journalprint.8*
-    %{_mandir}/man8/filter-aaaa.8.gz
-    %doc CHANGES README named.conf.default
-    %doc sample/
+subpackage.bind-pkcs11.files when +PKCS11: |
+    %{_sbindir}/named-pkcs11
+    %{_unitdir}/named-pkcs11.service
+    %{_mandir}/man8/named-pkcs11.8*
+    %{_libexecdir}/setup-named-softhsm.sh
 
-    %defattr(0640,root,named,0750)
-    %dir %{_sysconfdir}/named
-    %config(noreplace) %verify(not link) %{_sysconfdir}/named.conf
-    %config(noreplace) %verify(not link) %{_sysconfdir}/named.rfc1912.zones
-    %defattr(0660,root,named,01770)
-    %dir %{_localstatedir}/named
-    %defattr(0660,named,named,0770)
-    %dir %{_localstatedir}/named/slaves
-    %dir %{_localstatedir}/named/data
-    %dir %{_localstatedir}/named/dynamic
-    %ghost %{_localstatedir}/log/named.log
-    %defattr(0640,root,named,0750)
-    %config %verify(not link) %{_localstatedir}/named/named.ca
-    %config %verify(not link) %{_localstatedir}/named/named.localhost
-    %config %verify(not link) %{_localstatedir}/named/named.loopback
-    %config %verify(not link) %{_localstatedir}/named/named.empty
-    %ghost %config(noreplace) %{_sysconfdir}/rndc.key
-    %ghost %config(noreplace) %{_sysconfdir}/rndc.conf
-    %defattr(-,named,named,-)
-    %dir /run/named
+subpackage.bind-pkcs11-utils.files when +PKCS11: |
+    %{_sbindir}/dnssec*pkcs11
+    %{_sbindir}/pkcs11-destroy
+    %{_sbindir}/pkcs11-keygen
+    %{_sbindir}/pkcs11-list
+    %{_sbindir}/pkcs11-tokens
+    %{_mandir}/man8/pkcs11*.8*
+    %{_mandir}/man8/dnssec*-pkcs11.8*
 
-subpackage.libs.files: |
+subpackage.bind-pkcs11-libs.files when +PKCS11: |
+    %{_libdir}/libdns-pkcs11-%{version}*.so
+    %{_libdir}/libns-pkcs11-%{version}*.so
+
+subpackage.bind-pkcs11-devel.files when +PKCS11: |
+    %{_includedir}/bind9/pk11/*.h
+    %exclude %{_includedir}/bind9/pk11/site.h
+    %{_includedir}/bind9/pkcs11
+    %{_libdir}/libdns-pkcs11.so
+    %{_libdir}/libns-pkcs11.so
+    
+    %if %{with DLZ}
+
+subpackage.bind-libs.files: |
     %{_libdir}/libbind9-%{version}*.so
     %{_libdir}/libisccc-%{version}*.so
     %{_libdir}/libns-%{version}*.so
@@ -58,11 +35,11 @@ subpackage.libs.files: |
     %{_libdir}/libisc-%{version}*.so
     %{_libdir}/libisccfg-%{version}*.so
 
-subpackage.license.files: |
-    %{!?_licensedir:%global license %%doc}
+subpackage.bind-license.files: |
+    %{!?_licensedir:%global license \%\%doc}
     %license COPYRIGHT
 
-subpackage.utils.files: |
+subpackage.bind-utils.files: |
     %{_bindir}/dig
     %{_bindir}/delv
     %{_bindir}/host
@@ -95,19 +72,19 @@ subpackage.utils.files: |
     %{_mandir}/man8/named-compilezone.8*
     %{_sysconfdir}/trusted-key.key
 
-subpackage.dnssec-utils.files: |
+subpackage.bind-dnssec-utils.files: |
     %{_sbindir}/dnssec*
     %if %{with PKCS11}
     %exclude %{_sbindir}/dnssec*pkcs11
     %endif
 
-subpackage.dnssec-doc.files: |
+subpackage.bind-dnssec-doc.files: |
     %{_mandir}/man8/dnssec*.8*
     %if %{with PKCS11}
     %exclude %{_mandir}/man8/dnssec*-pkcs11.8*
     %endif
 
-subpackage.devel.files: |
+subpackage.bind-devel.files: |
     %{_libdir}/libbind9.so
     %{_libdir}/libisccc.so
     %{_libdir}/libns.so
@@ -127,7 +104,7 @@ subpackage.devel.files: |
     %{_includedir}/bind9/pk11/site.h
     %{_includedir}/bind9/isccfg
 
-subpackage.chroot.files: |
+subpackage.bind-chroot.files: |
     %config(noreplace) %{_sysconfdir}/named-chroot.files
     %{_unitdir}/named-chroot.service
     %{_unitdir}/named-chroot-setup.service
@@ -164,54 +141,87 @@ subpackage.chroot.files: |
     %dir %{chroot_prefix}/run/named
     %{chroot_prefix}%{_localstatedir}/run
 
-subpackage.python3-bind.files: |
-    %{python3_sitelib}/*.egg-info
-    %{python3_sitelib}/isc/
-
-subpackage.pkcs11.files: |
-    %{_sbindir}/named-pkcs11
-    %{_unitdir}/named-pkcs11.service
-    %{_mandir}/man8/named-pkcs11.8*
-    %{_libexecdir}/setup-named-softhsm.sh
-
-subpackage.pkcs11-utils.files: |
-    %{_sbindir}/dnssec*pkcs11
-    %{_sbindir}/pkcs11-destroy
-    %{_sbindir}/pkcs11-keygen
-    %{_sbindir}/pkcs11-list
-    %{_sbindir}/pkcs11-tokens
-    %{_mandir}/man8/pkcs11*.8*
-    %{_mandir}/man8/dnssec*-pkcs11.8*
-
-subpackage.pkcs11-libs.files: |
-    %{_libdir}/libdns-pkcs11-%{version}*.so
-    %{_libdir}/libns-pkcs11-%{version}*.so
-
-subpackage.pkcs11-devel.files: |
-    %{_includedir}/bind9/pk11/*.h
-    %exclude %{_includedir}/bind9/pk11/site.h
-    %{_includedir}/bind9/pkcs11
-    %{_libdir}/libdns-pkcs11.so
-    %{_libdir}/libns-pkcs11.so
-
-subpackage.dlz-filesystem.files: |
+subpackage.bind-dlz-filesystem.files when +DLZ: |
     %{_libdir}/{named,bind}/dlz_filesystem_dynamic.so
 
-subpackage.dlz-ldap.files: |
+subpackage.bind-dlz-ldap.files when +DLZ: |
     %{_libdir}/{named,bind}/dlz_ldap_dynamic.so
     %doc contrib/dlz/modules/ldap/testing/*
 
-subpackage.dlz-mysql.files: |
+subpackage.bind-dlz-mysql.files when +DLZ: |
     %{_libdir}/{named,bind}/dlz_mysql_dynamic.so
     %doc build/contrib/dlz/modules/doc/mysql
     %{_libdir}/{named,bind}/dlz_mysqldyn_mod.so
     %doc build/contrib/dlz/modules/doc/mysqldyn
 
-subpackage.dlz-sqlite3.files: |
+subpackage.bind-dlz-sqlite3.files when +DLZ: |
     %{_libdir}/{named,bind}/dlz_sqlite3_dynamic.so
     %doc contrib/dlz/modules/sqlite3/testing/*
 
-subpackage.doc.files: |
+subpackage.python3-bind.files: |
+    %{python3_sitelib}/*.egg-info
+    %{python3_sitelib}/isc/
+
+subpackage.bind-doc.files when +DOC: |
     %dir %{_pkgdocdir}
     %doc %{_pkgdocdir}/Bv9ARM.html
     %doc %{_pkgdocdir}/html
+    %if %{with DOCPDF}
+    %doc %{_pkgdocdir}/Bv9ARM.pdf
+
+files: |
+    %dir %{_libdir}/bind
+    %dir %{_libdir}/named
+    %{_libdir}/named/*.so
+    %config(noreplace) %verify(not md5 size mtime) %{_sysconfdir}/sysconfig/named
+    %config(noreplace) %attr(0644,root,named) %{_sysconfdir}/named.root.key
+    %config(noreplace) %{_sysconfdir}/logrotate.d/named
+    %{_tmpfilesdir}/named.conf
+    %{_sysconfdir}/rwtab.d/named
+    %{_unitdir}/named.service
+    %{_unitdir}/named-setup-rndc.service
+    %{_sbindir}/named-journalprint
+    %{_sbindir}/named-checkconf
+    %{_bindir}/named-rrchecker
+    %{_bindir}/mdig
+    %{_sbindir}/named
+    %{_sbindir}/rndc*
+    %{_libexecdir}/generate-rndc-key.sh
+    %{_mandir}/man1/mdig.1*
+    %{_mandir}/man1/named-rrchecker.1*
+    %{_mandir}/man5/named.conf.5*
+    %{_mandir}/man5/rndc.conf.5*
+    %{_mandir}/man8/rndc.8*
+    %{_mandir}/man8/named.8*
+    %{_mandir}/man8/named-checkconf.8*
+    %{_mandir}/man8/rndc-confgen.8*
+    %{_mandir}/man8/named-journalprint.8*
+    %{_mandir}/man8/filter-aaaa.8.gz
+    %doc CHANGES README named.conf.default
+    %doc sample/
+    
+    # Hide configuration
+    %defattr(0640,root,named,0750)
+    %dir %{_sysconfdir}/named
+    %config(noreplace) %verify(not link) %{_sysconfdir}/named.conf
+    %config(noreplace) %verify(not link) %{_sysconfdir}/named.rfc1912.zones
+    %defattr(0660,root,named,01770)
+    %dir %{_localstatedir}/named
+    %defattr(0660,named,named,0770)
+    %dir %{_localstatedir}/named/slaves
+    %dir %{_localstatedir}/named/data
+    %dir %{_localstatedir}/named/dynamic
+    %ghost %{_localstatedir}/log/named.log
+    %defattr(0640,root,named,0750)
+    %config %verify(not link) %{_localstatedir}/named/named.ca
+    %config %verify(not link) %{_localstatedir}/named/named.localhost
+    %config %verify(not link) %{_localstatedir}/named/named.loopback
+    %config %verify(not link) %{_localstatedir}/named/named.empty
+    %ghost %config(noreplace) %{_sysconfdir}/rndc.key
+    # ^- rndc.key now created on first install only if it does not exist
+    %ghost %config(noreplace) %{_sysconfdir}/rndc.conf
+    # ^- The default rndc.conf which uses rndc.key is in named's default internal config -
+    #    so rndc.conf is not necessary.
+    %defattr(-,named,named,-)
+    %dir /run/named
+

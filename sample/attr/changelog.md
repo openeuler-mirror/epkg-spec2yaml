@@ -82,3 +82,4 @@ in 0001-bypass-wrong-output-when-enabled-selinux.patch.
 
 * Mon Apr 15 2019 Buildteam <buildteam@openeuler.org> - 2.4.48-2
 - Package Initialization
+

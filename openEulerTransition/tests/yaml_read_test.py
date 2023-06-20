@@ -1,6 +1,6 @@
 import sys
 sys.path.append("../")
-from actions.writer.yaml_writer import *
+from openEulerTransition.actions.writer.yaml_writer import *
 test_spec_parser = SpecParser()
 
 
@@ -11,16 +11,9 @@ def test_run_read():
         raise Exception("fail to read test spec file")
 
 
-def test_run_parse_case_spell():
-    try:
-        test_spec_parser.parse_case_spell(word="")
-    except Exception:
-        raise Exception("fail to parse case spell")
-
-
 def test_run_find_quotes_from_words():
     try:
-        test_spec_parser.find_quotes_from_words("")
+        find_quotes_from_words("")
     except Exception:
         raise Exception("fail to run function find_quotes_from_words")
 

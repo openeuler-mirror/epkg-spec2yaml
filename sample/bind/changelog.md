@@ -266,3 +266,4 @@ Lock check of DNS_ZONEFLG_EXITING flag
 
 * Sat Dec 21 2019 openEuler Buildteam <buildteam@openeuler.org> - 9.11.4-12
 - Package init
+
