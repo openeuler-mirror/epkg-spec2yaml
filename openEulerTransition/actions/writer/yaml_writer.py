@@ -1,9 +1,8 @@
-import os
-import re
 import sys
 import copy
 from openEulerTransition.actions.utils.file_operate import Chdir
 from openEulerTransition.actions.utils.data_operate import *
+from openEulerTransition.actions.utils.compile_operate import *
 from openEulerTransition.configure.spec_config import *
 from openEulerTransition.configure.yaml_config import *
 
@@ -1390,14 +1389,14 @@ class SpecParser(object):
                     except Exception as e:
                         logger.info(str(e))
         self.change_several_requires()
-        self.collation_original_data(self.items)
+        self.collation_original_data()
 
-    def collation_original_data(self, original_data: dict):
+    def collation_original_data(self):
         """
         整理原始数据
-        :param original_data:
         :return:
         """
+        original_data = copy.deepcopy(self.items)
         if "changelog" in original_data:
             self.changelog = original_data["changelog"]
             with open("changelog.md", "w") as f:
@@ -1514,7 +1513,7 @@ class SpecParser(object):
             if host_flag not in self.items["defineFlags"]:
                 self.items["defineFlags"][host_flag] = ""
 
-    def divide_into_shell(self, keywords, value: str, sub_name=None, whole=False, main_name=None):
+    def divide_into_shell(self, keywords, value: str, sub_name=None, whole=False, main_name=None, items=None):
         """
         分解到shell中，当前shell的内容存放在变量中
         :param keywords:
@@ -1522,8 +1521,11 @@ class SpecParser(object):
         :param sub_name:
         :param whole:False代表子包不带-n，True代表子包带-n
         :param main_name:主包名
+        :param items: 可能要操作到的源数据
         :return:
         """
+        if items is None:
+            items = self.items
         condition = ""
         if sub_name is None:
             if keywords in self.keywords_if_config:
@@ -1573,7 +1575,13 @@ class SpecParser(object):
             if "build" in self.shell_functions:
                 configure_contents, self.shell_functions["build"] = divide_out_configure(self.shell_functions["build"])
                 for configure_cmd_flags, configure_content in configure_contents.items():
+                    params, configure_content = configure_params_split(configure_content, configure_cmd_flags)
+                    items = self.add_compile_flags_items(params, items)
                     self.shell_functions[configure_cmd_flags] = configure_content
+                if "cmake" in self.shell_functions.get("build"):
+                    params, self.shell_functions["build"] = cmake_params_split(self.shell_functions["build"])
+                    items = self.add_compile_flags_items(params, items)
+        return items
 
     def produce_use_flag(self):
         line_list = self.macros.split(os.linesep)
@@ -1797,3 +1805,24 @@ class SpecParser(object):
                     line_list.pop(0)
                 else:
                     break
+
+    def add_compile_flags_items(self, params: dict, items=None):
+        if items is None:
+            items = self.items
+        if params == {}:
+            return
+        for params_key, params_item in params.items():
+            if params_item:
+                if not isinstance(params_item, dict):
+                    continue
+                tmp_item = params_item.copy()
+                for param_key, param_value in tmp_item.items():
+                    if "%if" in param_key:
+                        params_item.pop(param_key)
+                        base_key = param_key.split("%if")[0].strip()
+                        params_item[base_key + change_judgement_grammar(param_key, self.rpm_global, True, self.macros)[0]] = param_value
+                if params_key not in items:
+                    items[params_key] = params_item
+                else:
+                    items[params_key].update(params_item)
+        return items

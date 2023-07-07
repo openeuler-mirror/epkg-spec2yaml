@@ -710,7 +710,7 @@ def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text="")
         for condition in conditions:
             add_define_flags.append(condition)
             judgement += " " + condition
-    # TODO(	%if 0%{?openEuler}=>when %%%{rpmGlobal.openEuler})
+    # TODO(	%if 0%{?openEuler}=>when ${{rpmrc.openEuler})
     if re.search("%if\s+[0x]%\{\?[\w|_]+}", line) is not None:
         results = re.findall("%if\s+[0x]%\{\?[\w|_]+}", line)
         conditions = list(map(lambda x: x.split("?")[1].rstrip("}"), results))
@@ -718,12 +718,12 @@ def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text="")
             if judgement != "":
                 judgement += " "
             if condition in RPM_GLOBAL_MACROS:
-                judgement += "when %%%{rpmGlobal." + condition + "}"
+                judgement += "when ${{rpmrc." + condition + "}}"
             elif condition in global_dict:
-                judgement += "when %%{rpmGlobal." + condition + "}"
+                judgement += "when ${{rpmGlobal." + condition + "}}"
             else:
                 judgement += "rpmWhen 0%{?" + condition + "}"
-    # TODO(	%if %{openEuler}=>when %%{rpmGlobal.openEuler})
+    # TODO(	%if %{openEuler}=>when ${{rpmGlobal.openEuler}})
     if re.search("%if\s+%\{[\w|_]+}", line) is not None:
         if judgement != "":
             judgement += " "
@@ -803,19 +803,19 @@ def modify_by_when(word, spec_global, spec_macros=""):
         for search_word in search_words:
             core_word = search_word.split("%{")[1].rstrip("}").lstrip("?")
             if core_word in RPM_GLOBAL_MACROS:
-                word = "%%%{rpmGlobal." + core_word + "}"
+                word = "${{rpmGlobal." + core_word + "}}"
             elif core_word in spec_global or core_word in spec_macros:
-                word = "%%{rpmGlobal." + core_word + "}"
+                word = "${{rpmGlobal." + core_word + "}}"
             else:
-                word = word.replace(search_word, "%%{" + core_word + "}")
+                word = word.replace(search_word, "${{" + core_word + "}}")
     return word
 
 
 def add_rpm_global(before):
     if before in RPM_GLOBAL_MACROS:
-        after = "%%%{rpmGlobal." + before + "}"
+        after = "${{rpmrc." + before + "}}"
     else:
-        after = "%%{rpmGlobal." + before + "}"
+        after = "${{rpmGlobal." + before + "}}"
     return after
 
 
@@ -824,21 +824,24 @@ def change_macros_usage(line, rpm_global=None, rpm_macros=""):
         rpm_global = {}
     if line.startswith("rpmWhen"):
         return line
-    # TODO(%{version}-%{release}=>%%{version}-%%{release})
+    # TODO(%{version}-%{release}=>${{pkg.version}}-${{release}})
     if re.search("%\{version}|%\{name}|%\{release}|%\{epoch}", line):
-        line = line.replace("%{version}", "%%{version}").replace("%{name}", "%%{name}").replace("%{release}", "%%{release}").replace("%{epoch}", "%%{epoch}")
-    # TODO(%{atk_version}=>%%{rpmGlobal.atk_version})
+        line = line.replace("%{version}", "${{pkg.version}}").replace("%{name}", "${{pkg.name}}").replace("%{release}", "${{pkg.release}}").replace("%{epoch}", "${{pkg.epoch}}")
+    # TODO(%{atk_version}=>${{rpmGlobal.atk_version}})
     if re.search(" %\{\w+}", line) is not None:
         results = re.findall(" %\{\w+}", line)
         for macro in results:
             param = macro.strip().split("%{")[1].strip("}")
             if param in RPM_GLOBAL_MACROS:
-                prefix = "%%%{rpmGlobal."
+                prefix = "${{rpmrc."
+                suffix = "}}"
             elif param in rpm_global or param in rpm_macros:
-                prefix = "%%{rpmGlobal."
+                prefix = "${{rpmGlobal."
+                suffix = "}}"
             else:
                 prefix = "%{"
-            line = line.replace(macro, macro.replace("%{", prefix))
+                suffix = "}"
+            line = line.replace(macro, macro.replace("%{", prefix).replace("}", suffix))
     return line
 
 
