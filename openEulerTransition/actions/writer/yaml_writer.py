@@ -1418,7 +1418,7 @@ class SpecParser(object):
             if _key in SHELL_KEYWORDS:
                 if _key == "prep" and _value == "%prep" + os.linesep + "%autosetup -n %{name}-%{version} -p1":
                     continue
-                self.divide_into_shell(_key, target_data[_key])
+                target_data = self.divide_into_shell(_key, target_data[_key], items=target_data)
                 if type(original_data[_key]) == str:
                     # target_data[_key] = shell_name
                     del target_data[_key]
@@ -1469,7 +1469,7 @@ class SpecParser(object):
                             target_data = add_quotation_from_member(member_key, self.items,
                                                                     sub_name=sub_member_name, target_items=target_data)
                         if origin_member_key in SHELL_KEYWORDS:
-                            self.divide_into_shell(member_key, target_data["SubPackages"][
+                            target_data = self.divide_into_shell(member_key, target_data["SubPackages"][
                                 sub_member_name][member_key], sub_name=sub_member_name.split()[0].strip(),
                                                    whole=whole_name, main_name=original_data["Name"][0])
                             if type(sub_member_dict[member_key]) == str:
