@@ -376,8 +376,8 @@ def get_reverse_judgement(judgement):
         return judgement.replace("%if %{with ", "%if %{without ")
     elif "%if %{without " in judgement:
         return judgement.replace("%if %{without ", "%if %{with ")
-    elif "%if ! " in judgement:
-        return judgement.replace("%if ! ", "%if ")
+    elif "%if !" in judgement:
+        return judgement.replace("%if !", "%if ")
     else:
         return judgement.replace("%if ", "%if ! ")
 
@@ -414,6 +414,7 @@ def divide_out_configure(content: str):
     configure_num = 0
     configure_cmd_multiline = True
     configure_cmd_flags = ""
+    compile_type = ""
     for num, line in enumerate(line_list):
         if line.startswith("#") or line.startswith("%global") or line.startswith("%define"):
             if configure_cmd:
@@ -440,11 +441,11 @@ def divide_out_configure(content: str):
                     build += line + os.linesep
                 if configure_cmd and configure.strip() != "":
                     if configure_cmd_flags:
-                        key_name = "configure_" + configure_cmd_flags
+                        key_name = f"{compile_type}_{configure_cmd_flags}"
                     elif configure_num > 1:
-                        key_name = "configure_" + str(configure_num - 1)
+                        key_name = f"{compile_type}_{str(configure_num - 1)}"
                     else:
-                        key_name = "configure"
+                        key_name = compile_type
                     configure_items[key_name] = configure.strip()
                     configure = ""
                 configure_cmd = False
@@ -452,6 +453,7 @@ def divide_out_configure(content: str):
         if "configure" in line.lower():
             if "./configure" in line:
                 configure += "%{?add_configure_flags} \\" + os.linesep
+            compile_type = "configure"
             if not configure_cmd:
                 if configure_cmd_flags:
                     build += "configure_" + configure_cmd_flags + os.linesep
@@ -463,9 +465,21 @@ def divide_out_configure(content: str):
                 configure_num += 1
             configure_cmd = True
             configure += line + os.linesep
+        elif "%cmake" in line:
+            compile_type = "cmake"
+            if not configure_cmd:
+                if configure_cmd_flags:
+                    build += "cmake" + configure_cmd_flags + os.linesep
+                else:
+                    if configure_num == 0:
+                        build += "cmake" + os.linesep
+                    else:
+                        build += "cmake_" + str(configure_num) + os.linesep
+                configure_cmd = True
+                configure += line + os.linesep
         if not configure_cmd:
             build += line + os.linesep
-        if "configure" in line.lower() and not line.endswith("\\"):
+        if compile_type in line.lower() and not line.endswith("\\"):
             configure_cmd_multiline = False
     if configure != "" and configure_items == {}:
         configure_items["configure"] = configure.strip()
@@ -495,7 +509,8 @@ def add_context(name, text, obj, file_obj: LuaFile):
     target_first = "--" + RPM_MACRO_PARAM_COMMENT + " " + first_line if "<lua>" in first_line else "#" + RPM_MACRO_PARAM_COMMENT + " " + first_line
     temp_list = first_line.split()
     if len(temp_list) > 1:
-        if name not in MAIN_SHELL_KEYWORDS and not name.startswith("configure") and (temp_list[0].startswith("-") or temp_list[1].startswith("-")):
+        if name not in MAIN_SHELL_KEYWORDS and not re.match("configure|cmake.*", name) and (temp_list[0].startswith(
+                "-") or temp_list[1].startswith("-")):
             text = text.replace(first_line, target_first, 1)
     if "<lua>" in first_line:
         file_name = os.path.splitext(obj.name)[0]
@@ -666,8 +681,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
         elif "%if" in build_rq:
             target_list.remove(build_rq)
             build_rq = remove_marginals_quotes(build_rq)
-            add_judgement, add_define_flags = change_judgement_grammar(build_rq, global_dict, cut_judge=True,
-                                                                       macros_text=macros_text)
+            add_judgement, add_define_flags = change_judgement_grammar(build_rq, global_dict, macros_text=macros_text)
             new_key = target + add_judgement
             value = build_rq.split("%if")[0].strip()
             value = divide_several_requires([value])
@@ -687,104 +701,95 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
     return items, add_define_flags
 
 
-def change_judgement_grammar(line, global_dict, cut_judge=False, macros_text=""):
-    if cut_judge:
-        keywords = line.split("%if")[0]
-        line = line.replace(keywords, "", 1)
+def change_judgement_grammar(line, global_dict, macros_text=""):
+    tmp_conditions = line.split("%if")[1:]
+    conditions = list(map(lambda x: "%if" + x.rstrip(), tmp_conditions))
     judgement = ""
     add_define_flags = []
-    # TODO(%if %{with ***}=>when )
-    if re.search("%if %\{with ", line) or re.search("%if %\{without ", line):
-        with_parts, without_parts = get_if_with_parts(line)
-        judgement = "when"
-        if len(with_parts):
-            judgement += " +" + " and +".join(with_parts)
-        if len(without_parts):
-            if with_parts:
-                judgement += " and"
-            judgement += " -" + " and -".join(without_parts)
-    elif re.search("%if\s+%\{\?_with_\w+:\s*1", line):
-        results = re.findall("%if\s+%\{\?_with_\w+:\s*1", line)
-        conditions = list(map(lambda x: "+" + x.split("_with_")[1].split(":")[0].rstrip("}"), results))
-        judgement = "when"
-        for condition in conditions:
-            add_define_flags.append(condition)
-            judgement += " " + condition
-    # TODO(	%if 0%{?openEuler}=>when ${{rpmrc.openEuler})
-    if re.search("%if\s+[0x]%\{\?[\w|_]+}", line) is not None:
-        results = re.findall("%if\s+[0x]%\{\?[\w|_]+}", line)
-        conditions = list(map(lambda x: x.split("?")[1].rstrip("}"), results))
-        for condition in conditions:
-            if judgement != "":
-                judgement += " "
+    for condition in conditions:
+        # TODO(%if %{with ***}=>when )
+        if re.match("%if %\{with ", condition) or re.match("%if %\{without ", condition):
+            with_parts, without_parts = get_if_with_parts(condition)
+            judgement = "when"
+            if len(with_parts):
+                judgement += " +" + " and +".join(with_parts)
+            if len(without_parts):
+                if with_parts:
+                    judgement += " and"
+                judgement += " -" + " and -".join(without_parts)
+        elif re.match("%if\s+%\{\?_with_\w+:\s*1", condition):
+            base_param = condition.split("_with_")[1].split(":")[0].rstrip("}")
+            judgement = "when"
+            add_define_flags.append(base_param)
+            judgement += " " + base_param
+        # TODO(	%if 0%{?openEuler}=>when ${{rpmrc.openEuler})
+        if re.fullmatch("%if\s+[0x]%\{\?[\w|_]+}", condition) is not None:
+            base_condition = condition.split("?")[1].rstrip("}")
             if condition in RPM_GLOBAL_MACROS:
-                judgement += "when ${{rpmrc." + condition + "}}"
+                judgement += "when ${{rpmrc." + base_condition + "}}"
             elif condition in global_dict:
-                judgement += "when ${{rpmGlobal." + condition + "}}"
+                judgement += "when ${{rpmGlobal." + base_condition + "}}"
             else:
-                judgement += "rpmWhen 0%{?" + condition + "}"
-    # TODO(	%if %{openEuler}=>when ${{rpmGlobal.openEuler}})
-    if re.search("%if\s+%\{[\w|_]+}", line) is not None:
-        if judgement != "":
-            judgement += " "
-        results = re.findall("%if\s+%\{[\w|_]+}", line)
-        conditions = list(map(lambda x: x.split("{")[1].rstrip("}"), results))
-        results = list(map(lambda x: add_rpm_global(x), conditions))
-        judgement += "when " + " ".join(results)
-    # TODO(%ifarch|%ifos|%ifnarch|%ifnos=>when arch in)
-    if re.search("%ifarch|%ifos|%ifnarch|%ifnos", line) is not None:
-        results = re.findall("%if.+", line)
-        tmp_results = results.copy()
-        for i in tmp_results:
-            if re.search("%ifarch|%ifos|%ifnarch|%ifnos", i) is None:
-                results.remove(i)
-        conditions = list(map(lambda x: x.replace("%ifarch", "when arch in").replace(
-            "%ifnarch", "when arch not in").replace("%ifos", "when os in").replace(
-            "%ifnos", "when os not in"), results))
-        if judgement != "":
-            judgement += " "
-        judgement += " ".join(conditions)
-    if "%if" in line and judgement == "":
-        judgement = change_to_when_or_rpmwhen(line, global_dict, macros_text)
+                judgement += condition.replace("%if", "rpmWhen")
+        # TODO(	%if %{openEuler}=>when ${{rpmGlobal.openEuler}})
+        if re.fullmatch("%if\s+%\{[\w|_]+}", condition) is not None:
+            judgement += "when " + add_rpm_global(condition.split("{")[1].rstrip("}"))
+        # TODO(%ifarch|%ifos|%ifnarch|%ifnos=>when arch in)
+        if re.match("%ifarch|%ifos|%ifnarch|%ifnos", line) is not None:
+            if " " not in condition:
+                logger.error("error condition: {0}".format(condition))
+            base_condition = condition.strip().split(" ", 1)[1]
+            if base_condition.startswith("%{") and base_condition.endswith("}"):
+                base_param = base_condition.replace("%{", "").replace("}", "")
+                changed_param = change_macros_type(base_param, global_dict, macros_text)
+                condition = condition.replace(base_condition, changed_param)
+            condition = condition.replace("%ifarch", "when arch in").replace(
+                "%ifnarch", "when arch not in").replace("%ifos", "when os in").replace(
+                "%ifnos", "when os not in")
+            judgement += condition
+        else:
+            judgement += change_to_when_or_rpmwhen(condition, global_dict, macros_text)
     judgement = change_macros_usage(judgement, global_dict, macros_text)
     judgement = merge_multi_judgement(judgement)
     if "%if " in judgement:
         judgement = judgement.replace("%if ", "rpmWhen ")
+    if re.search(" %\{[\w_]+}", judgement):
+        params = re.findall(" %\{[\w_]+}", judgement)
+        for param in params:
+            changed_param = change_macros_type(param[1], global_dict, macros_text)
+            judgement = judgement.replace(param[0], changed_param)
     if not judgement.startswith(" ") and judgement != "":
         judgement = " " + judgement.strip()
     return judgement.rstrip(), add_define_flags
 
 
-def change_to_when_or_rpmwhen(line, spec_global, spec_macros):
-    word_list = line.split("%if")[1:]
-    target = ""
-    for word in word_list:
-        if target != "" and not target.endswith(" "):
-            target += " "
-        if re.search("\(.*%.*\)", word):
-            target += "rpmWhen " + word.strip()
-            continue
-        params = []
-        non = ""
-        rpm_flag = "rpmWhen"
-        if word.strip().startswith("!"):
-            non = "not "
-        params += list(re.findall("\w+", word))
-        for param in params:
-            if param in RPM_GLOBAL_MACROS or param in spec_global:
-                rpm_flag = "when"
-                break
-            elif re.search("\n%define\s+" + param + " ", spec_macros) is not None or re.search("\n%global\s+" + param + " ", spec_macros) is not None:
-                rpm_flag = "when"
-                break
-        if rpm_flag == "rpmWhen":
-            target += rpm_flag + " " + word.strip()
+def change_to_when_or_rpmwhen(condition, spec_global, spec_macros):
+    condition = condition.replace("%if", "").strip()
+    non = "not " if condition.strip().startswith("!") else ""
+    if re.fullmatch("\w%\{?.*}\s+!\s*=\s*\w", condition):
+        if condition[0] == condition[-1]:
+            base_param = condition.split("%{")[1].split("}")[0]
         else:
-            modified_condition = modify_by_when(word, spec_global, spec_macros)
-            if modified_condition.lstrip().startswith("!"):
-                target += rpm_flag + modified_condition.replace("!", "", 1).strip()
-            else:
-                target += rpm_flag + " " + non + modified_condition.strip()
+            base_param = ""
+    else:
+        base_param = ""
+    if base_param != "":
+        if base_param in RPM_GLOBAL_MACROS or base_param in spec_global:
+            rpm_flag = "when"
+        elif re.search("\n%define\s+" + base_param + " ", spec_macros) is not None or re.search("\n%global\s+" + base_param + " ", spec_macros) is not None:
+            rpm_flag = "when"
+        else:
+            rpm_flag = "rpmWhen"
+    else:
+        rpm_flag = "rpmWhen"
+    if rpm_flag == "rpmWhen":
+        target = rpm_flag + " " + condition.strip()
+    else:
+        modified_condition = modify_by_when(base_param, spec_global, spec_macros)
+        if non:
+            target = rpm_flag + modified_condition.replace("!", non, 1).strip()
+        else:
+            target = rpm_flag + modified_condition.strip()
     return target
 
 
@@ -918,3 +923,13 @@ def check_rpm_condition(judgements, rpm_globals):
                     rpm_condition = False
                     break
     return rpm_condition
+
+
+def change_macros_type(base_condition: str, rpm_globals, macros_str=""):
+    if base_condition in rpm_globals or base_condition in macros_str:
+        result = "${{rpmGlobal.%s}}" % base_condition
+    elif base_condition in RPM_SYSTEM_MACROS:
+        result = "${{rpmrc.%s}}" % base_condition
+    else:
+        result = base_condition
+    return result

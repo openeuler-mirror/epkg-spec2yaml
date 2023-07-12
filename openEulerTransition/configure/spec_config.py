@@ -2,7 +2,7 @@ SHELL_KEYWORDS = ["build", "install", "prep", "check", "clean", "pre", "preun", 
                   "posttrans", "configure", "transfiletriggerin", "transfiletriggerpostun", "triggerun"]
 OBS_LINES_KEYWORDS = ["description", "files"]
 RARE_KEYWORDS = ["triggerun", "transfiletriggerin", "transfiletriggerpostun"]
-MAIN_SHELL_KEYWORDS = ["build", "install", "prep", "check", "clean"]
+MAIN_SHELL_KEYWORDS = ["build", "install", "prep", "check", "clean", "configure", "cmake"]
 MACROS_KEYWORDS = ["%package_help"]
 
 HEADERS = ('package',

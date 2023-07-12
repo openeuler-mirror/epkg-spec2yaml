@@ -1,3 +1,4 @@
+import re
 import sys
 import copy
 from openEulerTransition.actions.utils.file_operate import Chdir
@@ -94,15 +95,13 @@ class SpectacleDumper(object):
                 f_phase.write("#!/usr/bin/env bash\n\n")
                 lua_file = LuaFile()
                 for function_name, function_text in script_data.items():
-                    if function_name in ["install", "prep", "build", "clean", "check", "configure"] or \
-                            function_name.startswith("configure"):
+                    if function_name in MAIN_SHELL_KEYWORDS or re.match("configure|cmake.*", function_name):
                         lua_file = add_context(function_name, function_text, f_phase, lua_file)
             if f_runtime_phase != sys.stdout:
                 f_runtime_phase.write("#!/usr/bin/env bash\n\n")
                 lua_runtime_file = LuaFile()
                 for function_name, function_text in script_data.items():
-                    if function_name not in ["install", "prep", "build", "clean", "check", "configure"] and \
-                            not function_name.startswith("configure"):
+                    if function_name not in MAIN_SHELL_KEYWORDS and not re.match("configure|cmake.*", function_name):
                         lua_runtime_file = add_context(function_name, function_text, f_runtime_phase, lua_runtime_file)
         if f_files and files_data:
             for file_member_key, file_member_value in files_data.items():
@@ -1455,7 +1454,7 @@ class SpecParser(object):
                     for member_key, member_value in sub_member_dict.items():
                         if member_key == "files":
                             if "%if" in sub_member_name:
-                                add_judgement, add_define_flags = change_judgement_grammar(sub_member_name, self.rpm_global, cut_judge=True, macros_text=self.macros)
+                                add_judgement, add_define_flags = change_judgement_grammar(sub_member_name, self.rpm_global, macros_text=self.macros)
                                 sub_files_judgement = add_judgement
                                 self.add_define_flags_item(add_define_flags)
                             else:
@@ -1471,7 +1470,8 @@ class SpecParser(object):
                         if origin_member_key in SHELL_KEYWORDS:
                             target_data = self.divide_into_shell(member_key, target_data["SubPackages"][
                                 sub_member_name][member_key], sub_name=sub_member_name.split()[0].strip(),
-                                                   whole=whole_name, main_name=original_data["Name"][0])
+                                                   whole=whole_name, main_name=original_data["Name"][0],
+                                                                 items=target_data)
                             if type(sub_member_dict[member_key]) == str:
                                 # target_data["SubPackages"][sub_member_name][member_key] = shell_name
                                 del target_data["SubPackages"][sub_member_name][member_key]
@@ -1485,7 +1485,7 @@ class SpecParser(object):
                         keywords = sub_member_name.split("%if")[0].strip()
                         del target_data["SubPackages"][sub_member_name]
                         add_judgement, add_define_flags = change_judgement_grammar(
-                            sub_member_name, self.rpm_global, cut_judge=True, macros_text=self.macros)
+                            sub_member_name, self.rpm_global, macros_text=self.macros)
                         target_data["SubPackages"][keywords + add_judgement] = temp_sub_dict
                         self.add_define_flags_item(add_define_flags)
         self.items = target_data
@@ -1535,8 +1535,7 @@ class SpecParser(object):
             for subpackage in self.items["SubPackages"]:
                 pattern = re.escape(sub_name + "\s+%if")
                 if re.match(pattern, subpackage):
-                    condition = change_judgement_grammar(subpackage, self.rpm_global, cut_judge=True,
-                                                         macros_text=self.macros)[0]
+                    condition = change_judgement_grammar(subpackage, self.rpm_global, macros_text=self.macros)[0]
                     break
         if " -n " in value and not whole:
             value = value.split(os.linesep)[0].replace("-n %{name}-", "") + os.linesep + os.linesep.join(
@@ -1574,13 +1573,16 @@ class SpecParser(object):
         if no_configure:
             if "build" in self.shell_functions:
                 configure_contents, self.shell_functions["build"] = divide_out_configure(self.shell_functions["build"])
-                for configure_cmd_flags, configure_content in configure_contents.items():
-                    params, configure_content = configure_params_split(configure_content, configure_cmd_flags)
+                for compile_cmd_flags, configure_content in configure_contents.items():
+                    if compile_cmd_flags.startswith("configure"):
+                        split_function = configure_params_split
+                    elif compile_cmd_flags.startswith("cmake"):
+                        split_function = cmake_params_split
+                    else:
+                        continue
+                    params, configure_content = split_function(configure_content, compile_cmd_flags)
                     items = self.add_compile_flags_items(params, items)
-                    self.shell_functions[configure_cmd_flags] = configure_content
-                if "cmake" in self.shell_functions.get("build"):
-                    params, self.shell_functions["build"] = cmake_params_split(self.shell_functions["build"])
-                    items = self.add_compile_flags_items(params, items)
+                    self.shell_functions[compile_cmd_flags] = configure_content
         return items
 
     def produce_use_flag(self):
@@ -1820,7 +1822,7 @@ class SpecParser(object):
                     if "%if" in param_key:
                         params_item.pop(param_key)
                         base_key = param_key.split("%if")[0].strip()
-                        params_item[base_key + change_judgement_grammar(param_key, self.rpm_global, True, self.macros)[0]] = param_value
+                        params_item[base_key + change_judgement_grammar(param_key, self.rpm_global, self.macros)[0]] = param_value
                 if params_key not in items:
                     items[params_key] = params_item
                 else:
