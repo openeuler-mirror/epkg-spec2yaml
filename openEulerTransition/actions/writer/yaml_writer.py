@@ -1,4 +1,3 @@
-import re
 import sys
 import copy
 from openEulerTransition.actions.utils.file_operate import Chdir
@@ -1573,14 +1572,14 @@ class SpecParser(object):
         if no_configure:
             if "build" in self.shell_functions:
                 configure_contents, self.shell_functions["build"] = divide_out_configure(self.shell_functions["build"])
-                for compile_cmd_flags, configure_content in configure_contents.items():
+                for compile_cmd_flags, compile_content in configure_contents.items():
                     if compile_cmd_flags.startswith("configure"):
                         split_function = configure_params_split
                     elif compile_cmd_flags.startswith("cmake"):
                         split_function = cmake_params_split
                     else:
                         continue
-                    params, configure_content = split_function(configure_content, compile_cmd_flags)
+                    params, configure_content = split_function(compile_content, compile_cmd_flags)
                     items = self.add_compile_flags_items(params, items)
                     self.shell_functions[compile_cmd_flags] = configure_content
         return items

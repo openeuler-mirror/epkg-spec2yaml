@@ -469,17 +469,18 @@ def divide_out_configure(content: str):
             compile_type = "cmake"
             if not configure_cmd:
                 if configure_cmd_flags:
-                    build += "cmake" + configure_cmd_flags + os.linesep
+                    build += "cmake_" + configure_cmd_flags + os.linesep
                 else:
                     if configure_num == 0:
                         build += "cmake" + os.linesep
                     else:
                         build += "cmake_" + str(configure_num) + os.linesep
-                configure_cmd = True
-                configure += line + os.linesep
+                configure_num += 1
+            configure_cmd = True
+            configure += line + os.linesep
         if not configure_cmd:
             build += line + os.linesep
-        if compile_type in line.lower() and not line.endswith("\\"):
+        if compile_type and not line.endswith("\\"):
             configure_cmd_multiline = False
     if configure != "" and configure_items == {}:
         configure_items["configure"] = configure.strip()
@@ -707,6 +708,8 @@ def change_judgement_grammar(line, global_dict, macros_text=""):
     judgement = ""
     add_define_flags = []
     for condition in conditions:
+        if judgement != "":
+            judgement += " "
         # TODO(%if %{with ***}=>when )
         if re.match("%if %\{with ", condition) or re.match("%if %\{without ", condition):
             with_parts, without_parts = get_if_with_parts(condition)
@@ -723,7 +726,7 @@ def change_judgement_grammar(line, global_dict, macros_text=""):
             add_define_flags.append(base_param)
             judgement += " " + base_param
         # TODO(	%if 0%{?openEuler}=>when ${{rpmrc.openEuler})
-        if re.fullmatch("%if\s+[0x]%\{\?[\w|_]+}", condition) is not None:
+        elif re.fullmatch("%if\s+[0x]%\{\?[\w|_]+}", condition) is not None:
             base_condition = condition.split("?")[1].rstrip("}")
             if condition in RPM_GLOBAL_MACROS:
                 judgement += "when ${{rpmrc." + base_condition + "}}"
@@ -732,10 +735,10 @@ def change_judgement_grammar(line, global_dict, macros_text=""):
             else:
                 judgement += condition.replace("%if", "rpmWhen")
         # TODO(	%if %{openEuler}=>when ${{rpmGlobal.openEuler}})
-        if re.fullmatch("%if\s+%\{[\w|_]+}", condition) is not None:
+        elif re.fullmatch("%if\s+%\{[\w|_]+}", condition) is not None:
             judgement += "when " + add_rpm_global(condition.split("{")[1].rstrip("}"))
         # TODO(%ifarch|%ifos|%ifnarch|%ifnos=>when arch in)
-        if re.match("%ifarch|%ifos|%ifnarch|%ifnos", line) is not None:
+        elif re.match("%ifarch|%ifos|%ifnarch|%ifnos", condition) is not None:
             if " " not in condition:
                 logger.error("error condition: {0}".format(condition))
             base_condition = condition.strip().split(" ", 1)[1]
@@ -753,7 +756,7 @@ def change_judgement_grammar(line, global_dict, macros_text=""):
     judgement = merge_multi_judgement(judgement)
     if "%if " in judgement:
         judgement = judgement.replace("%if ", "rpmWhen ")
-    if re.search(" %\{[\w_]+}", judgement):
+    if re.search(" (%\{([\w_]+)})", judgement):
         params = re.findall(" %\{[\w_]+}", judgement)
         for param in params:
             changed_param = change_macros_type(param[1], global_dict, macros_text)
