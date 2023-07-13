@@ -42,6 +42,10 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
             elif not start:
                 continue
             if "--" in line:
+                if re.search("( -with-| -without-| -enable-| -disable-)", line):
+                    error_keywords_list = re.findall("( -with-| -without-| -enable-| -disable-)", line)
+                    for error_keywords in error_keywords_list:
+                        line = line.replace(error_keywords, error_keywords.replace("-", "--", 1))
                 tmp_compile_flags = line.split("--")[1:]
                 compile_flags = list(map(lambda x: "--" + x.rstrip(" \\"), tmp_compile_flags))
                 for compile_flag in compile_flags:

@@ -749,6 +749,11 @@ def change_judgement_grammar(line, global_dict, macros_text=""):
             condition = condition.replace("%ifarch", "when arch in").replace(
                 "%ifnarch", "when arch not in").replace("%ifos", "when os in").replace(
                 "%ifnos", "when os not in")
+            if re.search(" (%\{([\w_]+)})", condition):
+                params = re.findall(" (%\{([\w_]+)})", condition)
+                for param in params:
+                    changed_param = change_macros_type(param[1], global_dict, macros_text)
+                    condition = condition.replace(param[0], changed_param)
             judgement += condition
         else:
             judgement += change_to_when_or_rpmwhen(condition, global_dict, macros_text)
@@ -756,11 +761,6 @@ def change_judgement_grammar(line, global_dict, macros_text=""):
     judgement = merge_multi_judgement(judgement)
     if "%if " in judgement:
         judgement = judgement.replace("%if ", "rpmWhen ")
-    if re.search(" (%\{([\w_]+)})", judgement):
-        params = re.findall(" %\{[\w_]+}", judgement)
-        for param in params:
-            changed_param = change_macros_type(param[1], global_dict, macros_text)
-            judgement = judgement.replace(param[0], changed_param)
     if not judgement.startswith(" ") and judgement != "":
         judgement = " " + judgement.strip()
     return judgement.rstrip(), add_define_flags
