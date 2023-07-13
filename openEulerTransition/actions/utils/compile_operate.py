@@ -43,7 +43,7 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
                 continue
             if "--" in line:
                 tmp_compile_flags = line.split("--")[1:]
-                compile_flags = list(map(lambda x: "--" + x.rstrip(" \\", tmp_compile_flags)))
+                compile_flags = list(map(lambda x: "--" + x.rstrip(" \\"), tmp_compile_flags))
                 for compile_flag in compile_flags:
                     if compile_flag.strip().startswith("--enable-") or compile_flag.strip().startswith("--disable-"):
                         if "=" in compile_flag:
