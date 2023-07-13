@@ -450,7 +450,7 @@ def divide_out_configure(content: str):
                     configure = ""
                 configure_cmd = False
                 continue
-        if line.lstrip("./%").startswith("configure"):
+        if line.lstrip(".").startswith("/configure") or line.startswith("%configure"):
             if line.lstrip(".").startswith("/configure"):
                 configure += "%{?add_configure_flags} \\" + os.linesep
             compile_type = "configure"
@@ -483,7 +483,7 @@ def divide_out_configure(content: str):
         if compile_type and compile_type in line and not line.endswith("\\"):
             configure_cmd_multiline = False
     if configure != "" and configure_items == {}:
-        configure_items["configure"] = configure.strip()
+        configure_items[compile_type] = configure.strip()
     return configure_items, build.strip()
 
 

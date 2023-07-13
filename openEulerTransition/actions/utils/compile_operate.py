@@ -49,11 +49,12 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
                     param = line.replace("--disable-", "--enable-").lstrip()
                 if "build." + key_name + ".Flags" not in params:
                     params["build." + key_name + ".Flags"] = {}
+                value = esc_value(value.rstrip("\\ "))
                 if condition:
                     suffix = " " + " ".join(condition)
-                    params["build." + key_name + ".Flags"][param.strip("\\").strip() + suffix] = value.rstrip("\\").strip()
+                    params["build." + key_name + ".Flags"][param.strip("\\").strip() + suffix] = value
                 else:
-                    params["build." + key_name + ".Flags"][param.strip("\\").strip()] = value.rstrip("\\").strip()
+                    params["build." + key_name + ".Flags"][param.strip("\\").strip()] = value
             elif start and re.match("(--with-)|(--without-).*", line.strip()):
                 if "=" in line:
                     param, value = line.split("=", 1)
@@ -123,6 +124,7 @@ def cmake_params_split(script, cmake_cmd_flag):
             param, value = line.split("=", 1)
             if f"build.{cmake_cmd_flag}.Flags" not in params:
                 params["build." + cmake_cmd_flag + ".Flags"] = {}
+            value = esc_value(value.rstrip("\\ "))
             if condition:
                 suffix = " " + " ".join(condition)
                 params["build." + cmake_cmd_flag + ".Flags"][param + suffix] = value
