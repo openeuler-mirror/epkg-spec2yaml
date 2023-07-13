@@ -41,42 +41,48 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
                 continue
             elif not start:
                 continue
-            if start and (line.strip().startswith("--enable-") or line.strip().startswith("--disable-")):
-                if "=" in line:
-                    param, value = line.split("=", 1)
-                else:
-                    value = str("--enable-" in line).lower()
-                    param = line.replace("--disable-", "--enable-").lstrip()
-                if "build." + key_name + ".Flags" not in params:
-                    params["build." + key_name + ".Flags"] = {}
-                value = esc_value(value.rstrip("\\ "))
-                if condition:
-                    suffix = " " + " ".join(condition)
-                    params["build." + key_name + ".Flags"][param.strip("\\").strip() + suffix] = value
-                else:
-                    params["build." + key_name + ".Flags"][param.strip("\\").strip()] = value
-            elif start and re.match("(--with-)|(--without-).*", line.strip()):
-                if "=" in line:
-                    param, value = line.split("=", 1)
-                    value = esc_value(value.strip("\\ "))
-                else:
-                    param = line.strip("\\")
-                    value = "yes"
-                if "build." + key_name + ".Flags" not in params:
-                    params["build." + key_name + ".Flags"] = {}
-                if condition:
-                    params["build." + key_name + ".Flags"][param.strip() + " " + " ".join(condition)] = value
-                else:
-                    params["build." + key_name + ".Flags"][param.strip()] = value
-            elif start and re.match("(--build=)|(--target=)|(--host=)|(--prefix=)", line.strip()):
-                param, value = line.split("=", 1)
-                if "build." + key_name + ".Flags" not in params:
-                    params["build." + key_name + ".Flags"] = {}
-                value = esc_value(value.strip("\\ "))
-                if condition:
-                    params["build." + key_name + ".Flags"][param.strip() + " " + " ".join(condition)] = value
-                else:
-                    params["build." + key_name + ".Flags"][param.strip()] = value
+            if "--" in line:
+                tmp_compile_flags = line.split("--")[1:]
+                compile_flags = list(map(lambda x: "--" + x.rstrip(" \\", tmp_compile_flags)))
+                for compile_flag in compile_flags:
+                    if compile_flag.strip().startswith("--enable-") or compile_flag.strip().startswith("--disable-"):
+                        if "=" in compile_flag:
+                            param, value = compile_flag.split("=", 1)
+                        else:
+                            value = str("--enable-" in compile_flag).lower()
+                            param = compile_flag.replace("--disable-", "--enable-").lstrip()
+                        if "build." + key_name + ".Flags" not in params:
+                            params["build." + key_name + ".Flags"] = {}
+                        value = esc_value(value.rstrip("\\ "))
+                        if condition:
+                            suffix = " " + " ".join(condition)
+                            params["build." + key_name + ".Flags"][param.strip("\\").strip() + suffix] = value
+                        else:
+                            params["build." + key_name + ".Flags"][param.strip("\\").strip()] = value
+                    elif re.match("(--with-)|(--without-).*", compile_flag.strip()):
+                        if "=" in compile_flag:
+                            param, value = compile_flag.split("=", 1)
+                            value = esc_value(value.strip("\\ "))
+                        else:
+                            param = compile_flag.strip("\\")
+                            value = "yes"
+                        if "build." + key_name + ".Flags" not in params:
+                            params["build." + key_name + ".Flags"] = {}
+                        if condition:
+                            params["build." + key_name + ".Flags"][param.strip() + " " + " ".join(condition)] = value
+                        else:
+                            params["build." + key_name + ".Flags"][param.strip()] = value
+                    elif re.match("(--build=)|(--target=)|(--host=)|(--prefix=)", compile_flag.strip()):
+                        param, value = compile_flag.split("=", 1)
+                        if "build." + key_name + ".Flags" not in params:
+                            params["build." + key_name + ".Flags"] = {}
+                        value = esc_value(value.strip("\\ "))
+                        if condition:
+                            params["build." + key_name + ".Flags"][param.strip() + " " + " ".join(condition)] = value
+                        else:
+                            params["build." + key_name + ".Flags"][param.strip()] = value
+                    else:
+                        configure_line += f"  {compile_flag} \\{os.linesep}"
             elif line.lstrip().startswith("%if"):
                 configure_line += line + os.linesep
                 condition.insert(0, line.strip())
@@ -97,6 +103,7 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
                 configure_line += line + os.linesep
                 start = False
         return params, configure_line
+    raise Exception("Error compile text, lack of configure command!")
 
 
 def cmake_params_split(script, cmake_cmd_flag):
