@@ -131,11 +131,14 @@ def cmake_params_split(script, cmake_cmd_flag):
         if not start:
             continue
         if line.lstrip().startswith("-D") and "=" in line:
-            line = line.lstrip().replace("-D", "", 1).rstrip("\\")
-            param, value = line.split("=", 1)
+            new_line = line.lstrip().replace("-D", "", 1).rstrip("\\")
+            param, value = new_line.split("=", 1)
             if f"build.{cmake_cmd_flag}.Flags" not in params:
                 params["build." + cmake_cmd_flag + ".Flags"] = {}
             value = esc_value(value.rstrip("\\ "))
+            if value.startswith("\"") and value.count("\"") == 1:
+                cmake_cmd += line + os.linesep
+                continue
             if condition:
                 suffix = " " + " ".join(condition)
                 params["build." + cmake_cmd_flag + ".Flags"][param + suffix] = value

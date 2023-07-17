@@ -1821,6 +1821,9 @@ class SpecParser(object):
                     if "%if" in param_key:
                         params_item.pop(param_key)
                         base_key = param_key.split("%if")[0].strip()
+                        if "%else" in param_key:
+                            param_key = get_reverse_judgement(param_key)
+                            base_key = base_key.replace("%else", "").strip()
                         params_item[base_key + change_judgement_grammar(param_key, self.rpm_global, self.macros)[0]] = param_value
                 if params_key not in items:
                     items[params_key] = params_item
