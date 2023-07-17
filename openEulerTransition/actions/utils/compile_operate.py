@@ -41,6 +41,8 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
                 continue
             elif not start:
                 continue
+            if "#" in line:
+                line = line.split("#")[0]
             if "--" in line:
                 if re.search("( -with-| -without-| -enable-| -disable-)", line):
                     error_keywords_list = re.findall("( -with-| -without-| -enable-| -disable-)", line)
@@ -130,6 +132,8 @@ def cmake_params_split(script, cmake_cmd_flag):
             start = True
         if not start:
             continue
+        if "#" in line:
+            line = line.split("#")[0]
         if line.lstrip().startswith("-D") and "=" in line:
             new_line = line.lstrip().replace("-D", "", 1).rstrip("\\")
             param, value = new_line.split("=", 1)

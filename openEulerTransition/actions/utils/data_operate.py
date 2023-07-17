@@ -265,7 +265,7 @@ def esc_value(val):
     :return:
     """
     # ESC for leading '%', for yaml syntax
-    if re.match("%|\*|,|`.*", val) or ": " in val or val.endswith(':'):
+    if re.match("%|\*|,|`|@.*", val) or ": " in val or val.endswith(':'):
         quote_char = ""
         extra_escape = "\\" if val.endswith("\\") else ""
         if not ((val.startswith("\"") and val.endswith("\"")) or (val.startswith("\'") and val.endswith("\'"))):
