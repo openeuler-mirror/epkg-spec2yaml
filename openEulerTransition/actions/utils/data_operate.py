@@ -787,9 +787,9 @@ def change_to_when_or_rpmwhen(condition, spec_global, spec_macros):
     else:
         modified_condition = modify_by_when(base_param, spec_global, spec_macros)
         if non:
-            target = rpm_flag + modified_condition.replace("!", non, 1).strip()
+            target = rpm_flag + " " + modified_condition.replace("!", non, 1).strip()
         else:
-            target = rpm_flag + modified_condition.strip()
+            target = rpm_flag + " " + modified_condition.strip()
     return target
 
 

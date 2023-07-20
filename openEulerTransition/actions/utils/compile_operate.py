@@ -6,10 +6,10 @@ class CompileParams(object):
     def __init__(self):
         self.cmake_params = {
             "phase.cmake": "",
-            "build.cmakeFlags": {}
+            "build.cmake.flags": {}
         }
         self.configure_params = {
-            "build.configureFlags": {}
+            "build.configure.flags": {}
         }
 
 
@@ -45,14 +45,16 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
                 line = line.split("#")[0]
             if "--" in line:
                 if re.search("( -with-| -without-| -enable-| -disable-)", line):
-                    error_keywords_list = re.findall("( -with-| -without-| -enable-| -disable-)", line)
+                    error_keywords_list = re.findall("( -with-| -without-| -enable-| -disable-)\s+", line)
                     for error_keywords in error_keywords_list:
                         line = line.replace(error_keywords, error_keywords.replace("-", "--", 1))
                 tmp_compile_flags = line.split("--")[1:]
                 compile_flags = list(map(lambda x: "--" + x.rstrip(" \\"), tmp_compile_flags))
                 for compile_flag in compile_flags:
                     if compile_flag.strip().startswith("--enable-") or compile_flag.strip().startswith("--disable-"):
-                        if "=" in compile_flag:
+                        if compile_flag.strip().endswith("<<EOF"):
+                            configure_line += compile_flag
+                        elif "=" in compile_flag:
                             param, value = compile_flag.split("=", 1)
                         else:
                             value = str("--enable-" in compile_flag).lower()
@@ -68,10 +70,10 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
                     elif re.match("(--with-)|(--without-).*", compile_flag.strip()):
                         if "=" in compile_flag:
                             param, value = compile_flag.split("=", 1)
-                            value = esc_value(value.strip("\\ "))
+                            value = esc_value(value.rstrip("\\ "))
                         else:
                             param = compile_flag.strip("\\")
-                            value = "yes"
+                            value = "true"
                         if "--without-" in param:
                             param = param.replace("--without-", "--with-")
                             value = reverse_bool_value(value)
@@ -85,7 +87,7 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
                         param, value = compile_flag.split("=", 1)
                         if "build." + key_name + ".flags" not in params:
                             params["build." + key_name + ".flags"] = {}
-                        value = esc_value(value.strip("\\ "))
+                        value = esc_value(value.rstrip("\\ "))
                         if condition:
                             params["build." + key_name + ".flags"][param.strip() + " " + " ".join(condition)] = value
                         else:
