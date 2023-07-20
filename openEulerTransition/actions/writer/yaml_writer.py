@@ -1,5 +1,6 @@
 import sys
 import copy
+import yaml
 from openEulerTransition.actions.utils.file_operate import Chdir
 from openEulerTransition.actions.utils.data_operate import *
 from openEulerTransition.actions.utils.compile_operate import *
@@ -61,9 +62,9 @@ class SpectacleDumper(object):
 
     """
 
-    def __init__(self, file_type='yaml', opath=None, shell_functions=None, files=None):
+    def __init__(self, file_type='yaml', shell_functions=None, files=None):
         self.format = file_type
-        self.opath = opath
+        self.opath = "package.yaml"
         self.shell_functions = shell_functions
         self.files = files
         self.spec_extra = {}
@@ -125,7 +126,21 @@ class SpectacleDumper(object):
                             if line != "":
                                 f_files.write(TAB + line + os.linesep)
                         f_files.write(os.linesep)
+        new_define_yaml = True
         for key, value in data:
+            if key == "version":
+                with open("versions.yaml", "w") as f:
+                    f.write(f"{key}: {value}")
+                continue
+            elif key.startswith("defineFlags"):
+                if new_define_yaml:
+                    f = open("defineFlags.yaml", "w")
+                    new_define_yaml = False
+                else:
+                    f = open("defineFlags.yaml", "a")
+                f.write(yaml.safe_dump({key: value}))
+                f.close()
+                continue
             if not first_line and indent:
                 cur_indent = indent + '  '
 
@@ -221,10 +236,10 @@ class SpectacleDumper(object):
                                                 fp.write(cur_indent + TAB * (base + 3) + member + ": |" + os.linesep)
                                                 line_list = line.split(os.linesep)
                                                 for l in line_list:
-                                                    fp.write(cur_indent + TAB * (base + 4) + l + os.linesep)
+                                                    fp.write(cur_indent + TAB * (base + 4) + change_macros_usage(l) + os.linesep)
                                             else:
                                                 fp.write(cur_indent + TAB * (base + 3) + ("%s: %s" + os.linesep) % (
-                                                    member, esc_value(line)))
+                                                    member, esc_value(change_macros_usage(line))))
                                         fp.write(os.linesep)
                                 else:
                                     fp.write(cur_indent + TAB * (base+2) + ("- %s" + os.linesep) % (esc_value(sub_item)))
@@ -233,17 +248,17 @@ class SpectacleDumper(object):
                                 fp.write(cur_indent + TAB + dict_key + ": |" + os.linesep)
                                 line_list = dict_value.split(os.linesep)
                                 for line in line_list:
-                                    fp.write(cur_indent + TAB * 2 + line + os.linesep)
+                                    fp.write(cur_indent + TAB * 2 + change_macros_usage(line) + os.linesep)
                             else:
-                                fp.write(cur_indent + TAB + ("%s: %s" + os.linesep) % (dict_key, dict_value))
+                                fp.write(cur_indent + TAB + ("%s: %s" + os.linesep) % (dict_key, change_macros_usage(dict_value)))
             else:
                 lines_to_write = value.splitlines()
 
                 if len(lines_to_write) == 1:
                     try:
-                        fp.write(cur_indent + ("%s: %s" + os.linesep) % (key, esc_value(value)))
+                        fp.write(cur_indent + ("%s: %s" + os.linesep) % (key, esc_value(change_macros_usage(value))))
                     except UnicodeEncodeError:
-                        fp.write(cur_indent + ("%s: %s" + os.linesep) % (key, esc_value(value).encode('utf8')))
+                        fp.write(cur_indent + ("%s: %s" + os.linesep) % (key, esc_value(change_macros_usage(value)).encode('utf8')))
 
                 elif len(lines_to_write) == 0:
                     # not exist until now
@@ -251,7 +266,7 @@ class SpectacleDumper(object):
                 else:
                     fp.write(cur_indent + ("%s: |" + os.linesep) % key)
                     for line in lines_to_write:
-                        fp.write(cur_indent + TAB + ("%s" + os.linesep) % line)
+                        fp.write(cur_indent + TAB + ("%s" + os.linesep) % change_macros_usage(line))
 
             first_line = False
 
@@ -273,7 +288,6 @@ class SpectacleDumper(object):
             self.files = {}
         if self.shell_functions:
             try:
-                # fs = open(self.opath.replace(".yaml", ".sh"), "w")
                 fs_phase = open("phase.sh", "w")
                 for function_name in self.shell_functions.keys():
                     if function_name not in ["install", "prep", "build", "clean", "check", "configure"] and \
@@ -490,7 +504,7 @@ class YamlWriter:
         convertor = SpecConvertor()
 
         """Dump them to spectacle file"""
-        dumper = SpectacleDumper(file_type='yaml', opath=out_fpath, shell_functions=spec_parser.shell_functions,
+        dumper = SpectacleDumper(file_type='yaml', shell_functions=spec_parser.shell_functions,
                                  files=spec_parser.files)
         newspec_fpath = dumper.dump(convertor.convert(spec_parser.cooked_items()))
 
@@ -1408,7 +1422,7 @@ class SpecParser(object):
             original_data["Summary"][0] = "_" + original_data["Summary"][0]
         self.check_macros_escapes()
         self.macros, self.rpm_global = divide_rpm_global(self.macros, self.rpm_global)
-        self.produce_use_flag()
+        original_data = self.produce_use_flag(original_data)
         target_data = copy.deepcopy(original_data)
         for _key, _value in original_data.items():
             if _key in NEED_QUOTATION_KEYWORDS:
@@ -1584,7 +1598,9 @@ class SpecParser(object):
                     self.shell_functions[compile_cmd_flags] = configure_content
         return items
 
-    def produce_use_flag(self):
+    def produce_use_flag(self, items=None):
+        if items is None:
+            items = self.items
         line_list = self.macros.split(os.linesep)
         if_cond = []
         else_cond = []
@@ -1615,10 +1631,10 @@ class SpecParser(object):
                         remove_line.append(i - back_count)
                 else:
                     use_flag_key = "defineFlags"
-                if use_flag_key not in self.items:
-                    self.items[use_flag_key] = {flag_with + line.split()[-1]: ""}
+                if use_flag_key not in items:
+                    items[use_flag_key] = {flag_with + line.split()[-1]: ""}
                 else:
-                    self.items[use_flag_key][flag_with + line.split()[-1]] = ""
+                    items[use_flag_key][flag_with + line.split()[-1]] = ""
                 if rpm_condition:
                     remove_line.append(i)
             elif re.search("(%define)|(%global)|(%bcond_with)|(%\{\!\?)|(%undefine)|(%\{\?)|(%\{expand:\s*%)", line) is not None:
@@ -1642,6 +1658,7 @@ class SpecParser(object):
         for j in remove_line:
             target_list.pop(j)
         self.macros = os.linesep.join(target_list)
+        return items
 
     def cooked_items(self):
         """
