@@ -51,10 +51,10 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
                 tmp_compile_flags = line.split("--")[1:]
                 compile_flags = list(map(lambda x: "--" + x.rstrip(" \\"), tmp_compile_flags))
                 for compile_flag in compile_flags:
-                    if compile_flag.strip().startswith("--enable-") or compile_flag.strip().startswith("--disable-"):
-                        if compile_flag.strip().endswith("<<EOF"):
-                            configure_line += compile_flag
-                        elif "=" in compile_flag:
+                    if compile_flag.strip().endswith("<<EOF"):
+                        configure_line += compile_flag
+                    elif compile_flag.strip().startswith("--enable-") or compile_flag.strip().startswith("--disable-"):
+                        if "=" in compile_flag:
                             param, value = compile_flag.split("=", 1)
                         else:
                             value = str("--enable-" in compile_flag).lower()
