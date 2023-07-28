@@ -448,8 +448,6 @@ def divide_out_configure(content: str):
                 configure_cmd = False
                 continue
         if line.lstrip(".").startswith("/configure") or line.startswith("%configure"):
-            if line.lstrip(".").startswith("/configure"):
-                configure += "%{?add_configure_flags} \\" + os.linesep
             compile_type = "configure"
             if not configure_cmd:
                 if configure_cmd_flags:
