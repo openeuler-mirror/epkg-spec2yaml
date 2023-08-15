@@ -18,7 +18,7 @@ def main():
         log_file_name = "openEulerTransition_{0}.log".format(
             str(time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())))
         logger.log_file_path = os.path.join(log_path, log_file_name)
-        logger.change_path()
+        logger.set_log_conf()
     if not check_spec_file(options.spec_file):
         logger.error("Cannot find valid spec file, file path is " + options.spec_file)
         return

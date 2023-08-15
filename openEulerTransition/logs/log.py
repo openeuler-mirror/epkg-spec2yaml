@@ -35,28 +35,31 @@ class LogInfo:
 
 
 class Logger(object):
-    def __init__(self, name, clevel=log_level,
-                 log_file_path=None, Flevel=log_level, only_file=False):
-        fmt = logging.Formatter("%(asctime)s - [%(levelname)s] : %(message)s")
+    def __init__(self, name, clevel=log_level, log_file_path=None):
+        self.log_file_path = log_file_path
+        self.name = name
+        self.fmt = logging.Formatter("%(asctime)s - [%(levelname)s] : %(message)s")
 
-        ch = logging.StreamHandler()
-        ch.setLevel(clevel)
-        ch.setFormatter(fmt)
+        self.ch = logging.StreamHandler()
+        self.ch.setLevel(clevel)
+        self.ch.setFormatter(self.fmt)
+        self.fh = None
 
-        self.logger = logging.getLogger(name)
+        self.logger = logging.getLogger(self.name)
         self.logger.setLevel(DEBUG)
-        self.logger.addHandler(ch)
+        self.logger.addHandler(self.ch)
 
-        if log_file_path:
-            self.logger = logging.getLogger(name)
+    def set_log_conf(self, Flevel=log_level, only_file=False):
+        if self.log_file_path:
+            self.logger = logging.getLogger(self.name)
             if only_file:
-                fh = logging.FileHandler(filename=log_file_path, encoding="utf-8")
+                self.fh = logging.FileHandler(filename=self.log_file_path, encoding="utf-8")
             else:
-                fh = handlers.TimedRotatingFileHandler(filename=log_file_path, when="D")
-            fh.setLevel(Flevel)
-            fh.setFormatter(fmt)
-            self.logger.addHandler(fh)
-            self.logger.removeHandler(ch)
+                self.fh = handlers.TimedRotatingFileHandler(filename=self.log_file_path, when="D")
+            self.fh.setLevel(Flevel)
+            self.fh.setFormatter(self.fmt)
+            self.logger.addHandler(self.fh)
+            self.logger.removeHandler(self.ch)
 
     def debug(self, message):
         self.logger.debug(message)
@@ -74,37 +77,7 @@ class Logger(object):
         self.logger.critical(message)
 
 
-class LoggerSample:
-    def __init__(self, name, clevel=log_level,
-                 log_file_path=None, Flevel=log_level):
-        self.log_file_path = log_file_path
-        self.name = name
-        self.clevel = clevel
-        self.log_level = log_level
-        self.logger_sample = Logger(name, log_file_path=self.log_file_path, clevel=clevel, Flevel=Flevel, only_file=True)
-        self.logger_sample0 = Logger(name, log_file_path=None, clevel=ERROR, Flevel=ERROR)
-
-    def debug(self, message):
-        self.logger_sample.debug(message)
-
-    def info(self, message):
-        self.logger_sample.info(message)
-
-    def warn(self, message):
-        self.logger_sample.warn(message)
-
-    def error(self, message):
-        self.logger_sample0.error(message)
-
-    def change_path(self):
-        try:
-            self.logger_sample = Logger(self.name, log_file_path=self.log_file_path, clevel=self.clevel,
-                                        Flevel=self.log_level, only_file=True)
-        except Exception as e:
-            self.logger_sample.error("can't change log path to " + self.log_file_path + " : " + str(e))
-
-
-logger = LoggerSample("build", log_file_path="openEulerTransition_{0}.log".format(
+logger = Logger("build", log_file_path="openEulerTransition_{0}.log".format(
     str(time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()))))
 # Unified log format，change WARNING to WARN
 logging.addLevelName(WARN, 'WARN')
