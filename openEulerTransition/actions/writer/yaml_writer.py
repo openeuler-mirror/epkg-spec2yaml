@@ -1473,7 +1473,8 @@ class SpecParser(object):
                         sub_file_name = target_data["Name"][0] + "-" + sub_member_name.split("%if")[0].strip() \
                             if not whole_name else sub_member_name.split("%if")[0].strip()
                     else:
-                        sub_file_name = sub_member_name.strip()
+                        sub_file_name = target_data["Name"][0] + "-" + sub_member_name.strip() \
+                            if not whole_name else sub_member_name.strip()
                     for member_key, member_value in sub_member_dict.items():
                         if member_key == "files":
                             if "%if" in sub_member_name:
