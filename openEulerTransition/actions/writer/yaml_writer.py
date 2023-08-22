@@ -1470,8 +1470,10 @@ class SpecParser(object):
                     whole_name = "AsWholeName" in original_data["SubPackages"][sub_member_name].keys()
                     if "%if" in sub_member_name:
                         target_data = clear_sub_extra_judge(sub_member_name, self.items, target_items=target_data)
-                    sub_file_name = target_data["Name"][0] + "-" + sub_member_name.split("%if")[0].strip() \
-                        if not whole_name else sub_member_name.strip()
+                        sub_file_name = target_data["Name"][0] + "-" + sub_member_name.split("%if")[0].strip() \
+                            if not whole_name else sub_member_name.split("%if")[0].strip()
+                    else:
+                        sub_file_name = sub_member_name.strip()
                     for member_key, member_value in sub_member_dict.items():
                         if member_key == "files":
                             if "%if" in sub_member_name:
