@@ -506,7 +506,7 @@ def add_context(name, text, obj, file_obj: LuaFile):
     temp_list = first_line.split()
     if len(temp_list) > 1:
         if name not in MAIN_SHELL_KEYWORDS and not re.match("configure|cmake.*", name) and (temp_list[0].startswith(
-                "-") or temp_list[1].startswith("-")):
+                "-") or (temp_list[0].replace("%", "") in SHELL_KEYWORDS and temp_list[1].startswith("-"))):
             text = text.replace(first_line, target_first, 1)
     if "<lua>" in first_line:
         file_name = os.path.splitext(obj.name)[0]
