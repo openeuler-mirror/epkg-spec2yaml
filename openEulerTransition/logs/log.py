@@ -20,7 +20,7 @@ CRITICAL = logging.CRITICAL
 
 log_level = DEBUG
 if os.getenv('CI_BUILD_DEBUG') != 'True':
-    log_level = INFO
+    log_level = ERROR
 
 class LogInfo:
     def __init__(self, ):
