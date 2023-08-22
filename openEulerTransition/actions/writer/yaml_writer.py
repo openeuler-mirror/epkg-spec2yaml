@@ -416,7 +416,7 @@ class Convertor(object):
 
             for sub_items in subpkgs_list:
                 if "AsWholeName" not in sub_items and package_name != "" and "Name" in sub_items:
-                    sub_items["Name"] = _dict["Name"] + "-" + sub_items["Name"]
+                    sub_items["Name"] = package_name + "-" + sub_items["Name"]
                 elif "AsWholeName" in sub_items:
                     del sub_items["AsWholeName"]
                 if "Name" in sub_items:
