@@ -966,6 +966,12 @@ class SpecParser(object):
                 if macros_mode and need_left_strip:
                     if "rpmMacros" in items:
                         items["rpmMacros"] = right_strip_extra_judge(items["rpmMacros"])
+                    if macros_mode and _if_cond_part and not if_cond_part:
+                        if _else_cond_part and not else_cond_part:
+                            else_cond_part += _else_cond_part
+                            _else_cond_part.clear()
+                        if_cond_part += _if_cond_part
+                        _if_cond_part.clear()
                     macros_mode = False
                 if state == ST_INLINE and header in SHELL_KEYWORDS:
                     if re.match("%\w+", line) is not None:
