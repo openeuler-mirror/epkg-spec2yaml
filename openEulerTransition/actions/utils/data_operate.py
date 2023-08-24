@@ -884,7 +884,7 @@ def remove_files_param(opt):
 
 def right_strip_extra_judge(text):
     line_list = text.split(os.linesep)
-    last_line = line_list[0]
+    last_line = line_list[-1]
     if last_line.startswith("%if"):
         return os.linesep.join(line_list[:-1])
     return text
