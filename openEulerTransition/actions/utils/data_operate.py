@@ -642,14 +642,18 @@ def divide_several_requires(origin_list):
             search_list = re.findall("\S+\s+[>=<]+\s+\S+", line)
             search_list = list(map(lambda x: x.strip(","), search_list))
             target_list += search_list
+            for searched in search_list:
+                line = line.replace(searched, "")
+            if line.replace(",", "").strip() != "":
+                target_list += divide_several_requires([line.replace(",", "").strip()])
         elif "," in line:
             temp_list = line.split(",")
+            temp_list = list(map(lambda x: x.strip(), temp_list))
             if "" in temp_list:
                 temp_list.remove("")
-            temp_list = list(map(lambda x: x.strip(), temp_list))
             target_list += temp_list
         else:
-            target_list += line.split()
+            target_list += line.strip().split()
     return target_list
 
 

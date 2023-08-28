@@ -166,6 +166,40 @@ def cmake_params_split(script, cmake_cmd_flag):
     return params, cmake_cmd
 
 
+def add_make_flag(script):
+    """
+    make叠加%{?build_make_flags}
+    :param script:
+    :return:
+    """
+    if "cmake" in script:
+        return script
+    line_list = script.split(os.linesep)
+    make_dir = ""
+    make_num = 0
+    for line_index, line in enumerate(line_list):
+        if line.startswith("pushd "):
+            make_dir = re.findall("\w+", line)[-1]
+            continue
+        if line == "popd" and make_dir != "":
+            make_dir = ""
+            continue
+        if line.startswith("make ") or line.startswith("%make_build "):
+            if make_dir == "" and make_num == 0:
+                make_num += 1
+                make_func_name = ""
+            elif make_dir == "" and make_num != 0:
+                make_func_name = "_" + str(make_num)
+            else:
+                make_func_name = "_" + make_dir
+            if line.endswith("\\"):
+                line_list[line_index] = line.rstrip("\\").rtrip() + " %{?build_make" + make_func_name + "_flags} \\"
+            else:
+                line += " %{?build_make" + make_func_name + "_flags}"
+                line_list[line_index] = line
+    return os.linesep.join(line_list)
+
+
 def reverse_bool_value(word):
     """yes=>no, true=>false, ON=>OFF"""
     if isinstance(word, bool):
