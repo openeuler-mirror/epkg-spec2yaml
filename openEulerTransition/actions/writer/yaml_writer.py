@@ -1563,8 +1563,7 @@ class SpecParser(object):
                                                            macros_text=self.macros)[0]
         else:
             for subpackage in self.items["SubPackages"]:
-                pattern = re.escape(sub_name + "\s+%if")
-                if re.match(pattern, subpackage):
+                if re.match(sub_name + "\s+%if", subpackage):
                     condition = change_judgement_grammar(subpackage, self.rpm_global, macros_text=self.macros)[0]
                     break
         if " -n " in value and not whole:
