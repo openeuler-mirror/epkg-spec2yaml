@@ -128,42 +128,7 @@ def cmake_params_split(script, cmake_cmd_flag):
     params = compile_params.cmake_params
     if "cmake" not in script:
         return params
-    line_list = script.split(os.linesep)
-    start = False
-    condition = []
-    cmake_cmd = ""
-    for line in line_list:
-        if line.startswith("%cmake"):
-            start = True
-        if not start:
-            continue
-        if "#" in line:
-            line = line.split("#")[0]
-        if line.lstrip().startswith("-D") and "=" in line:
-            new_line = line.lstrip().replace("-D", "", 1).rstrip("\\")
-            param, value = new_line.split("=", 1)
-            if f"build.{cmake_cmd_flag}.flags" not in params:
-                params["build." + cmake_cmd_flag + ".flags"] = {}
-            value = esc_value(value.rstrip("\\ "))
-            if value.startswith("\"") and value.count("\"") == 1:
-                cmake_cmd += line + os.linesep
-                continue
-            if condition:
-                suffix = " " + " ".join(condition)
-                params["build." + cmake_cmd_flag + ".flags"][param + suffix] = value
-            else:
-                params["build." + cmake_cmd_flag + ".flags"][param] = value
-        elif line.lstrip().startswith("%if"):
-            condition.insert(0, line.strip())
-        elif line == "%else" and condition:
-            condition[0] = line + condition[0]
-        elif line == "%endif" and condition:
-            condition.pop(0)
-        else:
-            cmake_cmd += line + os.linesep
-            if not line.strip().endswith("\\"):
-                start = False
-    return params, cmake_cmd
+    return params, script
 
 
 def add_make_flag(script):
