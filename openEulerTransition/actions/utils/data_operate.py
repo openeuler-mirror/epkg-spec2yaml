@@ -668,8 +668,6 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
             target_list.remove(build_rq)
             build_rq = resolve_else_judgement(remove_marginals_quotes(build_rq))
             value = build_rq.split("%if")[0].strip()
-            if value.startswith("%"):
-                value = "\"" + value.replace("\"", "\\\"") + "\""
             add_judgement, add_define_flags = change_judgement_grammar(build_rq.replace(value, ""), global_dict,
                                      macros_text=macros_text)
             new_key = target + add_judgement
@@ -686,9 +684,6 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
             value = build_rq.split("%if")[0].strip()
             value = divide_several_requires([value])
             value = list(map(lambda x: change_macros_usage(x, global_dict, macros_text), value))
-            for v_index, v_item in enumerate(value):
-                if v_item.startswith("%"):
-                    value[v_index] = "\"" + v_item.replace("\"", "\\\"") + "\""
             if new_key in items:
                 items[new_key] += value
             else:
