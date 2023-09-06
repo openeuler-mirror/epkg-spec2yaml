@@ -416,7 +416,7 @@ class Convertor(object):
 
             for sub_items in subpkgs_list:
                 if "AsWholeName" not in sub_items and package_name != "" and "Name" in sub_items:
-                    sub_items["Name"] = package_name + "-" + sub_items["Name"]
+                    sub_items["Name"] = WHOLE_NAME_PREFIX + sub_items["Name"]
                 elif "AsWholeName" in sub_items:
                     del sub_items["AsWholeName"]
                 if "Name" in sub_items:
@@ -1476,10 +1476,10 @@ class SpecParser(object):
                     whole_name = "AsWholeName" in original_data["SubPackages"][sub_member_name].keys()
                     if "%if" in sub_member_name:
                         target_data = clear_sub_extra_judge(sub_member_name, self.items, target_items=target_data)
-                        sub_file_name = target_data["Name"][0] + "-" + sub_member_name.split("%if")[0].strip() \
+                        sub_file_name = WHOLE_NAME_PREFIX + sub_member_name.split("%if")[0].strip() \
                             if not whole_name else sub_member_name.split("%if")[0].strip()
                     else:
-                        sub_file_name = target_data["Name"][0] + "-" + sub_member_name.strip() \
+                        sub_file_name = WHOLE_NAME_PREFIX + sub_member_name.strip() \
                             if not whole_name else sub_member_name.strip()
                     for member_key, member_value in sub_member_dict.items():
                         if member_key == "files":
@@ -1519,6 +1519,9 @@ class SpecParser(object):
                         target_data["SubPackages"][keywords + add_judgement] = temp_sub_dict
                         self.add_define_flags_item(add_define_flags)
         self.items = target_data
+        if "build" in self.shell_functions:
+            self.shell_functions["build"] = add_make_flag(self.shell_functions["build"])
+            self.shell_functions["build"] = add_cmake_flag(self.shell_functions["build"])
         self.check_shell_functions()
 
     def change_several_requires(self):
@@ -1572,7 +1575,7 @@ class SpecParser(object):
         value = value.split(os.linesep)[0].replace(" -n", "") + os.linesep + os.linesep.join(value.split(os.linesep)[1:])
         original_sub_name = sub_name
         if sub_name is not None and not whole:
-            sub_name = main_name + "-" + sub_name
+            sub_name = WHOLE_NAME_PREFIX + sub_name
         if value.startswith("%" + keywords + os.linesep):  # 主包shell语句分解
             function_context = value.replace("%" + keywords + os.linesep, "", 1)
             self.shell_functions[keywords + condition] = function_context.strip()
@@ -1605,8 +1608,8 @@ class SpecParser(object):
                 for compile_cmd_flags, compile_content in configure_contents.items():
                     if compile_cmd_flags.startswith("configure"):
                         split_function = configure_params_split
-                    elif compile_cmd_flags.startswith("cmake"):
-                        split_function = cmake_params_split
+                    # elif compile_cmd_flags.startswith("cmake"):
+                    #     split_function = cmake_params_split
                     else:
                         continue
                     params, configure_content = split_function(compile_content, compile_cmd_flags)

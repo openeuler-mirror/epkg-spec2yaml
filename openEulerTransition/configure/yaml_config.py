@@ -47,3 +47,4 @@ KEY_SYS = {
         }
 
 RPM_MACRO_PARAM_COMMENT = ":rpm_macro_param:"
+WHOLE_NAME_PREFIX = "${{pkg.name}}-"

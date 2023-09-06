@@ -33,6 +33,8 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
             if line.startswith("%configure") or line.lstrip(".").startswith("/configure"):
                 start = True
                 configure_line = line + os.linesep
+                if line.lstrip(".").startswith("/configure"):
+                    configure_line = "%{?add_configure_flags} \\" + os.linesep + configure_line
                 if configure_cmd_flag:
                     key_name = configure_cmd_flag
                 elif configure_num > 1:
@@ -117,18 +119,38 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
     raise Exception("Error compile text, lack of configure command!")
 
 
-def cmake_params_split(script, cmake_cmd_flag):
+def add_cmake_flag(script):
     """
-    cmake参数分解
+    cmake参数后缀
     :param script:
-    :param cmake_cmd_flag:
     :return:
     """
-    compile_params = CompileParams()
-    params = compile_params.cmake_params
     if "cmake" not in script:
-        return params
-    return params, script
+        return script
+    line_list = script.split(os.linesep)
+    make_dir = ""
+    make_num = 0
+    for line_index, line in enumerate(line_list):
+        if line.startswith("pushd "):
+            make_dir = re.findall("\w+", line)[-1]
+            continue
+        if line == "popd" and make_dir != "":
+            make_dir = ""
+            continue
+        if line.startswith("cmake ") or line.startswith("%cmake "):
+            if make_dir == "" and make_num == 0:
+                make_num += 1
+                make_func_name = ""
+            elif make_dir == "" and make_num != 0:
+                make_func_name = "_" + str(make_num)
+            else:
+                make_func_name = "_" + make_dir
+            if line.endswith("\\"):
+                line_list[line_index] = line.rstrip("\\").rtrip() + " %{?build_cmake" + make_func_name + "_flags} \\"
+            else:
+                line += " %{?build_cmake" + make_func_name + "_flags}"
+                line_list[line_index] = line
+    return os.linesep.join(line_list)
 
 
 def add_make_flag(script):
