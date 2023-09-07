@@ -1608,8 +1608,11 @@ class SpecParser(object):
                 for compile_cmd_flags, compile_content in configure_contents.items():
                     if compile_cmd_flags.startswith("configure"):
                         split_function = configure_params_split
-                    # elif compile_cmd_flags.startswith("cmake"):
-                    #     split_function = cmake_params_split
+                    elif compile_cmd_flags.startswith("cmake"):
+                        # split_function = cmake_params_split
+                        cmake_content = add_cmake_flag(compile_content)
+                        self.shell_functions[compile_cmd_flags] = cmake_content
+                        continue
                     else:
                         continue
                     params, configure_content = split_function(compile_content, compile_cmd_flags)
