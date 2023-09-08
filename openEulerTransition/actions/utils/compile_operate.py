@@ -145,11 +145,9 @@ def add_cmake_flag(script):
                 make_func_name = "_" + str(make_num)
             else:
                 make_func_name = "_" + make_dir
-            if line.endswith("\\"):
-                line_list[line_index] = line.rstrip("\\").rstrip() + " %{?build_cmake" + make_func_name + "_flags} \\"
-            else:
-                line += " %{?build_cmake" + make_func_name + "_flags}"
-                line_list[line_index] = line
+            temp_list = line.split(" ", 1)
+            temp_list.insert(1, "%{?build_cmake" + make_func_name + "_flags}")
+            line_list[line_index] = " ".join(temp_list)
     return os.linesep.join(line_list)
 
 
@@ -179,11 +177,9 @@ def add_make_flag(script):
                 make_func_name = "_" + str(make_num)
             else:
                 make_func_name = "_" + make_dir
-            if line.endswith("\\"):
-                line_list[line_index] = line.rstrip("\\").rstrip() + " %{?build_make" + make_func_name + "_flags} \\"
-            else:
-                line += " %{?build_make" + make_func_name + "_flags}"
-                line_list[line_index] = line
+            temp_list = line.split(" ", 1)
+            temp_list.insert(1, "%{?build_make" + make_func_name + "_flags}")
+            line_list[line_index] = " ".join(temp_list)
     return os.linesep.join(line_list)
 
 
