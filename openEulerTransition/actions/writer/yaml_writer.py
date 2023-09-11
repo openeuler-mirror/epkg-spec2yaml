@@ -176,7 +176,9 @@ class SpectacleDumper(object):
                         for item in extra_val:
                             # fp.write(cur_indent + TAB + "%s\n" % item)
                             item = add_tab_in_lines(item)
-                            fp.write(cur_indent + "%s\n" % item.replace('\"', '\\"'))
+                            if os.linesep not in item.strip():
+                                item = item.replace('\"', '\\"')
+                            fp.write(cur_indent + "%s\n" % item)
                         fp.write(os.linesep)
                 continue
 
@@ -1023,9 +1025,9 @@ class SpecParser(object):
                     else:
                         if if_cond_part:
                             if subpackages_mode:
-                                items = add_string_to_dict(items, "rpmMacros", if_cond_part[0])
+                                items = add_string_to_dict(items, "rpmMacros", if_cond_part[0] + os.linesep)
                             else:
-                                self.macros += if_cond_part[0]
+                                self.macros += if_cond_part[0] + os.linesep
                             _if_cond_part += if_cond_part
                             if_cond_part.clear()
                         left_count, right_count = calculate_brackets(line)
