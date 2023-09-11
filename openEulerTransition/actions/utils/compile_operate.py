@@ -146,7 +146,7 @@ def add_cmake_flag(script):
             else:
                 make_func_name = "_" + make_dir
             if line.endswith("\\"):
-                line_list[line_index] = line.rstrip("\\").rtrip() + " %{?build_cmake" + make_func_name + "_flags} \\"
+                line_list[line_index] = line.rstrip("\\").rstrip() + " %{?build_cmake" + make_func_name + "_flags} \\"
             else:
                 line += " %{?build_cmake" + make_func_name + "_flags}"
                 line_list[line_index] = line
