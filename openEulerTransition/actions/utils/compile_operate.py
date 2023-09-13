@@ -115,7 +115,7 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
             else:
                 configure_line += line + os.linesep
                 start = False
-        return params, configure_line
+        return params, configure_line.rstrip().rstrip("\\") + os.linesep
     raise Exception("Error compile text, lack of configure command!")
 
 
