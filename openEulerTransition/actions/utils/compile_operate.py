@@ -33,8 +33,6 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
             if line.startswith("%configure") or line.lstrip(".").startswith("/configure"):
                 start = True
                 configure_line = line + os.linesep
-                if line.lstrip(".").startswith("/configure"):
-                    configure_line = "%{?add_configure_flags} " + configure_line
                 if configure_cmd_flag:
                     key_name = configure_cmd_flag
                 elif configure_num > 1:
