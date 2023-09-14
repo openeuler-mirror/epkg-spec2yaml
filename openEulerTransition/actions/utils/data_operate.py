@@ -458,8 +458,18 @@ def divide_out_configure(content: str):
                     else:
                         build += "configure_" + str(configure_num) + os.linesep
                 configure_num += 1
-            configure_cmd = True
+            configure_cmd = line.rstrip().endswith("\\")
             configure += line + os.linesep
+            if not configure_cmd:
+                if configure_cmd_flags:
+                    key_name = f"{compile_type}_{configure_cmd_flags}"
+                elif configure_num > 1:
+                    key_name = f"{compile_type}_{str(configure_num - 1)}"
+                else:
+                    key_name = compile_type
+                configure_items[key_name] = configure.strip()
+                configure = ""
+                continue
         elif line.startswith("%cmake"):
             compile_type = "cmake"
             if not configure_cmd:
@@ -471,8 +481,18 @@ def divide_out_configure(content: str):
                     else:
                         build += "cmake_" + str(configure_num) + os.linesep
                 configure_num += 1
-            configure_cmd = True
+            configure_cmd = line.rstrip().endswith("\\")
             configure += line + os.linesep
+            if not configure_cmd:
+                if configure_cmd_flags:
+                    key_name = f"{compile_type}_{configure_cmd_flags}"
+                elif configure_num > 1:
+                    key_name = f"{compile_type}_{str(configure_num - 1)}"
+                else:
+                    key_name = compile_type
+                configure_items[key_name] = configure.strip()
+                configure = ""
+                continue
         if not configure_cmd:
             build += line + os.linesep
         if compile_type and compile_type in line and not line.endswith("\\"):
