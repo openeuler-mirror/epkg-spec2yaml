@@ -97,10 +97,10 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
             elif line.lstrip().startswith("%if"):
                 configure_line += line + os.linesep
                 condition.insert(0, line.strip())
-            elif line == "%else" and condition:
+            elif line.strip() == "%else" and condition:
                 configure_line += line + os.linesep
                 condition[0] = line + condition[0]
-            elif line == "%endif" and condition:
+            elif line.strip() == "%endif" and condition:
                 last_configure_line = configure_line.strip().split(os.linesep)[-1]
                 if last_configure_line.strip().startswith("%if"):
                     configure_line = os.linesep.join(configure_line.strip().split(os.linesep)[:-1]) + os.linesep
