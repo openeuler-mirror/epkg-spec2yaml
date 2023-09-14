@@ -148,7 +148,7 @@ def add_cmake_flag(script):
             else:
                 line += " %{?build_cmake" + make_func_name + "_flags}"
                 line_list[line_index] = line
-    return os.linesep.join(line_list)
+    return os.linesep.join(line_list).rstrip().rstrip("\\") + os.linesep
 
 
 def add_make_flag(script):
