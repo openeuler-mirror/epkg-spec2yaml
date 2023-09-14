@@ -516,8 +516,6 @@ class YamlWriter:
 
 
 def pre_treatment(content):
-    if "%%" in content:
-        content = content.replace("%%", "\\%\\%").replace("\\%%", "\\%\\%")
     if re.search(r"\\+\w", content):
         escape_characters = list(set(re.findall(r"\\+\w", content)))
         for character in escape_characters:
