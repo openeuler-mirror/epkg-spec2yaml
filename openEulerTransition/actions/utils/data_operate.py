@@ -688,8 +688,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
             target_list.remove(build_rq)
             build_rq = resolve_else_judgement(remove_marginals_quotes(build_rq))
             value = build_rq.split("%if")[0].strip()
-            add_judgement, add_define_flags = change_judgement_grammar(build_rq.replace(value, ""), global_dict,
-                                     macros_text=macros_text)
+            add_judgement, add_define_flags = change_judgement_grammar(build_rq.replace(value, ""), global_dict)
             new_key = target + add_judgement
             if new_key in items:
                 items[new_key].append(value)
@@ -699,7 +698,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
         elif "%if" in build_rq:
             target_list.remove(build_rq)
             build_rq = remove_marginals_quotes(build_rq)
-            add_judgement, add_define_flags = change_judgement_grammar(build_rq, global_dict, macros_text=macros_text)
+            add_judgement, add_define_flags = change_judgement_grammar(build_rq, global_dict)
             new_key = target + add_judgement
             value = build_rq.split("%if")[0].strip()
             value = divide_several_requires([value])
@@ -716,7 +715,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
     return items, add_define_flags
 
 
-def change_judgement_grammar(line, global_dict, macros_text=""):
+def change_judgement_grammar(line, global_dict):
     tmp_conditions = line.split("%if")[1:]
     conditions = list(map(lambda x: "%if" + x.rstrip(), tmp_conditions))
     judgement = ""
@@ -758,7 +757,7 @@ def change_judgement_grammar(line, global_dict, macros_text=""):
             base_condition = condition.strip().split(" ", 1)[1]
             if base_condition.startswith("%{") and base_condition.endswith("}"):
                 base_param = base_condition.replace("%{", "").replace("}", "")
-                changed_param = change_macros_type(base_param, global_dict, macros_text)
+                changed_param = change_macros_type(base_param, global_dict)
                 condition = condition.replace(base_condition, changed_param)
             condition = condition.replace("%ifarch", "when arch in").replace(
                 "%ifnarch", "when arch not in").replace("%ifos", "when os in").replace(
@@ -766,11 +765,11 @@ def change_judgement_grammar(line, global_dict, macros_text=""):
             if re.search(" (%\{([\w_]+)})", condition):
                 params = re.findall(" (%\{([\w_]+)})", condition)
                 for param in params:
-                    changed_param = change_macros_type(param[1], global_dict, macros_text)
+                    changed_param = change_macros_type(param[1], global_dict)
                     condition = condition.replace(param[0], changed_param)
             judgement += condition
         else:
-            judgement += change_to_when_or_rpmwhen(condition, global_dict, macros_text)
+            judgement += change_to_when_or_rpmwhen(condition, global_dict)
     judgement = change_macros_usage(judgement, global_dict)
     judgement = merge_multi_judgement(judgement)
     if "%if " in judgement:
@@ -780,7 +779,7 @@ def change_judgement_grammar(line, global_dict, macros_text=""):
     return judgement.rstrip(), add_define_flags
 
 
-def change_to_when_or_rpmwhen(condition, spec_global, spec_macros):
+def change_to_when_or_rpmwhen(condition, spec_global):
     condition = condition.replace("%if", "").strip()
     non = "not " if condition.strip().startswith("!") else ""
     if re.fullmatch("\w%\{?.*}\s+!\s*=\s*\w", condition):
@@ -793,8 +792,6 @@ def change_to_when_or_rpmwhen(condition, spec_global, spec_macros):
     if base_param != "":
         if base_param in RPM_GLOBAL_MACROS or base_param in spec_global:
             rpm_flag = "when"
-        elif re.search("\n%define\s+" + base_param + " ", spec_macros) is not None or re.search("\n%global\s+" + base_param + " ", spec_macros) is not None:
-            rpm_flag = "when"
         else:
             rpm_flag = "rpmWhen"
     else:
@@ -802,7 +799,7 @@ def change_to_when_or_rpmwhen(condition, spec_global, spec_macros):
     if rpm_flag == "rpmWhen":
         target = rpm_flag + " " + condition.strip()
     else:
-        modified_condition = modify_by_when(base_param, spec_global, spec_macros)
+        modified_condition = modify_by_when(base_param, spec_global)
         if non:
             target = rpm_flag + " " + modified_condition.replace("!", non, 1).strip()
         else:
@@ -819,14 +816,14 @@ def merge_multi_judgement(words):
     return words
 
 
-def modify_by_when(word, spec_global, spec_macros=""):
+def modify_by_when(word, spec_global):
     if re.search("\w?%\{\??\w+}", word) is not None:
         search_words = re.findall("\w?%\{\??\w+}", word)
         for search_word in search_words:
             core_word = search_word.split("%{")[1].rstrip("}").lstrip("?")
             if core_word in RPM_GLOBAL_MACROS:
                 word = "${{rpmrc." + core_word + "}}"
-            elif core_word in spec_global or core_word in spec_macros:
+            elif core_word in spec_global:
                 word = "${{pkg.rpmGlobal." + core_word + "}}"
             else:
                 word = word.replace(search_word, "${{" + core_word + "}}")
@@ -942,8 +939,8 @@ def check_rpm_condition(judgements, rpm_globals):
     return rpm_condition
 
 
-def change_macros_type(base_condition: str, rpm_globals, macros_str=""):
-    if base_condition in rpm_globals or base_condition in macros_str:
+def change_macros_type(base_condition: str, rpm_globals):
+    if base_condition in rpm_globals:
         result = "${{pkg.rpmGlobal.%s}}" % base_condition
     elif base_condition in RPM_SYSTEM_MACROS:
         result = "${{rpmrc.%s}}" % base_condition
