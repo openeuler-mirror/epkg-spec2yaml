@@ -825,7 +825,7 @@ def modify_by_when(word, spec_global, spec_macros=""):
         for search_word in search_words:
             core_word = search_word.split("%{")[1].rstrip("}").lstrip("?")
             if core_word in RPM_GLOBAL_MACROS:
-                word = "${{pkg.rpmGlobal." + core_word + "}}"
+                word = "${{rpmrc." + core_word + "}}"
             elif core_word in spec_global or core_word in spec_macros:
                 word = "${{pkg.rpmGlobal." + core_word + "}}"
             else:
