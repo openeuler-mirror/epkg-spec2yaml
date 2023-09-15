@@ -942,7 +942,7 @@ def check_rpm_condition(judgements, rpm_globals):
 def change_macros_type(base_condition: str, rpm_globals):
     if base_condition in rpm_globals:
         result = "${{pkg.rpmGlobal.%s}}" % base_condition
-    elif base_condition in RPM_SYSTEM_MACROS:
+    elif base_condition in RPM_GLOBAL_MACROS:
         result = "${{rpmrc.%s}}" % base_condition
     else:
         result = base_condition
