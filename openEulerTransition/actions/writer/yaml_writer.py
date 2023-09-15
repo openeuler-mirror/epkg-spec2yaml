@@ -130,7 +130,8 @@ class SpectacleDumper(object):
         for key, value in data:
             if key == "version":
                 with open("versions.yaml", "w") as f:
-                    f.write(f"{key}: {value}")
+                    f.write(f"{key}: {value}" + os.linesep)
+                fp.write(f"{key}: {value}" + os.linesep)
                 continue
             elif key.startswith("defineFlags"):
                 if new_define_yaml:
