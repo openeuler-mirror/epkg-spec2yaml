@@ -745,10 +745,10 @@ def change_judgement_grammar(line, global_dict, macros_text=""):
             if condition in RPM_GLOBAL_MACROS:
                 judgement += "when ${{rpmrc." + base_condition + "}}"
             elif condition in global_dict:
-                judgement += "when ${{rpmGlobal." + base_condition + "}}"
+                judgement += "when ${{pkg.rpmGlobal." + base_condition + "}}"
             else:
                 judgement += condition.replace("%if", "rpmWhen")
-        # TODO(	%if %{openEuler}=>when ${{rpmGlobal.openEuler}})
+        # TODO(	%if %{openEuler}=>when ${{pkg.rpmGlobal.openEuler}})
         elif re.fullmatch("%if\s+%\{[\w|_]+}", condition) is not None:
             judgement += "when " + add_rpm_global(condition.split("{")[1].rstrip("}"))
         # TODO(%ifarch|%ifos|%ifnarch|%ifnos=>when arch in)
@@ -825,9 +825,9 @@ def modify_by_when(word, spec_global, spec_macros=""):
         for search_word in search_words:
             core_word = search_word.split("%{")[1].rstrip("}").lstrip("?")
             if core_word in RPM_GLOBAL_MACROS:
-                word = "${{rpmGlobal." + core_word + "}}"
+                word = "${{pkg.rpmGlobal." + core_word + "}}"
             elif core_word in spec_global or core_word in spec_macros:
-                word = "${{rpmGlobal." + core_word + "}}"
+                word = "${{pkg.rpmGlobal." + core_word + "}}"
             else:
                 word = word.replace(search_word, "${{" + core_word + "}}")
     return word
@@ -837,7 +837,7 @@ def add_rpm_global(before):
     if before in RPM_GLOBAL_MACROS:
         after = "${{rpmrc." + before + "}}"
     else:
-        after = "${{rpmGlobal." + before + "}}"
+        after = "${{pkg.rpmGlobal." + before + "}}"
     return after
 
 
@@ -849,7 +849,7 @@ def change_macros_usage(line, rpm_global=None):
     # TODO(%{version}-%{release}=>${{pkg.version}}-${{release}})
     if re.search("%\{version}|%\{name}|%\{release}|%\{epoch}", line):
         line = line.replace("%{version}", "${{pkg.version}}").replace("%{name}", "${{pkg.name}}").replace("%{release}", "${{pkg.release}}").replace("%{epoch}", "${{pkg.epoch}}")
-    # TODO(%{atk_version}=>${{rpmGlobal.atk_version}})
+    # TODO(%{atk_version}=>${{pkg.rpmGlobal.atk_version}})
     if re.search(" %\{\w+}", line) is not None:
         results = re.findall(" %\{\w+}", line)
         for macro in results:
@@ -858,7 +858,7 @@ def change_macros_usage(line, rpm_global=None):
                 prefix = "${{rpmrc."
                 suffix = "}}"
             elif param in rpm_global:
-                prefix = "${{rpmGlobal."
+                prefix = "${{pkg.rpmGlobal."
                 suffix = "}}"
             else:
                 prefix = "%{"
@@ -944,7 +944,7 @@ def check_rpm_condition(judgements, rpm_globals):
 
 def change_macros_type(base_condition: str, rpm_globals, macros_str=""):
     if base_condition in rpm_globals or base_condition in macros_str:
-        result = "${{rpmGlobal.%s}}" % base_condition
+        result = "${{pkg.rpmGlobal.%s}}" % base_condition
     elif base_condition in RPM_SYSTEM_MACROS:
         result = "${{rpmrc.%s}}" % base_condition
     else:

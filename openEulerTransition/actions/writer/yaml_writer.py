@@ -1467,10 +1467,10 @@ class SpecParser(object):
                 lower_key = _key.lower()
                 if _value[0] == "%{" + lower_key + "}":
                     if lower_key in self.rpm_global or lower_key in self.macros:
-                        target_data[_key][0] = "${{rpmGlobal." + lower_key + "}}"
+                        target_data[_key][0] = "${{pkg.rpmGlobal." + lower_key + "}}"
                 elif _value == "%{" + lower_key + "}":
                     if lower_key in self.rpm_global or lower_key in self.macros:
-                        target_data[_key] = "${{rpmGlobal." + lower_key + "}}"
+                        target_data[_key] = "${{pkg.rpmGlobal." + lower_key + "}}"
             if _key == "SubPackages":
                 for sub_member_name, sub_member_dict in original_data["SubPackages"].items():
                     if "rpmMacros" in sub_member_dict:
