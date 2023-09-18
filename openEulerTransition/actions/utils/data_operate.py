@@ -330,7 +330,7 @@ def divide_rpm_global(macros_text, rpm_global_text):
     for i, line in enumerate(line_list):
         if line.endswith("%{expand:"):
             continue
-        if re.match("%global\s+\S+ [\s\S]+", line) is not None:
+        if re.match("(%global|%define)\s+\S+ [\s\S]+", line) is not None:
             if line.endswith("\\"):
                 continue
             if if_flag == else_flag == 0:
@@ -934,5 +934,5 @@ def change_macros_type(base_condition: str, rpm_globals):
     elif base_condition in RPM_GLOBAL_MACROS:
         result = "${{rpmrc.%s}}" % base_condition
     else:
-        result = base_condition
+        result = "%{?" + base_condition + "}"
     return result
