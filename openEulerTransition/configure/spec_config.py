@@ -101,7 +101,10 @@ ORDER_ENTRIES = ['Macros',
                  'FilesJudgement',
                  'rpmMacros',
                  'rpmGlobal',
-                 'useFlag'
+                 'useFlag',
+                 "AutoReq",
+                 "AutoProv",
+                 "AutoReqProv"
                  ]
 
 SPEC_EXTRA_KEYS = {
