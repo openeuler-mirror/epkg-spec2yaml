@@ -34,7 +34,10 @@ SINGLES = ('Summary',
            'BuildRoot',
            'Prefix',
            'License',
-           "Release")
+           "Release",
+           "AutoReq",
+           "AutoProv",
+           "AutoReqProv")
 SEVERAL = ('Source',
            'Patch',)
 REQUIRES = ('BuildRequires',

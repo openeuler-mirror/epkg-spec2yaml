@@ -361,7 +361,6 @@ class Convertor(object):
         :return:
         """
         self._replace_keys(_dict)
-        translate_keys(_dict)
         remove_duplicate(_dict)
 
         items = []
@@ -912,7 +911,7 @@ class SpecParser(object):
         cond_endif = re.compile('^%endif.*')
         directive = re.compile('^([\w()]+)[ \t]*:[ \t]*(.*)')
         header_re = re.compile('^%(' + '|'.join(HEADERS) + ')\s*(.*)')
-        single_re = re.compile('^(' + '|'.join(SINGLES + SEVERAL) + ')\s*(.*)')
+        single_re = re.compile('^(' + '|'.join(SINGLES + SEVERAL + BOOL_SINGLES) + ')\s*(.*)')
         require_re = re.compile('^(' + '|'.join(REQUIRES) + ')\s*(.*)')
 
         state = ST_MAIN
@@ -1743,7 +1742,7 @@ class SpecParser(object):
                     nv.append(vi)
                 v = nv
 
-            if k in (SINGLES + SEVERAL):
+            if k in (SINGLES + SEVERAL + BOOL_SINGLES):
                 if isinstance(v, str):
                     ck_items[k] = v
                 else:
