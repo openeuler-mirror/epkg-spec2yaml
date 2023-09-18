@@ -1456,7 +1456,8 @@ class SpecParser(object):
                 if "%if" in file_key:
                     add_judgement, add_define_flags = change_judgement_grammar("%if " + " ".join(file_key.split("%if")[1:]),
                                                                 self.rpm_global)
-                    files_judgement += add_judgement
+                    if add_judgement not in files_judgement:
+                        files_judgement += add_judgement
                     self.add_define_flags_item(add_define_flags)
                     main_file_key = "files" + files_judgement
                 else:
@@ -1493,7 +1494,8 @@ class SpecParser(object):
                                 del target_data["SubPackages"][sub_member_name]["FilesJudgement"]
                             if "%if" in sub_member_name:
                                 add_judgement, add_define_flags = change_judgement_grammar(sub_member_name, self.rpm_global)
-                                sub_files_judgement += add_judgement
+                                if add_judgement not in sub_files_judgement:
+                                    sub_files_judgement += add_judgement
                                 self.add_define_flags_item(add_define_flags)
                             self.files["subpackage." + sub_file_name + ".files" + sub_files_judgement] = member_value
                             del target_data["SubPackages"][sub_member_name]["files"]
