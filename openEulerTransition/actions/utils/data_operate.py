@@ -738,18 +738,15 @@ def change_judgement_grammar(line, global_dict):
             judgement = "when"
             add_define_flags.append(base_param)
             judgement += " " + base_param
-        # TODO(	%if 0%{?openEuler}=>when ${{rpmrc.openEuler})
-        elif re.fullmatch("%if\s+[0x]%\{\?[\w|_]+}", condition) is not None:
-            base_condition = condition.split("?")[1].rstrip("}")
+        # TODO(	%if 0%{?openEuler}=>when ${{rpmrc.openEuler}) or when ${{pkg.rpmGlobal.openEuler}}
+        elif re.fullmatch("%if\s+[0x]%\{\??[\w|_]+}", condition) is not None:
+            base_condition = condition.split("{")[1].lstrip("?").rstrip("}")
             if condition in RPM_GLOBAL_MACROS:
                 judgement += "when ${{rpmrc." + base_condition + "}}"
             elif condition in global_dict:
                 judgement += "when ${{pkg.rpmGlobal." + base_condition + "}}"
             else:
                 judgement += condition.replace("%if", "rpmWhen")
-        # TODO(	%if %{openEuler}=>when ${{pkg.rpmGlobal.openEuler}})
-        elif re.fullmatch("%if\s+%\{[\w|_]+}", condition) is not None:
-            judgement += "when " + add_rpm_global(condition.split("{")[1].rstrip("}"))
         # TODO(%ifarch|%ifos|%ifnarch|%ifnos=>when arch in)
         elif re.match("%ifarch|%ifos|%ifnarch|%ifnos", condition) is not None:
             if " " not in condition:
@@ -828,14 +825,6 @@ def modify_by_when(word, spec_global):
             else:
                 word = word.replace(search_word, "${{" + core_word + "}}")
     return word
-
-
-def add_rpm_global(before):
-    if before in RPM_GLOBAL_MACROS:
-        after = "${{rpmrc." + before + "}}"
-    else:
-        after = "${{pkg.rpmGlobal." + before + "}}"
-    return after
 
 
 def change_macros_usage(line, rpm_global=None):
