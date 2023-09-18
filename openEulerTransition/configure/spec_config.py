@@ -34,7 +34,8 @@ SINGLES = ('Summary',
            'BuildRoot',
            'Prefix',
            'License',
-           "Release",
+           "Release")
+BOOL_SINGLES = (
            "AutoReq",
            "AutoProv",
            "AutoReqProv")
