@@ -1486,12 +1486,15 @@ class SpecParser(object):
                             if not whole_name else sub_member_name.strip()
                     for member_key, member_value in sub_member_dict.items():
                         if member_key == "files":
+                            sub_files_judgement = ""
+                            if "FilesJudgement" in sub_member_dict:
+                                sub_files_judgement += change_judgement_grammar(
+                                    " ".join(sub_member_dict["FilesJudgement"]), self.rpm_global)[0]
+                                del target_data["SubPackages"][sub_member_name]["FilesJudgement"]
                             if "%if" in sub_member_name:
                                 add_judgement, add_define_flags = change_judgement_grammar(sub_member_name, self.rpm_global)
-                                sub_files_judgement = add_judgement
+                                sub_files_judgement += add_judgement
                                 self.add_define_flags_item(add_define_flags)
-                            else:
-                                sub_files_judgement = ""
                             self.files["subpackage." + sub_file_name + ".files" + sub_files_judgement] = member_value
                             del target_data["SubPackages"][sub_member_name]["files"]
                         if member_key == "Summary" and len(member_value) == 1 and member_value[0].startswith("`"):
