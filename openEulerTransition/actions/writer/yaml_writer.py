@@ -1530,6 +1530,7 @@ class SpecParser(object):
             self.shell_functions["build"] = add_make_flag(self.shell_functions["build"])
             self.shell_functions["build"] = add_cmake_flag(self.shell_functions["build"])
         self.check_shell_functions()
+        self.check_macros_use()
 
     def change_several_requires(self):
         for change_key, target_key in LIST_KEY_REPLACE.items():
@@ -1850,6 +1851,60 @@ class SpecParser(object):
                     line_list.pop(0)
                 else:
                     break
+
+    def check_macros_use(self):
+        origin_data = self.items.copy()
+        for key, origin_value in origin_data.items():
+            if key in SINGLES and isinstance(origin_value, list):
+                value = origin_value[0]
+                macros_uses = re.findall("%\{\??\w+}", value)
+                macros_use_names = list(map(lambda x: x.lstrip("${?").rstrip("}"), macros_uses))
+                for m, macros_use_name in enumerate(macros_use_names):
+                    if macros_use_name in self.rpm_global:
+                        value = value.replace(macros_uses[m], "${{pkg.rpmGlobal." + macros_use_name + "}}")
+                        self.items[key] = [value]
+                    elif macros_use_name in RPM_SYSTEM_MACROS:
+                        value = value.replace(macros_uses[m], "${{rpmrc." + macros_use_name + "}}")
+                        self.items[key] = [value]
+            elif key in SINGLES and isinstance(origin_value, str):
+                macros_uses = re.findall("%\{\??\w+}", origin_value)
+                macros_use_names = list(map(lambda x: x.lstrip("${?").rstrip("}"), macros_uses))
+                for m, macros_use_name in enumerate(macros_use_names):
+                    if macros_use_name in self.rpm_global:
+                        value = origin_value.replace(macros_uses[m], "${{pkg.rpmGlobal." + macros_use_name + "}}")
+                        self.items[key] = value
+                    elif macros_use_name in RPM_SYSTEM_MACROS:
+                        value = origin_value.replace(macros_uses[m], "${{pkg.rpmrc." + macros_use_name + "}}")
+                        self.items[key] = value
+            elif key == "SubPackages" and isinstance(origin_value, dict):
+                for sub_name, sub in origin_value.items():
+                    if not isinstance(sub, dict):
+                        continue
+                    for sub_key, sub_value in sub.items():
+                        if sub_key in SINGLES and isinstance(sub_value, list):
+                            macros_uses = re.findall("%\{\??\w+}", sub_value[0])
+                            macros_use_names = list(map(lambda x: x.lstrip("${?").rstrip("}"), macros_uses))
+                            for m, macros_use_name in enumerate(macros_use_names):
+                                if macros_use_name in self.rpm_global:
+                                    sub_value[0] = sub_value[0].replace(macros_uses[m],
+                                                                        "${{pkg.rpmGlobal." + macros_use_name + "}}")
+                                    self.items["SubPackage"][sub_name][sub_key] = sub_value
+                                elif macros_use_name in RPM_SYSTEM_MACROS:
+                                    sub_value[0] = sub_value[0].replace(macros_uses[m],
+                                                                        "${{pkg.rpmrc." + macros_use_name + "}}")
+                                    self.items["SubPackage"][sub_name][sub_key] = sub_value
+                        elif sub_key in SINGLES and isinstance(sub_value, str):
+                            macros_uses = re.findall("%\{\??\w+}", sub_value)
+                            macros_use_names = list(map(lambda x: x.lstrip("${?").rstrip("}"), macros_uses))
+                            for m, macros_use_name in enumerate(macros_use_names):
+                                if macros_use_name in self.rpm_global:
+                                    sub_value = sub_value.replace(macros_uses[m],
+                                                                  "${{pkg.rpmGlobal." + macros_use_name + "}}")
+                                    self.items["SubPackage"][sub_name][sub_key] = sub_value
+                                elif macros_use_name in RPM_SYSTEM_MACROS:
+                                    sub_value = sub_value.replace(macros_uses[m],
+                                                                  "${{pkg.rpmrc." + macros_use_name + "}}")
+                                    self.items["SubPackage"][sub_name][sub_key] = sub_value
 
     def add_compile_flags_items(self, params: dict, items=None):
         if items is None:

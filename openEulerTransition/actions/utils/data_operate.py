@@ -190,33 +190,6 @@ def add_special_keywords(_items, line, keyword):
             _items[keyword] = [line]
 
 
-def translate_keys(_dict):
-    """
-    将AutoReq/AutoProv的值转换成布尔类型
-    :param _dict: 传入的字典
-    :return:
-    """
-    # translate AutoReq/AutoProv to spectacle boolean keys
-    autoreq = autoprov = None
-    if 'AutoReq' in _dict:
-        autoreq = _dict['AutoReq']
-        del _dict['AutoReq']
-    if 'AutoProv' in _dict:
-        autoprov = _dict['AutoProv']
-        del _dict['AutoProv']
-    if 'AutoReqProv' in _dict:
-        if _dict['AutoReqProv'] == '0':
-            autoreq = autoprov = '0'
-        del _dict['AutoReqProv']
-
-    if autoreq == '0' and autoprov == '0':
-        _dict['NoAutoReqProv'] = 'yes'
-    elif autoreq == '0':
-        _dict['NoAutoReq'] = 'yes'
-    elif autoprov == '0':
-        _dict['NoAutoProv'] = 'yes'
-
-
 def remove_duplicate(_dict):
     """
     配置去重
