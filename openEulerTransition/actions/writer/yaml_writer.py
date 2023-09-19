@@ -1888,11 +1888,11 @@ class SpecParser(object):
                                 if macros_use_name in self.rpm_global:
                                     sub_value[0] = sub_value[0].replace(macros_uses[m],
                                                                         "${{pkg.rpmGlobal." + macros_use_name + "}}")
-                                    self.items["SubPackage"][sub_name][sub_key] = sub_value
+                                    self.items["SubPackages"][sub_name][sub_key] = sub_value
                                 elif macros_use_name in RPM_SYSTEM_MACROS:
                                     sub_value[0] = sub_value[0].replace(macros_uses[m],
                                                                         "${{pkg.rpmrc." + macros_use_name + "}}")
-                                    self.items["SubPackage"][sub_name][sub_key] = sub_value
+                                    self.items["SubPackages"][sub_name][sub_key] = sub_value
                         elif sub_key in SINGLES and isinstance(sub_value, str):
                             macros_uses = re.findall("%\{\??\w+}", sub_value)
                             macros_use_names = list(map(lambda x: x.lstrip("%{?").rstrip("}"), macros_uses))
@@ -1900,11 +1900,11 @@ class SpecParser(object):
                                 if macros_use_name in self.rpm_global:
                                     sub_value = sub_value.replace(macros_uses[m],
                                                                   "${{pkg.rpmGlobal." + macros_use_name + "}}")
-                                    self.items["SubPackage"][sub_name][sub_key] = sub_value
+                                    self.items["SubPackages"][sub_name][sub_key] = sub_value
                                 elif macros_use_name in RPM_SYSTEM_MACROS:
                                     sub_value = sub_value.replace(macros_uses[m],
                                                                   "${{pkg.rpmrc." + macros_use_name + "}}")
-                                    self.items["SubPackage"][sub_name][sub_key] = sub_value
+                                    self.items["SubPackages"][sub_name][sub_key] = sub_value
 
     def add_compile_flags_items(self, params: dict, items=None):
         if items is None:
