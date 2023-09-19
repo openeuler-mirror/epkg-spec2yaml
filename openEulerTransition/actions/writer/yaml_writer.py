@@ -1858,7 +1858,7 @@ class SpecParser(object):
             if key in SINGLES and isinstance(origin_value, list):
                 value = origin_value[0]
                 macros_uses = re.findall("%\{\??\w+}", value)
-                macros_use_names = list(map(lambda x: x.lstrip("${?").rstrip("}"), macros_uses))
+                macros_use_names = list(map(lambda x: x.lstrip("%{?").rstrip("}"), macros_uses))
                 for m, macros_use_name in enumerate(macros_use_names):
                     if macros_use_name in self.rpm_global:
                         value = value.replace(macros_uses[m], "${{pkg.rpmGlobal." + macros_use_name + "}}")
@@ -1868,7 +1868,7 @@ class SpecParser(object):
                         self.items[key] = [value]
             elif key in SINGLES and isinstance(origin_value, str):
                 macros_uses = re.findall("%\{\??\w+}", origin_value)
-                macros_use_names = list(map(lambda x: x.lstrip("${?").rstrip("}"), macros_uses))
+                macros_use_names = list(map(lambda x: x.lstrip("%{?").rstrip("}"), macros_uses))
                 for m, macros_use_name in enumerate(macros_use_names):
                     if macros_use_name in self.rpm_global:
                         value = origin_value.replace(macros_uses[m], "${{pkg.rpmGlobal." + macros_use_name + "}}")
@@ -1883,7 +1883,7 @@ class SpecParser(object):
                     for sub_key, sub_value in sub.items():
                         if sub_key in SINGLES and isinstance(sub_value, list):
                             macros_uses = re.findall("%\{\??\w+}", sub_value[0])
-                            macros_use_names = list(map(lambda x: x.lstrip("${?").rstrip("}"), macros_uses))
+                            macros_use_names = list(map(lambda x: x.lstrip("%{?").rstrip("}"), macros_uses))
                             for m, macros_use_name in enumerate(macros_use_names):
                                 if macros_use_name in self.rpm_global:
                                     sub_value[0] = sub_value[0].replace(macros_uses[m],
@@ -1895,7 +1895,7 @@ class SpecParser(object):
                                     self.items["SubPackage"][sub_name][sub_key] = sub_value
                         elif sub_key in SINGLES and isinstance(sub_value, str):
                             macros_uses = re.findall("%\{\??\w+}", sub_value)
-                            macros_use_names = list(map(lambda x: x.lstrip("${?").rstrip("}"), macros_uses))
+                            macros_use_names = list(map(lambda x: x.lstrip("%{?").rstrip("}"), macros_uses))
                             for m, macros_use_name in enumerate(macros_use_names):
                                 if macros_use_name in self.rpm_global:
                                     sub_value = sub_value.replace(macros_uses[m],
