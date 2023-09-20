@@ -50,6 +50,26 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
                         line = line.replace(error_keywords, error_keywords.replace("-", "--", 1))
                 tmp_compile_flags = line.split("--")[1:]
                 compile_flags = list(map(lambda x: "--" + x.rstrip(" \\"), tmp_compile_flags))
+                tmp_compile_flags = compile_flags.copy()
+                remove_list = []
+                for t, tmp_compile_flags in enumerate(tmp_compile_flags):
+                    left_count = tmp_compile_flags.count("(")
+                    right_count = tmp_compile_flags.count(")")
+                    if left_count > right_count:
+                        n = 1
+                        while t + n < len(tmp_compile_flags):
+                            next_compile_flag = tmp_compile_flags[t + n]
+                            left_count += next_compile_flag.count("(")
+                            right_count += next_compile_flag.count(")")
+                            if left_count == right_count:
+                                compile_flags[t] = compile_flags[t] + " " + compile_flags[t + n]
+                                remove_list.append(compile_flags[t + n])
+                                break
+                            else:
+                                remove_list.append(compile_flags[t + n])
+                            n += 1
+                for remove_item in remove_list:
+                    compile_flags.remove(remove_item)
                 for compile_flag in compile_flags:
                     if compile_flag.strip().endswith("<<EOF"):
                         configure_line += compile_flag
