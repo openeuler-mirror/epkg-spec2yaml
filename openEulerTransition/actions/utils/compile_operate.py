@@ -52,9 +52,9 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
                 compile_flags = list(map(lambda x: "--" + x.rstrip(" \\"), tmp_compile_flags))
                 tmp_compile_flags = compile_flags.copy()
                 remove_list = []
-                for t, tmp_compile_flags in enumerate(tmp_compile_flags):
-                    left_count = tmp_compile_flags.count("(")
-                    right_count = tmp_compile_flags.count(")")
+                for t, tmp_compile_flag in enumerate(tmp_compile_flags):
+                    left_count = tmp_compile_flag.count("(")
+                    right_count = tmp_compile_flag.count(")")
                     if left_count > right_count:
                         n = 1
                         while t + n < len(tmp_compile_flags):
