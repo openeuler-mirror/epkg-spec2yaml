@@ -675,7 +675,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
             new_key = target + add_judgement
             value = build_rq.split("%if")[0].strip()
             value = divide_several_requires([value])
-            value = list(map(lambda x: change_macros_usage(x, global_dict), value))
+            # value = list(map(lambda x: change_macros_usage(x, global_dict), value))
             if new_key in items:
                 items[new_key] += value
             else:
@@ -683,7 +683,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
         else:
             pass
     target_list = divide_several_requires(target_list)
-    target_list = list(map(lambda x: change_macros_usage(x, global_dict), target_list))
+    # target_list = list(map(lambda x: change_macros_usage(x, global_dict), target_list))
     items[origin] = target_list
     return items, add_define_flags
 
