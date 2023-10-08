@@ -366,7 +366,8 @@ class Convertor(object):
         items = []
         meta_dict = {}
         package_name = ""
-        for entry in ORDER_ENTRIES:
+        tmp_dict = _dict.copy()
+        for entry in tmp_dict:
             if entry == "Name" and "SubPackages" in _dict:
                 package_name = _dict["Name"]
             if not entry:
@@ -375,7 +376,7 @@ class Convertor(object):
                     items.append(('', ''))
                 continue
 
-            if entry in _dict:
+            if entry in ORDER_ENTRIES:
                 if entry in MAY_QUOTATION_KEYWORDS:
                     if type(_dict[entry]) == list:
                         need_add_quotation = False
@@ -409,6 +410,9 @@ class Convertor(object):
                 else:
                     if _dict[entry]:
                         items.append((lower_first_word(entry), _dict[entry]))
+                del _dict[entry]
+            elif re.match("summary\s(when|rpmWhen) ", entry):
+                meta_dict[entry] = _dict[entry]
                 del _dict[entry]
 
         subpkgs = {}
