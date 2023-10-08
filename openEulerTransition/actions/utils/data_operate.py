@@ -709,8 +709,8 @@ def change_judgement_grammar(line, global_dict):
         elif re.match("%if\s+%\{\?_with_\w+:\s*1", condition):
             base_param = condition.split("_with_")[1].split(":")[0].rstrip("}")
             judgement = "when"
-            add_define_flags.append(base_param)
-            judgement += " " + base_param
+            add_define_flags.append("+" + base_param)
+            judgement += " +" + base_param
         # TODO(	%if 0%{?openEuler}=>when ${{rpmrc.openEuler}) or when ${{pkg.rpmGlobal.openEuler}}
         elif re.fullmatch("%if\s+[0x]%\{\??[\w|_]+}", condition) is not None:
             base_condition = condition.split("{")[1].lstrip("?").rstrip("}")
