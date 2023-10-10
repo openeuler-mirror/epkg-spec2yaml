@@ -1467,7 +1467,7 @@ class SpecParser(object):
                     main_file_key = "files"
                 self.files[main_file_key] = original_data["files"]
                 del target_data["files"]
-            if _key in ["Name", "Version", "Release", "Epoch"]:
+            if _key in ["Name", "Version", "Epoch"]:
                 lower_key = _key.lower()
                 if _value[0] == "%{" + lower_key + "}":
                     if lower_key in self.rpm_global:

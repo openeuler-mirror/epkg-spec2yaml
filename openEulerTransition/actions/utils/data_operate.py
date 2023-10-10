@@ -805,9 +805,9 @@ def change_macros_usage(line, rpm_global=None):
         rpm_global = {}
     if line.startswith("rpmWhen"):
         return line
-    # TODO(%{version}-%{release}=>${{pkg.version}}-${{release}})
-    if re.search("%\{version}|%\{name}|%\{release}|%\{epoch}", line):
-        line = line.replace("%{version}", "${{pkg.version}}").replace("%{name}", "${{pkg.name}}").replace("%{release}", "${{pkg.release}}").replace("%{epoch}", "${{pkg.epoch}}")
+    # TODO(%{version}-%{release}=>${{pkg.version}}-%{release})
+    if re.search("%\{version}|%\{name}|%\{epoch}", line):
+        line = line.replace("%{version}", "${{pkg.version}}").replace("%{name}", "${{pkg.name}}").replace("%{epoch}", "${{pkg.epoch}}")
     # TODO(%{atk_version}=>${{pkg.rpmGlobal.atk_version}})
     if re.search(" %\{\w+}", line) is not None:
         results = re.findall(" %\{\w+}", line)
