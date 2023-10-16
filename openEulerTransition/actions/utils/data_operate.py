@@ -909,3 +909,11 @@ def change_macros_type(base_condition: str, rpm_globals):
     else:
         result = "%{?" + base_condition + "}"
     return result
+
+
+def add_escape_character(content):
+    if re.search(r"\\+\w", content):
+        escape_characters = list(set(re.findall(r"\\+\w", content)))
+        for character in escape_characters:
+            content = content.replace(character, character.replace("\\", "\\\\"))
+    return content

@@ -107,12 +107,14 @@ class SpectacleDumper(object):
             for file_member_key, file_member_value in files_data.items():
                 file_member_value, param_text = strip_files_startswith(file_member_value)
                 if file_member_value != "":
+                    file_member_value = add_escape_character(file_member_value)
                     f_files.write(file_member_key + ": |" + os.linesep)
                     value_line_list = file_member_value.strip().split(os.linesep)
                     for line in value_line_list:
                         f_files.write(TAB + line + os.linesep)
                     f_files.write(os.linesep)
                 if param_text != "":
+                    param_text = add_escape_character(param_text)
                     temp_param_list = param_text.split(os.linesep)
                     if len(temp_param_list) > 1 and temp_param_list[0] in temp_param_list[1]:
                         temp_param_list.pop(0)
@@ -129,11 +131,13 @@ class SpectacleDumper(object):
         new_define_yaml = True
         for key, value in data:
             if key == "version":
+                value = add_escape_character(value)
                 with open("versions.yaml", "w") as f:
                     f.write(f"{key}: {value}" + os.linesep)
                 fp.write(f"{key}: {value}" + os.linesep)
                 continue
             elif key.startswith("defineFlags"):
+                value = add_escape_character(value)
                 if new_define_yaml:
                     f = open("defineFlags.yaml", "w")
                     new_define_yaml = False
@@ -193,6 +197,7 @@ class SpectacleDumper(object):
                         self._dump_yaml(item, fp, cur_indent + TAB, cur_pkg=item[0][1])
                         fp.write(os.linesep)
                     else:
+                        item = add_escape_character(item)
                         fp.write(cur_indent + TAB + ("- %s" + os.linesep) % (esc_value(item)))
             elif isinstance(value, bool):
                 if value:
@@ -219,22 +224,25 @@ class SpectacleDumper(object):
                                     fp.write(os.linesep)
                                 elif isinstance(sub_item, tuple) and len(sub_item) > 1:
                                     if isinstance(sub_item[1], str):
-                                        if os.linesep in sub_item[1].strip():
+                                        value = add_escape_character(sub_item[1])
+                                        if os.linesep in value.strip():
                                             fp.write(cur_indent + TAB * (base+2) + ("%s: |" + os.linesep) % sub_item[0])
-                                            line_list = sub_item[1].split(os.linesep)
+                                            line_list = value.split(os.linesep)
                                             for line in line_list:
                                                 fp.write(cur_indent + TAB * (base+3) + line + os.linesep)
                                         else:
                                             fp.write(cur_indent + TAB * (base+2) + ("%s: %s" + os.linesep) % (
-                                                sub_item[0], sub_item[1]))
+                                                sub_item[0], value))
                                     elif isinstance(sub_item[1], list):
                                         fp.write(cur_indent + TAB * (base+2) + sub_item[0] + ":" + os.linesep)
                                         for line in sub_item[1]:
+                                            line = add_escape_character(line)
                                             fp.write(
                                                 cur_indent + TAB * (base+3) + ("- %s" + os.linesep) % esc_value(line))
                                     elif isinstance(sub_item[1], dict):
                                         fp.write(cur_indent + TAB * (base+2) + sub_item[0] + ":" + os.linesep)
                                         for member, line in sub_item[1].items():
+                                            line = add_escape_character(line)
                                             if member == "description":
                                                 fp.write(cur_indent + TAB * (base + 3) + member + ": |" + os.linesep)
                                                 line_list = line.split(os.linesep)
@@ -247,6 +255,7 @@ class SpectacleDumper(object):
                                 else:
                                     fp.write(cur_indent + TAB * (base+2) + ("- %s" + os.linesep) % (esc_value(sub_item)))
                         elif isinstance(dict_value, str):
+                            dict_value = add_escape_character(dict_value)
                             if dict_key == "description":
                                 fp.write(cur_indent + TAB + dict_key + ": |" + os.linesep)
                                 line_list = dict_value.split(os.linesep)
@@ -255,6 +264,7 @@ class SpectacleDumper(object):
                             else:
                                 fp.write(cur_indent + TAB + ("%s: %s" + os.linesep) % (dict_key, change_macros_usage(dict_value)))
             else:
+                value = add_escape_character(value)
                 lines_to_write = value.splitlines()
 
                 if len(lines_to_write) == 1:
@@ -522,10 +532,6 @@ class YamlWriter:
 def pre_treatment(content):
     if "%%" in content:
         content = content.replace("%%", "\\%\\%").replace("\\%%", "\\%\\%")
-    if re.search(r"\\+\w", content):
-        escape_characters = list(set(re.findall(r"\\+\w", content)))
-        for character in escape_characters:
-            content = content.replace(character, character.replace("\\", "\\\\"))
     for system_macros in RPM_SYSTEM_MACROS:
         if os.linesep + system_macros in content:
             content = content.replace(os.linesep + system_macros,
