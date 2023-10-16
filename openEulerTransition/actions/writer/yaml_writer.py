@@ -137,7 +137,6 @@ class SpectacleDumper(object):
                 fp.write(f"{key}: {value}" + os.linesep)
                 continue
             elif key.startswith("defineFlags"):
-                value = add_escape_character(value)
                 if new_define_yaml:
                     f = open("defineFlags.yaml", "w")
                     new_define_yaml = False
