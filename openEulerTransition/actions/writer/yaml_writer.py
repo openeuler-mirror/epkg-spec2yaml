@@ -1914,6 +1914,9 @@ class SpecParser(object):
                                     sub_value = sub_value.replace(macros_uses[m],
                                                                   "${{pkg.rpmrc." + macros_use_name + "}}")
                                     self.items["SubPackages"][sub_name][sub_key] = sub_value
+        if "prep" in self.shell_functions:
+            if "%{version}" in self.shell_functions["prep"]:
+                self.shell_functions["prep"] = self.shell_functions["prep"].replace("%{version}", "${{pkg.version}}")
 
     def add_compile_flags_items(self, params: dict, items=None):
         if items is None:
