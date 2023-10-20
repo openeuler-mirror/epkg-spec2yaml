@@ -688,8 +688,9 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
     return items, add_define_flags
 
 
-def change_judgement_grammar(line, global_dict):
+def change_judgement_grammar(line, global_dict, macros_txt=""):
     tmp_conditions = line.split("%if")[1:]
+    macros_txt, global_dict = divide_rpm_global(macros_txt, global_dict)
     conditions = list(map(lambda x: "%if" + x.rstrip(), tmp_conditions))
     judgement = ""
     add_define_flags = []
@@ -716,9 +717,9 @@ def change_judgement_grammar(line, global_dict):
         # TODO(	%if 0%{?openEuler}=>when ${{rpmrc.openEuler}) or when ${{pkg.rpmGlobal.openEuler}}
         elif re.fullmatch("%if\s+[0x]?%\{\??[\w|_]+}", condition) is not None:
             base_condition = condition.split("{")[1].lstrip("?").rstrip("}")
-            if condition in RPM_GLOBAL_MACROS:
+            if base_condition in RPM_GLOBAL_MACROS:
                 judgement += "when ${{rpmrc." + base_condition + "}}"
-            elif condition in global_dict:
+            elif base_condition in global_dict:
                 judgement += "when ${{pkg.rpmGlobal." + base_condition + "}}"
             else:
                 judgement += condition.replace("%if", "rpmWhen")

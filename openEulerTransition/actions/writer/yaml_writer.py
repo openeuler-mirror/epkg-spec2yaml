@@ -881,7 +881,7 @@ class SpecParser(object):
         keywords = lower_first_word(keywords)
         if "%if" in value:
             value = remove_marginals_quotes(value)
-            judgement, add_define_flags = change_judgement_grammar(value, self.rpm_global)
+            judgement, add_define_flags = change_judgement_grammar(value, self.rpm_global, self.macros)
             self.add_define_flags_item(add_define_flags)
         num_dict = self.sources_num_dict if keywords == "source" else self.patches_num_dict
         count = 6 if keywords == "source" else 5
@@ -1320,7 +1320,7 @@ class SpecParser(object):
                         single_add_judge = True
                         if line_suffix.strip().startswith("%else"):
                             line_suffix = get_reverse_judgement(line_suffix.replace("%else", ""))
-                        judgement = change_judgement_grammar(line_suffix, self.rpm_global)[0]
+                        judgement = change_judgement_grammar(line_suffix, self.rpm_global, self.macros)[0]
                         key = lower_first_word(key) + judgement
                         val = find_quotes_from_words(val)
                         if val.startswith("%"):
