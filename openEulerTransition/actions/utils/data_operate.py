@@ -696,8 +696,10 @@ def change_judgement_grammar(line, global_dict):
     for condition in conditions:
         if judgement != "":
             judgement += " "
+        if "||" in condition or "&&" in condition:
+            judgement += condition.replace("%if", "rpmWhen")
         # TODO(%if %{with ***}=>when )
-        if re.match("%if %\{with ", condition) or re.match("%if %\{without ", condition):
+        elif re.match("%if %\{with ", condition) or re.match("%if %\{without ", condition):
             with_parts, without_parts = get_if_with_parts(condition)
             judgement = "when"
             if len(with_parts):
@@ -712,7 +714,7 @@ def change_judgement_grammar(line, global_dict):
             add_define_flags.append("+" + base_param)
             judgement += " +" + base_param
         # TODO(	%if 0%{?openEuler}=>when ${{rpmrc.openEuler}) or when ${{pkg.rpmGlobal.openEuler}}
-        elif re.fullmatch("%if\s+[0x]%\{\??[\w|_]+}", condition) is not None:
+        elif re.fullmatch("%if\s+[0x]?%\{\??[\w|_]+}", condition) is not None:
             base_condition = condition.split("{")[1].lstrip("?").rstrip("}")
             if condition in RPM_GLOBAL_MACROS:
                 judgement += "when ${{rpmrc." + base_condition + "}}"
