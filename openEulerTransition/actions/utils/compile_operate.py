@@ -133,6 +133,14 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
             else:
                 configure_line += line + os.linesep
                 start = False
+        if re.search("%if.*\n%else\n%endif\n", configure_line):
+            empty_ifs = re.findall("%if.*\n%else\n%endif\n", configure_line)
+            for empty_if in empty_ifs:
+                configure_line = configure_line.replace(empty_if, "")
+        if re.search("%if.*\n%endif\n", configure_line):
+            empty_ifs = re.findall("%if.*\n%endif\n", configure_line)
+            for empty_if in empty_ifs:
+                configure_line = configure_line.replace(empty_if, "")
         return params, configure_line.rstrip().rstrip("\\") + os.linesep
     raise Exception("Error compile text, lack of configure command!")
 
