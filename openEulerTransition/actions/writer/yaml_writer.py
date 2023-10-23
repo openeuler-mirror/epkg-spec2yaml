@@ -905,8 +905,6 @@ class SpecParser(object):
             find_list = list(set(re.findall(pattern, self.macros)))
             for word in find_list:
                 self.macros = self.macros.replace(word, word.replace("\\", "\\\\"))
-        if "\\%\\%" in self.macros:
-            self.macros = self.macros.replace("\\%\\%", "\\\\%\\\\%")
 
     def read(self, filename):
         """
