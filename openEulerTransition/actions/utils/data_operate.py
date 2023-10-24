@@ -316,6 +316,8 @@ def divide_rpm_global(macros_text, rpm_global_text):
                     global_value = " ".join(line_list[2:])
                 else:
                     continue
+                if " " in global_value:
+                    continue
                 global_value = resolve_inner_quotes(global_value)
                 rpm_global_text[global_key] = "\"" + global_value + "\""
                 remove_list.append(i)
