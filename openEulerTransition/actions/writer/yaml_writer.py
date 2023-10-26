@@ -979,8 +979,15 @@ class SpecParser(object):
                         if _else_cond_part and not else_cond_part:
                             else_cond_part += _else_cond_part
                             _else_cond_part.clear()
+                            if _else_status and not else_status:
+                                else_status, _else_status = _else_status, else_status
                         if_cond_part += _if_cond_part
                         _if_cond_part.clear()
+                        macros_lines = self.macros.rstrip().split(os.linesep)
+                        if macros_lines[-1].startswith("%if"):
+                            self.macros = os.linesep.join(macros_lines[:-1])
+                        else:
+                            self.macros += "%endif" + os.linesep
                     macros_mode = False
                 if state == ST_INLINE and header in SHELL_KEYWORDS:
                     if re.match("%\w+", line) is not None:
@@ -1046,11 +1053,14 @@ class SpecParser(object):
                         _if_cond_part.append(line)
                     elif "%else" in line:
                         _else_cond_part.append(line)
+                        _else_status = True
                     else:
                         if _if_cond_part:
                             _if_cond_part.pop()
                         if _else_cond_part:
                             _else_cond_part.pop()
+                        if _else_status:
+                            _else_status = False
                 if subpackages_mode:
                     items = add_string_to_dict(items, "rpmMacros", line)
                 else:
