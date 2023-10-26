@@ -119,7 +119,7 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
                 condition.insert(0, line.strip())
             elif line.strip() == "%else" and condition:
                 configure_line += line + os.linesep
-                condition[0] = line + condition[0]
+                condition[0] = "%else " + condition[0]
             elif line.strip() == "%endif" and condition:
                 last_configure_line = configure_line.strip().split(os.linesep)[-1]
                 if last_configure_line.strip().startswith("%if"):
