@@ -1317,7 +1317,7 @@ class SpecParser(object):
                     if key in SINGLES and line_suffix != "":
                         single_add_judge = True
                         if line_suffix.strip().startswith("%else"):
-                            line_suffix = get_reverse_judgement(line_suffix.replace("%else", ""))
+                            line_suffix = get_reverse_judgement(line_suffix)
                         judgement = change_judgement_grammar(line_suffix, self.rpm_global, self.macros)[0]
                         key = lower_first_word(key) + judgement
                         val = find_quotes_from_words(val)
@@ -1660,7 +1660,7 @@ class SpecParser(object):
                         remove_line.append(i - back_count)
                 elif if_cond and else_cond and rpm_condition:
                     use_flag_key = "defineFlags" + change_judgement_grammar(
-                        get_reverse_judgement(if_cond[0]), self.rpm_global)[0]
+                        get_reverse_judgement(if_cond[0], only=True), self.rpm_global)[0]
                     back_count += 1
                     if i - back_count not in remove_line:
                         remove_line.append(i - back_count)

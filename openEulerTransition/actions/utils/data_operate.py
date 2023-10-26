@@ -335,41 +335,53 @@ def divide_rpm_global(macros_text, rpm_global_text):
     return macros_text, rpm_global_text
 
 
-def get_reverse_judgement(judgement):
-    if "%ifarch" in judgement:
-        return judgement.replace("%ifarch", "%ifnarch")
-    elif "%ifnarch" in judgement:
-        return judgement.replace("%ifnarch", "%ifarch")
-    elif "%ifos" in judgement:
-        return judgement.replace("%ifos", "%ifnos")
-    elif "%ifnos" in judgement:
-        return judgement.replace("%ifnos", "%ifos")
-    elif "%if %{with " in judgement:
-        return judgement.replace("%if %{with ", "%if %{without ")
-    elif "%if %{without " in judgement:
-        return judgement.replace("%if %{without ", "%if %{with ")
-    elif "%if !" in judgement:
-        return judgement.replace("%if !", "%if ")
+def reverse_judgement(else_condition):
+    if "%else %ifarch" in else_condition:
+        return else_condition.replace("%else %ifarch", "%ifnarch")
+    elif "%else %ifnarch" in else_condition:
+        return else_condition.replace("%else %ifnarch", "%ifarch")
+    elif "%else %ifos" in else_condition:
+        return else_condition.replace("%else %ifos", "%ifnos")
+    elif "%else %ifnos" in else_condition:
+        return else_condition.replace("%else %ifnos", "%ifos")
+    elif "%else %if %{with " in else_condition:
+        return else_condition.replace("%else %if %{with ", "%if %{without ")
+    elif "%else %if %{without " in else_condition:
+        return else_condition.replace("%else %if %{without ", "%if %{with ")
+    elif "%else %if !" in else_condition:
+        return else_condition.replace("%else %if !", "%if ")
     else:
-        return judgement.replace("%if ", "%if ! ")
+        if "&&" not in else_condition and "||" not in else_condition:
+            if else_condition.count("==") == 1:
+                return else_condition.replace("==", "!=").replace("%else %if ", "%if ")
+            elif else_condition.count("!=") == 1:
+                return else_condition.replace("!=", "==").replace("%else %if ", "%if ")
+        return else_condition.replace("%else %if ", "%if ! ")
 
 
-def resolve_else_judgement(line: str):
-    if "%else %if ! " in line:
-        line = line.replace("%else %if ! ", "%if ")
-    elif "%else %if !" in line:
-        line = line.replace("%else %if !", "%if")
-    if "%else %ifn" in line:
-        line = line.replace("%else %ifn", "%if")
-    if "%else %if " in line:
-        line = line.replace("%else %if ", "%if ! ")
-    elif "%else %ifarch" in line:
-        line = line.replace("%else %ifarch", "%ifnarch")
-    elif "%else %ifos" in line:
-        line = line.replace("%else %ifos", "%ifnos")
-    if "%else %if" in line:
-        line = line.replace("%else %if", "%ifn")
-    return line
+def get_reverse_judgement(judgement, only=False):
+    if only:
+        judgement = "%else " + judgement
+    if judgement.count("%if") == 1:
+        return reverse_judgement(judgement)
+    else:
+        results = judgement.split("%else %if")
+        results.remove("")
+        results = list(map(lambda x: "%else %if" + x, results))
+        final = []
+        for i, result in enumerate(results):
+            if results.count("%if") > 1:
+                if_part = result.split("%if")[2:]
+                else_part = result.split("%if")[:2]
+                if_part = list(map(lambda x: "%if" + x.rstrip(), if_part))
+                tmp_result = ["%if".join(else_part).strip()] + if_part
+                final += tmp_result
+            else:
+                final.append(result.rstrip())
+        for i, result in enumerate(final):
+            if "%else " in result:
+                final[i] = reverse_judgement(result)
+        return " ".join(final)
 
 
 def divide_out_configure(content: str):
@@ -661,7 +673,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
     for build_rq in items[origin]:
         if "%else %if" in build_rq:
             target_list.remove(build_rq)
-            build_rq = resolve_else_judgement(remove_marginals_quotes(build_rq))
+            build_rq = get_reverse_judgement(remove_marginals_quotes(build_rq))
             value = build_rq.split("%if")[0].strip()
             add_judgement, add_define_flags = change_judgement_grammar(build_rq.replace(value, ""), global_dict)
             new_key = target + add_judgement
