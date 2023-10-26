@@ -731,9 +731,9 @@ def change_judgement_grammar(line, global_dict, macros_txt=""):
         # TODO(	%if 0%{?openEuler}=>when ${{rpmrc.openEuler}) or when ${{pkg.rpmGlobal.openEuler}}
         elif re.fullmatch("%if\s+[0x]?%\{\??[\w|_]+}", condition) is not None:
             base_condition = condition.split("{")[1].lstrip("?").rstrip("}")
-            if condition in RPM_GLOBAL_MACROS:
+            if base_condition in RPM_GLOBAL_MACROS:
                 judgement += "when ${{rpmrc." + base_condition + "}}"
-            elif condition in global_dict:
+            elif base_condition in global_dict:
                 judgement += "when ${{pkg.rpmGlobal." + base_condition + "}}"
             else:
                 judgement += condition.replace("%if", "rpmWhen")
