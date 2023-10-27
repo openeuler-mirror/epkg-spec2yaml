@@ -676,7 +676,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
             else_parts = build_rq.split("%else %if")[1:]
             else_parts = list(map(lambda x: "%else %if" + x, else_parts))
             for else_part in else_parts:
-                build_rq = build_rq.replace(else_part, get_reverse_judgement(get_reverse_judgement))
+                build_rq = build_rq.replace(else_part, get_reverse_judgement(else_part))
                 build_rq = remove_marginals_quotes(build_rq)
             value = build_rq.split("%if")[0].strip()
             add_judgement, add_define_flags = change_judgement_grammar(build_rq.replace(value, ""), global_dict)
