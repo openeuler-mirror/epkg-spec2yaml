@@ -437,8 +437,8 @@ class Convertor(object):
                 if "Name" in sub_items:
                     sub_name = sub_items["Name"]
                     del sub_items["Name"]
-                    if sub_name.startswith("%"):
-                        sub_name = "\"" + sub_name + "\""
+                    # if sub_name.startswith("%"):
+                    #     sub_name = "\"" + sub_name + "\""
                     subpkgs[sub_name] = self.convert(sub_items, False)
 
         if 'extra' in _dict:
