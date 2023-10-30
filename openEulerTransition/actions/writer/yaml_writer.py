@@ -1024,6 +1024,9 @@ class SpecParser(object):
                     elif re.match("%define|%global ", line):
                         macros_mode = True
                         if subpackages_mode:
+                            if _if_cond_part and while_next:
+                                line = os.linesep.join(_if_cond_part) + os.linesep + line
+                                while_next = False
                             items = add_string_to_dict(items, "rpmMacros", line)
                         else:
                             self.macros += line + os.linesep
