@@ -1406,7 +1406,7 @@ class SpecParser(object):
                                     line = line.replace(" -n ", "").replace(sub_pkg, "")
                             if "%if" not in self.cur_pkg and self.cur_pkg not in opt and while_next:
                                 while_next = False
-                            if len(if_cond_part) > 0 and while_next:
+                            if len(if_cond_part) > 0 and (while_next or subpackages_mode):
                                 if type(items) is dict and "FilesJudgement" not in items.keys():
                                     items["FilesJudgement"] = copy.deepcopy(if_cond_part)
                         else:
