@@ -306,6 +306,8 @@ def divide_rpm_global(macros_text, rpm_global_text):
         if re.match("(%global|%define)\s+\S+ [\s\S]+", line) is not None:
             if line.endswith("\\"):
                 continue
+            if "%{expand:" in line:
+                continue
             if if_flag == else_flag == 0:
                 line_list = line.split()
                 if len(line_list) == 3:
