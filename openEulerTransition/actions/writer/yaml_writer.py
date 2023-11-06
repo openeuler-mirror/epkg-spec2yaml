@@ -1,9 +1,9 @@
-import os
-import re
 import sys
 import copy
+import yaml
 from openEulerTransition.actions.utils.file_operate import Chdir
 from openEulerTransition.actions.utils.data_operate import *
+from openEulerTransition.actions.utils.compile_operate import *
 from openEulerTransition.configure.spec_config import *
 from openEulerTransition.configure.yaml_config import *
 
@@ -62,9 +62,9 @@ class SpectacleDumper(object):
 
     """
 
-    def __init__(self, file_type='yaml', opath=None, shell_functions=None, files=None):
+    def __init__(self, file_type='yaml', shell_functions=None, files=None):
         self.format = file_type
-        self.opath = opath
+        self.opath = "package.yaml"
         self.shell_functions = shell_functions
         self.files = files
         self.spec_extra = {}
@@ -95,26 +95,26 @@ class SpectacleDumper(object):
                 f_phase.write("#!/usr/bin/env bash\n\n")
                 lua_file = LuaFile()
                 for function_name, function_text in script_data.items():
-                    if function_name in ["install", "prep", "build", "clean", "check", "configure"] or \
-                            function_name.startswith("configure"):
+                    if function_name in MAIN_SHELL_KEYWORDS or re.match("configure|cmake.*", function_name):
                         lua_file = add_context(function_name, function_text, f_phase, lua_file)
             if f_runtime_phase != sys.stdout:
                 f_runtime_phase.write("#!/usr/bin/env bash\n\n")
                 lua_runtime_file = LuaFile()
                 for function_name, function_text in script_data.items():
-                    if function_name not in ["install", "prep", "build", "clean", "check", "configure"] and \
-                            not function_name.startswith("configure"):
+                    if function_name not in MAIN_SHELL_KEYWORDS and not re.match("configure|cmake.*", function_name):
                         lua_runtime_file = add_context(function_name, function_text, f_runtime_phase, lua_runtime_file)
         if f_files and files_data:
             for file_member_key, file_member_value in files_data.items():
                 file_member_value, param_text = strip_files_startswith(file_member_value)
                 if file_member_value != "":
+                    file_member_value = add_escape_character(file_member_value)
                     f_files.write(file_member_key + ": |" + os.linesep)
                     value_line_list = file_member_value.strip().split(os.linesep)
                     for line in value_line_list:
                         f_files.write(TAB + line + os.linesep)
                     f_files.write(os.linesep)
                 if param_text != "":
+                    param_text = add_escape_character(param_text)
                     temp_param_list = param_text.split(os.linesep)
                     if len(temp_param_list) > 1 and temp_param_list[0] in temp_param_list[1]:
                         temp_param_list.pop(0)
@@ -128,7 +128,23 @@ class SpectacleDumper(object):
                             if line != "":
                                 f_files.write(TAB + line + os.linesep)
                         f_files.write(os.linesep)
+        new_define_yaml = True
         for key, value in data:
+            if key == "version":
+                value = add_escape_character(value)
+                with open("versions.yaml", "w") as f:
+                    f.write(f"{key}: {value}" + os.linesep)
+                fp.write(f"{key}: {value}" + os.linesep)
+                continue
+            elif key.startswith("defineFlags"):
+                if new_define_yaml:
+                    f = open("defineFlags.yaml", "w")
+                    new_define_yaml = False
+                else:
+                    f = open("defineFlags.yaml", "a")
+                f.write(yaml.safe_dump({key: value}))
+                f.close()
+                continue
             if not first_line and indent:
                 cur_indent = indent + '  '
 
@@ -164,7 +180,9 @@ class SpectacleDumper(object):
                         for item in extra_val:
                             # fp.write(cur_indent + TAB + "%s\n" % item)
                             item = add_tab_in_lines(item)
-                            fp.write(cur_indent + "%s\n" % item.replace('\"', '\\"'))
+                            if os.linesep not in item.strip():
+                                item = item.replace('\"', '\\"')
+                            fp.write(cur_indent + "%s\n" % item)
                         fp.write(os.linesep)
                 continue
 
@@ -178,6 +196,7 @@ class SpectacleDumper(object):
                         self._dump_yaml(item, fp, cur_indent + TAB, cur_pkg=item[0][1])
                         fp.write(os.linesep)
                     else:
+                        item = add_escape_character(item)
                         fp.write(cur_indent + TAB + ("- %s" + os.linesep) % (esc_value(item)))
             elif isinstance(value, bool):
                 if value:
@@ -204,49 +223,54 @@ class SpectacleDumper(object):
                                     fp.write(os.linesep)
                                 elif isinstance(sub_item, tuple) and len(sub_item) > 1:
                                     if isinstance(sub_item[1], str):
-                                        if os.linesep in sub_item[1].strip():
+                                        value = add_escape_character(sub_item[1])
+                                        if os.linesep in value.strip():
                                             fp.write(cur_indent + TAB * (base+2) + ("%s: |" + os.linesep) % sub_item[0])
-                                            line_list = sub_item[1].split(os.linesep)
+                                            line_list = value.split(os.linesep)
                                             for line in line_list:
                                                 fp.write(cur_indent + TAB * (base+3) + line + os.linesep)
                                         else:
                                             fp.write(cur_indent + TAB * (base+2) + ("%s: %s" + os.linesep) % (
-                                                sub_item[0], sub_item[1]))
+                                                sub_item[0], value))
                                     elif isinstance(sub_item[1], list):
                                         fp.write(cur_indent + TAB * (base+2) + sub_item[0] + ":" + os.linesep)
                                         for line in sub_item[1]:
+                                            line = add_escape_character(line)
                                             fp.write(
                                                 cur_indent + TAB * (base+3) + ("- %s" + os.linesep) % esc_value(line))
                                     elif isinstance(sub_item[1], dict):
                                         fp.write(cur_indent + TAB * (base+2) + sub_item[0] + ":" + os.linesep)
                                         for member, line in sub_item[1].items():
+                                            line = add_escape_character(line)
                                             if member == "description":
                                                 fp.write(cur_indent + TAB * (base + 3) + member + ": |" + os.linesep)
                                                 line_list = line.split(os.linesep)
                                                 for l in line_list:
-                                                    fp.write(cur_indent + TAB * (base + 4) + l + os.linesep)
+                                                    fp.write(cur_indent + TAB * (base + 4) + change_macros_usage(l) + os.linesep)
                                             else:
                                                 fp.write(cur_indent + TAB * (base + 3) + ("%s: %s" + os.linesep) % (
-                                                    member, esc_value(line)))
+                                                    member, esc_value(change_macros_usage(line))))
                                         fp.write(os.linesep)
                                 else:
                                     fp.write(cur_indent + TAB * (base+2) + ("- %s" + os.linesep) % (esc_value(sub_item)))
                         elif isinstance(dict_value, str):
+                            dict_value = add_escape_character(dict_value)
                             if dict_key == "description":
                                 fp.write(cur_indent + TAB + dict_key + ": |" + os.linesep)
                                 line_list = dict_value.split(os.linesep)
                                 for line in line_list:
-                                    fp.write(cur_indent + TAB * 2 + line + os.linesep)
+                                    fp.write(cur_indent + TAB * 2 + change_macros_usage(line) + os.linesep)
                             else:
-                                fp.write(cur_indent + TAB + ("%s: %s" + os.linesep) % (dict_key, dict_value))
+                                fp.write(cur_indent + TAB + ("%s: %s" + os.linesep) % (dict_key, change_macros_usage(dict_value)))
             else:
+                value = add_escape_character(value)
                 lines_to_write = value.splitlines()
 
                 if len(lines_to_write) == 1:
                     try:
-                        fp.write(cur_indent + ("%s: %s" + os.linesep) % (key, esc_value(value)))
+                        fp.write(cur_indent + ("%s: %s" + os.linesep) % (key, esc_value(change_macros_usage(value))))
                     except UnicodeEncodeError:
-                        fp.write(cur_indent + ("%s: %s" + os.linesep) % (key, esc_value(value).encode('utf8')))
+                        fp.write(cur_indent + ("%s: %s" + os.linesep) % (key, esc_value(change_macros_usage(value)).encode('utf8')))
 
                 elif len(lines_to_write) == 0:
                     # not exist until now
@@ -254,7 +278,7 @@ class SpectacleDumper(object):
                 else:
                     fp.write(cur_indent + ("%s: |" + os.linesep) % key)
                     for line in lines_to_write:
-                        fp.write(cur_indent + TAB + ("%s" + os.linesep) % line)
+                        fp.write(cur_indent + TAB + ("%s" + os.linesep) % change_macros_usage(line))
 
             first_line = False
 
@@ -276,7 +300,6 @@ class SpectacleDumper(object):
             self.files = {}
         if self.shell_functions:
             try:
-                # fs = open(self.opath.replace(".yaml", ".sh"), "w")
                 fs_phase = open("phase.sh", "w")
                 for function_name in self.shell_functions.keys():
                     if function_name not in ["install", "prep", "build", "clean", "check", "configure"] and \
@@ -347,13 +370,13 @@ class Convertor(object):
         :return:
         """
         self._replace_keys(_dict)
-        translate_keys(_dict)
         remove_duplicate(_dict)
 
         items = []
         meta_dict = {}
         package_name = ""
-        for entry in ORDER_ENTRIES:
+        tmp_dict = _dict.copy()
+        for entry in tmp_dict:
             if entry == "Name" and "SubPackages" in _dict:
                 package_name = _dict["Name"]
             if not entry:
@@ -362,7 +385,7 @@ class Convertor(object):
                     items.append(('', ''))
                 continue
 
-            if entry in _dict:
+            if entry in ORDER_ENTRIES:
                 if entry in MAY_QUOTATION_KEYWORDS:
                     if type(_dict[entry]) == list:
                         need_add_quotation = False
@@ -397,6 +420,9 @@ class Convertor(object):
                     if _dict[entry]:
                         items.append((lower_first_word(entry), _dict[entry]))
                 del _dict[entry]
+            elif re.match("summary\s(when|rpmWhen) ", entry):
+                meta_dict[entry] = _dict[entry]
+                del _dict[entry]
 
         subpkgs = {}
         if "SubPackages" in _dict:
@@ -405,14 +431,14 @@ class Convertor(object):
 
             for sub_items in subpkgs_list:
                 if "AsWholeName" not in sub_items and package_name != "" and "Name" in sub_items:
-                    sub_items["Name"] = package_name + "-" + sub_items["Name"]
+                    sub_items["Name"] = WHOLE_NAME_PREFIX + sub_items["Name"]
                 elif "AsWholeName" in sub_items:
                     del sub_items["AsWholeName"]
                 if "Name" in sub_items:
                     sub_name = sub_items["Name"]
                     del sub_items["Name"]
-                    if sub_name.startswith("%"):
-                        sub_name = "\"" + sub_name + "\""
+                    # if sub_name.startswith("%"):
+                    #     sub_name = "\"" + sub_name + "\""
                     subpkgs[sub_name] = self.convert(sub_items, False)
 
         if 'extra' in _dict:
@@ -493,7 +519,7 @@ class YamlWriter:
         convertor = SpecConvertor()
 
         """Dump them to spectacle file"""
-        dumper = SpectacleDumper(file_type='yaml', opath=out_fpath, shell_functions=spec_parser.shell_functions,
+        dumper = SpectacleDumper(file_type='yaml', shell_functions=spec_parser.shell_functions,
                                  files=spec_parser.files)
         newspec_fpath = dumper.dump(convertor.convert(spec_parser.cooked_items()))
 
@@ -503,12 +529,6 @@ class YamlWriter:
 
 
 def pre_treatment(content):
-    if "%%" in content:
-        content = content.replace("%%", "\\%\\%").replace("\\%%", "\\%\\%")
-    if re.search(r"\\+\w", content):
-        escape_characters = list(set(re.findall(r"\\+\w", content)))
-        for character in escape_characters:
-            content = content.replace(character, character.replace("\\", "\\\\"))
     for system_macros in RPM_SYSTEM_MACROS:
         if os.linesep + system_macros in content:
             content = content.replace(os.linesep + system_macros,
@@ -859,7 +879,7 @@ class SpecParser(object):
         keywords = lower_first_word(keywords)
         if "%if" in value:
             value = remove_marginals_quotes(value)
-            judgement, add_define_flags = change_judgement_grammar(value, self.rpm_global, macros_text=self.macros)
+            judgement, add_define_flags = change_judgement_grammar(value, self.rpm_global, self.macros)
             self.add_define_flags_item(add_define_flags)
         num_dict = self.sources_num_dict if keywords == "source" else self.patches_num_dict
         count = 6 if keywords == "source" else 5
@@ -878,13 +898,13 @@ class SpecParser(object):
         return dict1
 
     def check_macros_escapes(self):
-        if "\\%\\%" in self.macros:
-            self.macros = self.macros.replace("\\%\\%", "\\\\%\\\\%")
         pattern = re.compile(r"\\+[(.){}]")
         if re.search(pattern, self.macros):
             find_list = list(set(re.findall(pattern, self.macros)))
             for word in find_list:
                 self.macros = self.macros.replace(word, word.replace("\\", "\\\\"))
+        if "\\%\\%" in self.macros:
+            self.macros = self.macros.replace("\\%\\%", "\\\\%\\\\%")
 
     def read(self, filename):
         """
@@ -898,7 +918,7 @@ class SpecParser(object):
         cond_endif = re.compile('^%endif.*')
         directive = re.compile('^([\w()]+)[ \t]*:[ \t]*(.*)')
         header_re = re.compile('^%(' + '|'.join(HEADERS) + ')\s*(.*)')
-        single_re = re.compile('^(' + '|'.join(SINGLES + SEVERAL) + ')\s*(.*)')
+        single_re = re.compile('^(' + '|'.join(SINGLES + SEVERAL + BOOL_SINGLES) + ')\s*(.*)')
         require_re = re.compile('^(' + '|'.join(REQUIRES) + ')\s*(.*)')
 
         state = ST_MAIN
@@ -955,6 +975,19 @@ class SpecParser(object):
                 if macros_mode and need_left_strip:
                     if "rpmMacros" in items:
                         items["rpmMacros"] = right_strip_extra_judge(items["rpmMacros"])
+                    if macros_mode and _if_cond_part and not if_cond_part:
+                        if _else_cond_part and not else_cond_part:
+                            else_cond_part += _else_cond_part
+                            _else_cond_part.clear()
+                            if _else_status and not else_status:
+                                else_status, _else_status = _else_status, else_status
+                        if_cond_part += _if_cond_part
+                        _if_cond_part.clear()
+                        macros_lines = self.macros.rstrip().split(os.linesep)
+                        if macros_lines[-1].startswith("%if"):
+                            self.macros = os.linesep.join(macros_lines[:-1])
+                        elif self.macros.count("%if") >  self.macros.count("%endif"):
+                            self.macros += "%endif" + os.linesep
                     macros_mode = False
                 if state == ST_INLINE and header in SHELL_KEYWORDS:
                     if re.match("%\w+", line) is not None:
@@ -991,6 +1024,9 @@ class SpecParser(object):
                     elif re.match("%define|%global ", line):
                         macros_mode = True
                         if subpackages_mode:
+                            if _if_cond_part and while_next:
+                                line = os.linesep.join(_if_cond_part) + os.linesep + line
+                                while_next = False
                             items = add_string_to_dict(items, "rpmMacros", line)
                         else:
                             self.macros += line + os.linesep
@@ -1006,9 +1042,9 @@ class SpecParser(object):
                     else:
                         if if_cond_part:
                             if subpackages_mode:
-                                items = add_string_to_dict(items, "rpmMacros", if_cond_part[0])
+                                items = add_string_to_dict(items, "rpmMacros", if_cond_part[0] + os.linesep)
                             else:
-                                self.macros += if_cond_part[0]
+                                self.macros += if_cond_part[0] + os.linesep
                             _if_cond_part += if_cond_part
                             if_cond_part.clear()
                         left_count, right_count = calculate_brackets(line)
@@ -1020,11 +1056,14 @@ class SpecParser(object):
                         _if_cond_part.append(line)
                     elif "%else" in line:
                         _else_cond_part.append(line)
+                        _else_status = True
                     else:
                         if _if_cond_part:
                             _if_cond_part.pop()
                         if _else_cond_part:
                             _else_cond_part.pop()
+                        if _else_status:
+                            _else_status = False
                 if subpackages_mode:
                     items = add_string_to_dict(items, "rpmMacros", line)
                 else:
@@ -1291,8 +1330,8 @@ class SpecParser(object):
                     if key in SINGLES and line_suffix != "":
                         single_add_judge = True
                         if line_suffix.strip().startswith("%else"):
-                            line_suffix = get_reverse_judgement(line_suffix.replace("%else", ""))
-                        judgement = change_judgement_grammar(line_suffix, self.rpm_global, macros_text=self.macros)[0]
+                            line_suffix = get_reverse_judgement(line_suffix)
+                        judgement = change_judgement_grammar(line_suffix, self.rpm_global, self.macros)[0]
                         key = lower_first_word(key) + judgement
                         val = find_quotes_from_words(val)
                         if val.startswith("%"):
@@ -1365,7 +1404,9 @@ class SpecParser(object):
                                 sub_pkg = ls[ls.index('-n') + 1]
                                 if sub_pkg == "%{name}" or sub_pkg == filename.replace(".spec", ""):
                                     line = line.replace(" -n ", "").replace(sub_pkg, "")
-                            if len(if_cond_part) > 0:
+                            if "%if" not in self.cur_pkg and self.cur_pkg not in opt and while_next:
+                                while_next = False
+                            if len(if_cond_part) > 0 and (while_next or subpackages_mode):
                                 if type(items) is dict and "FilesJudgement" not in items.keys():
                                     items["FilesJudgement"] = copy.deepcopy(if_cond_part)
                         else:
@@ -1390,14 +1431,14 @@ class SpecParser(object):
                     except Exception as e:
                         logger.info(str(e))
         self.change_several_requires()
-        self.collation_original_data(self.items)
+        self.collation_original_data()
 
-    def collation_original_data(self, original_data: dict):
+    def collation_original_data(self):
         """
         整理原始数据
-        :param original_data:
         :return:
         """
+        original_data = copy.deepcopy(self.items)
         if "changelog" in original_data:
             self.changelog = original_data["changelog"]
             with open("changelog.md", "w") as f:
@@ -1411,7 +1452,7 @@ class SpecParser(object):
             original_data["Summary"][0] = "_" + original_data["Summary"][0]
         self.check_macros_escapes()
         self.macros, self.rpm_global = divide_rpm_global(self.macros, self.rpm_global)
-        self.produce_use_flag()
+        original_data = self.produce_use_flag(original_data)
         target_data = copy.deepcopy(original_data)
         for _key, _value in original_data.items():
             if _key in NEED_QUOTATION_KEYWORDS:
@@ -1419,7 +1460,7 @@ class SpecParser(object):
             if _key in SHELL_KEYWORDS:
                 if _key == "prep" and _value == "%prep" + os.linesep + "%autosetup -n %{name}-%{version} -p1":
                     continue
-                self.divide_into_shell(_key, target_data[_key])
+                target_data = self.divide_into_shell(_key, target_data[_key], items=target_data)
                 if type(original_data[_key]) == str:
                     # target_data[_key] = shell_name
                     del target_data[_key]
@@ -1435,14 +1476,23 @@ class SpecParser(object):
                 file_key = original_data["Name"]
                 if "%if" in file_key:
                     add_judgement, add_define_flags = change_judgement_grammar("%if " + " ".join(file_key.split("%if")[1:]),
-                                                                self.rpm_global, macros_text=self.macros)
-                    files_judgement += add_judgement
+                                                                self.rpm_global)
+                    if add_judgement not in files_judgement:
+                        files_judgement += add_judgement
                     self.add_define_flags_item(add_define_flags)
                     main_file_key = "files" + files_judgement
                 else:
                     main_file_key = "files"
                 self.files[main_file_key] = original_data["files"]
                 del target_data["files"]
+            if _key in ["Name", "Version", "Epoch"]:
+                lower_key = _key.lower()
+                if _value[0] == "%{" + lower_key + "}":
+                    if lower_key in self.rpm_global:
+                        target_data[_key][0] = "${{pkg.rpmGlobal." + lower_key + "}}"
+                elif _value == "%{" + lower_key + "}":
+                    if lower_key in self.rpm_global:
+                        target_data[_key] = "${{pkg.rpmGlobal." + lower_key + "}}"
             if _key == "SubPackages":
                 for sub_member_name, sub_member_dict in original_data["SubPackages"].items():
                     if "rpmMacros" in sub_member_dict:
@@ -1451,16 +1501,23 @@ class SpecParser(object):
                     whole_name = "AsWholeName" in original_data["SubPackages"][sub_member_name].keys()
                     if "%if" in sub_member_name:
                         target_data = clear_sub_extra_judge(sub_member_name, self.items, target_items=target_data)
-                    sub_file_name = target_data["Name"][0] + "-" + sub_member_name.split("%if")[0].strip() \
-                        if not whole_name else sub_member_name.strip()
+                        sub_file_name = WHOLE_NAME_PREFIX + sub_member_name.split("%if")[0].strip() \
+                            if not whole_name else sub_member_name.split("%if")[0].strip()
+                    else:
+                        sub_file_name = WHOLE_NAME_PREFIX + sub_member_name.strip() \
+                            if not whole_name else sub_member_name.strip()
                     for member_key, member_value in sub_member_dict.items():
                         if member_key == "files":
+                            sub_files_judgement = ""
+                            if "FilesJudgement" in sub_member_dict:
+                                sub_files_judgement += change_judgement_grammar(
+                                    " ".join(sub_member_dict["FilesJudgement"]), self.rpm_global)[0]
+                                del target_data["SubPackages"][sub_member_name]["FilesJudgement"]
                             if "%if" in sub_member_name:
-                                add_judgement, add_define_flags = change_judgement_grammar(sub_member_name, self.rpm_global, cut_judge=True, macros_text=self.macros)
-                                sub_files_judgement = add_judgement
+                                add_judgement, add_define_flags = change_judgement_grammar(sub_member_name, self.rpm_global)
+                                if add_judgement not in sub_files_judgement:
+                                    sub_files_judgement += add_judgement
                                 self.add_define_flags_item(add_define_flags)
-                            else:
-                                sub_files_judgement = ""
                             self.files["subpackage." + sub_file_name + ".files" + sub_files_judgement] = member_value
                             del target_data["SubPackages"][sub_member_name]["files"]
                         if member_key == "Summary" and len(member_value) == 1 and member_value[0].startswith("`"):
@@ -1470,9 +1527,10 @@ class SpecParser(object):
                             target_data = add_quotation_from_member(member_key, self.items,
                                                                     sub_name=sub_member_name, target_items=target_data)
                         if origin_member_key in SHELL_KEYWORDS:
-                            self.divide_into_shell(member_key, target_data["SubPackages"][
+                            target_data = self.divide_into_shell(member_key, target_data["SubPackages"][
                                 sub_member_name][member_key], sub_name=sub_member_name.split()[0].strip(),
-                                                   whole=whole_name, main_name=original_data["Name"][0])
+                                                   whole=whole_name, main_name=original_data["Name"][0],
+                                                                 items=target_data)
                             if type(sub_member_dict[member_key]) == str:
                                 # target_data["SubPackages"][sub_member_name][member_key] = shell_name
                                 del target_data["SubPackages"][sub_member_name][member_key]
@@ -1486,11 +1544,15 @@ class SpecParser(object):
                         keywords = sub_member_name.split("%if")[0].strip()
                         del target_data["SubPackages"][sub_member_name]
                         add_judgement, add_define_flags = change_judgement_grammar(
-                            sub_member_name, self.rpm_global, cut_judge=True, macros_text=self.macros)
+                            sub_member_name, self.rpm_global)
                         target_data["SubPackages"][keywords + add_judgement] = temp_sub_dict
                         self.add_define_flags_item(add_define_flags)
         self.items = target_data
+        if "build" in self.shell_functions:
+            self.shell_functions["build"] = add_make_flag(self.shell_functions["build"])
+            self.shell_functions["build"] = add_cmake_flag(self.shell_functions["build"])
         self.check_shell_functions()
+        self.check_macros_use()
 
     def change_several_requires(self):
         for change_key, target_key in LIST_KEY_REPLACE.items():
@@ -1514,7 +1576,7 @@ class SpecParser(object):
             if host_flag not in self.items["defineFlags"]:
                 self.items["defineFlags"][host_flag] = ""
 
-    def divide_into_shell(self, keywords, value: str, sub_name=None, whole=False, main_name=None):
+    def divide_into_shell(self, keywords, value: str, sub_name=None, whole=False, main_name=None, items=None):
         """
         分解到shell中，当前shell的内容存放在变量中
         :param keywords:
@@ -1522,19 +1584,19 @@ class SpecParser(object):
         :param sub_name:
         :param whole:False代表子包不带-n，True代表子包带-n
         :param main_name:主包名
+        :param items: 可能要操作到的源数据
         :return:
         """
+        if items is None:
+            items = self.items
         condition = ""
         if sub_name is None:
             if keywords in self.keywords_if_config:
-                condition = change_judgement_grammar(" ".join(self.keywords_if_config[keywords]), self.rpm_global,
-                                                           macros_text=self.macros)[0]
+                condition = change_judgement_grammar(" ".join(self.keywords_if_config[keywords]), self.rpm_global)[0]
         else:
             for subpackage in self.items["SubPackages"]:
-                pattern = re.escape(sub_name + "\s+%if")
-                if re.match(pattern, subpackage):
-                    condition = change_judgement_grammar(subpackage, self.rpm_global, cut_judge=True,
-                                                         macros_text=self.macros)[0]
+                if re.match(re.escape(sub_name) + "\s+%if", subpackage):
+                    condition = change_judgement_grammar(subpackage, self.rpm_global)[0]
                     break
         if " -n " in value and not whole:
             value = value.split(os.linesep)[0].replace("-n %{name}-", "") + os.linesep + os.linesep.join(
@@ -1542,7 +1604,7 @@ class SpecParser(object):
         value = value.split(os.linesep)[0].replace(" -n", "") + os.linesep + os.linesep.join(value.split(os.linesep)[1:])
         original_sub_name = sub_name
         if sub_name is not None and not whole:
-            sub_name = main_name + "-" + sub_name
+            sub_name = WHOLE_NAME_PREFIX + sub_name
         if value.startswith("%" + keywords + os.linesep):  # 主包shell语句分解
             function_context = value.replace("%" + keywords + os.linesep, "", 1)
             self.shell_functions[keywords + condition] = function_context.strip()
@@ -1572,10 +1634,24 @@ class SpecParser(object):
         if no_configure:
             if "build" in self.shell_functions:
                 configure_contents, self.shell_functions["build"] = divide_out_configure(self.shell_functions["build"])
-                for configure_cmd_flags, configure_content in configure_contents.items():
-                    self.shell_functions[configure_cmd_flags] = configure_content
+                for compile_cmd_flags, compile_content in configure_contents.items():
+                    if compile_cmd_flags.startswith("configure"):
+                        split_function = configure_params_split
+                    elif compile_cmd_flags.startswith("cmake"):
+                        # split_function = cmake_params_split
+                        cmake_content = add_cmake_flag(compile_content)
+                        self.shell_functions[compile_cmd_flags] = cmake_content
+                        continue
+                    else:
+                        continue
+                    params, configure_content = split_function(compile_content, compile_cmd_flags)
+                    items = self.add_compile_flags_items(params, items)
+                    self.shell_functions[compile_cmd_flags] = configure_content
+        return items
 
-    def produce_use_flag(self):
+    def produce_use_flag(self, items=None):
+        if items is None:
+            items = self.items
         line_list = self.macros.split(os.linesep)
         if_cond = []
         else_cond = []
@@ -1592,24 +1668,23 @@ class SpecParser(object):
                     continue
                 rpm_condition = check_rpm_condition(if_cond, self.rpm_global)
                 if if_cond and len(else_cond) == 0 and rpm_condition:
-                    use_flag_key = "defineFlags" + change_judgement_grammar(if_cond[0], self.rpm_global,
-                                                                             macros_text=self.macros)[0]
+                    use_flag_key = "defineFlags" + change_judgement_grammar(if_cond[0], self.rpm_global)[0]
                     remove_line.append(line_list.index(if_cond[0]))
                     back_count += 1
                     if i - back_count not in remove_line:
                         remove_line.append(i - back_count)
                 elif if_cond and else_cond and rpm_condition:
                     use_flag_key = "defineFlags" + change_judgement_grammar(
-                        get_reverse_judgement(if_cond[0]), self.rpm_global, macros_text=self.macros)[0]
+                        get_reverse_judgement(if_cond[0], only=True), self.rpm_global)[0]
                     back_count += 1
                     if i - back_count not in remove_line:
                         remove_line.append(i - back_count)
                 else:
                     use_flag_key = "defineFlags"
-                if use_flag_key not in self.items:
-                    self.items[use_flag_key] = {flag_with + line.split()[-1]: ""}
+                if use_flag_key not in items:
+                    items[use_flag_key] = {flag_with + line.split()[-1]: ""}
                 else:
-                    self.items[use_flag_key][flag_with + line.split()[-1]] = ""
+                    items[use_flag_key][flag_with + line.split()[-1]] = ""
                 if rpm_condition:
                     remove_line.append(i)
             elif re.search("(%define)|(%global)|(%bcond_with)|(%\{\!\?)|(%undefine)|(%\{\?)|(%\{expand:\s*%)", line) is not None:
@@ -1633,6 +1708,7 @@ class SpecParser(object):
         for j in remove_line:
             target_list.pop(j)
         self.macros = os.linesep.join(target_list)
+        return items
 
     def cooked_items(self):
         """
@@ -1689,7 +1765,7 @@ class SpecParser(object):
                     nv.append(vi)
                 v = nv
 
-            if k in (SINGLES + SEVERAL):
+            if k in (SINGLES + SEVERAL + BOOL_SINGLES):
                 if isinstance(v, str):
                     ck_items[k] = v
                 else:
@@ -1764,11 +1840,15 @@ class SpecParser(object):
             if re.match("%define\s+\w+ [\s\S]+", macros_line) is not None:
                 line_list = macros_line.split()
                 global_value = " ".join(line_list[2:])
+                if " " in global_value:
+                    continue
                 self.rpm_global[line_list[1]] = "\"" + resolve_inner_quotes(global_value) + "\""
                 remove_line_list.append(k)
             elif re.match("%global\s+\w+ [\s\S]+", macros_line) is not None:
                 line_list = macros_line.split()
                 global_value = " ".join(line_list[2:])
+                if " " in global_value:
+                    continue
                 self.rpm_global[line_list[1]] = "\"" + resolve_inner_quotes(global_value) + "\""
                 remove_line_list.append(k)
         remove_line_list.reverse()
@@ -1797,3 +1877,85 @@ class SpecParser(object):
                     line_list.pop(0)
                 else:
                     break
+
+    def check_macros_use(self):
+        origin_data = self.items.copy()
+        for key, origin_value in origin_data.items():
+            if key in SINGLES and isinstance(origin_value, list):
+                value = origin_value[0]
+                macros_uses = re.findall("%\{\??\w+}", value)
+                macros_use_names = list(map(lambda x: x.lstrip("%{?").rstrip("}"), macros_uses))
+                for m, macros_use_name in enumerate(macros_use_names):
+                    if macros_use_name in self.rpm_global:
+                        value = value.replace(macros_uses[m], "${{pkg.rpmGlobal." + macros_use_name + "}}")
+                        self.items[key] = [value]
+                    elif macros_use_name in RPM_SYSTEM_MACROS:
+                        value = value.replace(macros_uses[m], "${{rpmrc." + macros_use_name + "}}")
+                        self.items[key] = [value]
+            elif key in SINGLES and isinstance(origin_value, str):
+                macros_uses = re.findall("%\{\??\w+}", origin_value)
+                macros_use_names = list(map(lambda x: x.lstrip("%{?").rstrip("}"), macros_uses))
+                for m, macros_use_name in enumerate(macros_use_names):
+                    if macros_use_name in self.rpm_global:
+                        value = origin_value.replace(macros_uses[m], "${{pkg.rpmGlobal." + macros_use_name + "}}")
+                        self.items[key] = value
+                    elif macros_use_name in RPM_SYSTEM_MACROS:
+                        value = origin_value.replace(macros_uses[m], "${{pkg.rpmrc." + macros_use_name + "}}")
+                        self.items[key] = value
+            elif key == "SubPackages" and isinstance(origin_value, dict):
+                for sub_name, sub in origin_value.items():
+                    if not isinstance(sub, dict):
+                        continue
+                    for sub_key, sub_value in sub.items():
+                        if sub_key in SINGLES and isinstance(sub_value, list):
+                            macros_uses = re.findall("%\{\??\w+}", sub_value[0])
+                            macros_use_names = list(map(lambda x: x.lstrip("%{?").rstrip("}"), macros_uses))
+                            for m, macros_use_name in enumerate(macros_use_names):
+                                if macros_use_name in self.rpm_global:
+                                    sub_value[0] = sub_value[0].replace(macros_uses[m],
+                                                                        "${{pkg.rpmGlobal." + macros_use_name + "}}")
+                                    self.items["SubPackages"][sub_name][sub_key] = sub_value
+                                elif macros_use_name in RPM_SYSTEM_MACROS:
+                                    sub_value[0] = sub_value[0].replace(macros_uses[m],
+                                                                        "${{pkg.rpmrc." + macros_use_name + "}}")
+                                    self.items["SubPackages"][sub_name][sub_key] = sub_value
+                        elif sub_key in SINGLES and isinstance(sub_value, str):
+                            macros_uses = re.findall("%\{\??\w+}", sub_value)
+                            macros_use_names = list(map(lambda x: x.lstrip("%{?").rstrip("}"), macros_uses))
+                            for m, macros_use_name in enumerate(macros_use_names):
+                                if macros_use_name in self.rpm_global:
+                                    sub_value = sub_value.replace(macros_uses[m],
+                                                                  "${{pkg.rpmGlobal." + macros_use_name + "}}")
+                                    self.items["SubPackages"][sub_name][sub_key] = sub_value
+                                elif macros_use_name in RPM_SYSTEM_MACROS:
+                                    sub_value = sub_value.replace(macros_uses[m],
+                                                                  "${{pkg.rpmrc." + macros_use_name + "}}")
+                                    self.items["SubPackages"][sub_name][sub_key] = sub_value
+        if "prep" in self.shell_functions:
+            if "%{version}" in self.shell_functions["prep"]:
+                self.shell_functions["prep"] = self.shell_functions["prep"].replace("%{version}", "${{pkg.version}}")
+
+    def add_compile_flags_items(self, params: dict, items=None):
+        if items is None:
+            items = self.items
+        if params == {}:
+            return
+        for params_key, params_item in params.items():
+            if params_item:
+                if not isinstance(params_item, dict):
+                    continue
+                tmp_item = params_item.copy()
+                for param_key, param_value in tmp_item.items():
+                    if "%if" in param_key:
+                        params_item.pop(param_key)
+                        base_key = param_key.split("%if")[0].strip()
+                        if "%else" in param_key:
+                            else_part = "%else" + param_key.split("%else", 1)[1]
+                            param_key = param_key.replace(else_part, get_reverse_judgement(else_part))
+                            base_key = base_key.replace("%else", "").strip()
+                        params_item[base_key + change_judgement_grammar(param_key, self.rpm_global)[0]] = param_value
+                if params_key not in items:
+                    items[params_key] = params_item
+                else:
+                    items[params_key].update(params_item)
+        return items

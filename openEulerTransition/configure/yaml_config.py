@@ -2,7 +2,7 @@ NEED_QUOTATION_KEYWORDS = ['Provides', 'Obsoletes', 'BuildRequires', 'Requires',
                            'Requires(pre)', 'PreRequires', 'PreReq', 'Prereq', 'Requires(preun)', 'Provides',
                            'Obsoletes', 'Conflicts', 'BuildConflicts', 'ExclusiveArch', 'OrderWithRequires',
                            'Requires(post)', 'Requires(posttrans)', 'Version']
-MAY_QUOTATION_KEYWORDS = ['Version', 'Sources', 'Description', 'Summary', 'Patches', 'Files', 'FilesInput',
+MAY_QUOTATION_KEYWORDS = ['Sources', 'Description', 'Summary', 'Patches', 'Files', 'FilesInput',
                           'Epoch', 'Release', 'License', 'Recommends', 'Suggests', 'ExcludeArch', "Name",
                           "Supplements", 'URL', 'Prefix', 'IncludeSource', 'rpmMacros', "FilesJudgement", "rpmGlobal"]
 LIST_KEY_REPLACE = {"BuildRequires": "buildRequires", "Requires": "requires", "Provides": "provides",
@@ -47,3 +47,4 @@ KEY_SYS = {
         }
 
 RPM_MACRO_PARAM_COMMENT = ":rpm_macro_param:"
+WHOLE_NAME_PREFIX = "${{pkg.name}}-"
