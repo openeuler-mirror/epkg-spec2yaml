@@ -1861,22 +1861,23 @@ class SpecParser(object):
             if_count = len(re.findall("%if", function))
             endif_count = len(re.findall("%endif", function))
             line_list = function.split(os.linesep)
-            if len(line_list) < 2:
+            if len(line_list) < 2 or if_count == endif_count:
                 continue
             while if_count > endif_count:
                 last_line = line_list[-1]
                 if last_line.startswith("%if"):
-                    self.shell_functions[name] = os.linesep.join(line_list[0:-1])
                     line_list.pop()
+                    if_count -= 1
                 else:
-                    break
+                    endif_count += 1
             while if_count < endif_count:
                 first_line = line_list[0]
                 if first_line.startswith("%endif"):
-                    self.shell_functions[name] = os.linesep.join(line_list[1:])
                     line_list.pop(0)
+                    endif_count -= 1
                 else:
                     break
+            self.shell_functions[name] = os.linesep.join(line_list)
 
     def check_macros_use(self):
         origin_data = self.items.copy()
