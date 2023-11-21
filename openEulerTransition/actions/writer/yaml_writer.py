@@ -1869,6 +1869,7 @@ class SpecParser(object):
                     line_list.pop()
                     if_count -= 1
                 else:
+                    line_list.append("%endif")
                     endif_count += 1
             while if_count < endif_count:
                 first_line = line_list[0]
