@@ -959,12 +959,14 @@ class SpecParser(object):
             # preprocessed
             if need_left_strip:
                 line = line.strip()
+                hold_last_mode = False
             else:
                 if re.match("\s*%if", line):
                     line = line.strip()
                 else:
                     line = line.rstrip()
                 need_left_strip = True
+                hold_last_mode = True
             if header == "description" and line == "%package_description":
                 items[header] += line + os.linesep
                 continue
@@ -1010,7 +1012,7 @@ class SpecParser(object):
                 if "rpmMacros" in items:
                     items["rpmMacros"] += line + os.linesep
                 continue
-            if re.match("(%define)|(%global)|(%bcond_with)|(%\{\!\?)|(%undefine)|(%\{)|(%\{expand:\s*%)", line) is not None:
+            if re.match("(%define)|(%global)|(%bcond_with)|(%\{\!\?)|(%undefine)|(%\{)|(%\{expand:\s*%)", line) is not None and not hold_last_mode:
                 if header in SHELL_KEYWORDS + ["files"] and state == ST_INLINE:
                     # shell lines or inline mode pass
                     macros_mode = False
