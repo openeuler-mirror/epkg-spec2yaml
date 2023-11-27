@@ -642,7 +642,14 @@ class SpecParser(object):
             if wholename:
                 self.items['SubPackages'][subpkg]['AsWholeName'] = True
         if filesinput != '':
-            self.items['SubPackages'][subpkg]['FilesInput'] = filesinput
+            if 'FilesInput' not in self.items['SubPackages'][subpkg]:
+                self.items['SubPackages'][subpkg]['FilesInput'] = filesinput
+            else:
+                merged_files_input = merge_rpm_macro_params(self.items['SubPackages'][subpkg]['FilesInput'], filesinput)
+                self.items['SubPackages'][subpkg]['files'] = self.items['SubPackages'][subpkg]['files'].replace(
+                    self.items['SubPackages'][subpkg]['FilesInput'].split(RPM_MACRO_PARAM_COMMENT)[-1].strip(),
+                    merged_files_input.split(RPM_MACRO_PARAM_COMMENT)[-1].strip()
+                )
         # switch
         self.cur_pkg = subpkg
         return self.items['SubPackages'][subpkg]
@@ -1534,8 +1541,7 @@ class SpecParser(object):
                         if origin_member_key in SHELL_KEYWORDS:
                             target_data = self.divide_into_shell(member_key, target_data["SubPackages"][
                                 sub_member_name][member_key], sub_name=sub_member_name.split()[0].strip(),
-                                                   whole=whole_name, main_name=original_data["Name"][0],
-                                                                 items=target_data)
+                                                   whole=whole_name, items=target_data)
                             if type(sub_member_dict[member_key]) == str:
                                 # target_data["SubPackages"][sub_member_name][member_key] = shell_name
                                 del target_data["SubPackages"][sub_member_name][member_key]
@@ -1581,7 +1587,7 @@ class SpecParser(object):
             if host_flag not in self.items["defineFlags"]:
                 self.items["defineFlags"][host_flag] = ""
 
-    def divide_into_shell(self, keywords, value: str, sub_name=None, whole=False, main_name=None, items=None):
+    def divide_into_shell(self, keywords, value: str, sub_name=None, whole=False, items=None):
         """
         分解到shell中，当前shell的内容存放在变量中
         :param keywords:

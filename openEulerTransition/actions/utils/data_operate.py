@@ -947,3 +947,13 @@ def add_escape_character(content):
         for character in escape_characters:
             content = content.replace(character, character.replace("\\", "\\\\"))
     return content
+
+
+def merge_rpm_macro_params(param1, param2):
+    if RPM_MACRO_PARAM_COMMENT in param2:
+        base_param2 = " " + param2.split(RPM_MACRO_PARAM_COMMENT)[-1].strip()
+        if param1.endswith(os.linesep):
+            param1 = param1.rstrip() + base_param2 + os.linesep
+        else:
+            param1 += base_param2
+    return param1
