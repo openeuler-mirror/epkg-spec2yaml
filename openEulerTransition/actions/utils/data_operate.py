@@ -666,7 +666,7 @@ def divide_several_requires(origin_list):
     return target_list
 
 
-def change_requires_struct(origin, target, items: dict, global_dict=None, macros_text=""):
+def change_requires_struct(origin, target, items: dict, global_dict=None):
     """改变依赖的结构"""
     if global_dict is None:
         global_dict = {}
@@ -695,7 +695,6 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
             new_key = target + add_judgement
             value = build_rq.split("%if")[0].strip()
             value = divide_several_requires([value])
-            # value = list(map(lambda x: change_macros_usage(x, global_dict), value))
             if new_key in items:
                 items[new_key] += value
             else:
@@ -703,12 +702,13 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
         else:
             pass
     target_list = divide_several_requires(target_list)
-    # target_list = list(map(lambda x: change_macros_usage(x, global_dict), target_list))
     items[origin] = target_list
     return items, add_define_flags
 
 
-def change_judgement_grammar(line, global_dict, macros_txt=""):
+def change_judgement_grammar(line, global_dict, macros_txt="", define_flags=None):
+    if define_flags is None:
+        define_flags = []
     tmp_conditions = line.split("%if")[1:]
     macros_txt, global_dict = divide_rpm_global(macros_txt, global_dict)
     conditions = list(map(lambda x: "%if" + x.rstrip(), tmp_conditions))
@@ -722,6 +722,13 @@ def change_judgement_grammar(line, global_dict, macros_txt=""):
         # TODO(%if %{with ***}=>when )
         elif re.match("%if %\{with ", condition) or re.match("%if %\{without ", condition):
             with_parts, without_parts = get_if_with_parts(condition)
+            jump_out = False
+            for part in with_parts + without_parts:
+                if part not in define_flags:
+                    judgement += condition.replace("%if", "rpmWhen")
+                    jump_out = True
+            if jump_out:
+                continue
             judgement = "when"
             if len(with_parts):
                 judgement += " +" + " and +".join(with_parts)

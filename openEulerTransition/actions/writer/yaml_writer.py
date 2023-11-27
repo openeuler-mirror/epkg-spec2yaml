@@ -552,6 +552,7 @@ class SpecParser(object):
         self.patches_num_dict = {}
         self.files = {}
         self.changelog = ""
+        self.define_flags = []
 
     def _switch_subpkg(self, subpkg, create=False, cond_part=None, default=None):
         """
@@ -1478,7 +1479,7 @@ class SpecParser(object):
                 file_key = original_data["Name"]
                 if "%if" in file_key:
                     add_judgement, add_define_flags = change_judgement_grammar("%if " + " ".join(file_key.split("%if")[1:]),
-                                                                self.rpm_global)
+                                                                self.rpm_global, define_flags=self.define_flags)
                     if add_judgement not in files_judgement:
                         files_judgement += add_judgement
                     self.add_define_flags_item(add_define_flags)
@@ -1513,10 +1514,12 @@ class SpecParser(object):
                             sub_files_judgement = ""
                             if "FilesJudgement" in sub_member_dict:
                                 sub_files_judgement += change_judgement_grammar(
-                                    " ".join(sub_member_dict["FilesJudgement"]), self.rpm_global)[0]
+                                    " ".join(sub_member_dict["FilesJudgement"]), self.rpm_global,
+                                    define_flags=self.define_flags)[0]
                                 del target_data["SubPackages"][sub_member_name]["FilesJudgement"]
                             if "%if" in sub_member_name:
-                                add_judgement, add_define_flags = change_judgement_grammar(sub_member_name, self.rpm_global)
+                                add_judgement, add_define_flags = change_judgement_grammar(
+                                    sub_member_name, self.rpm_global, define_flags=self.define_flags)
                                 if add_judgement not in sub_files_judgement:
                                     sub_files_judgement += add_judgement
                                 self.add_define_flags_item(add_define_flags)
@@ -1546,7 +1549,7 @@ class SpecParser(object):
                         keywords = sub_member_name.split("%if")[0].strip()
                         del target_data["SubPackages"][sub_member_name]
                         add_judgement, add_define_flags = change_judgement_grammar(
-                            sub_member_name, self.rpm_global)
+                            sub_member_name, self.rpm_global, self.macros, self.define_flags)
                         target_data["SubPackages"][keywords + add_judgement] = temp_sub_dict
                         self.add_define_flags_item(add_define_flags)
         self.items = target_data
@@ -1594,11 +1597,12 @@ class SpecParser(object):
         condition = ""
         if sub_name is None:
             if keywords in self.keywords_if_config:
-                condition = change_judgement_grammar(" ".join(self.keywords_if_config[keywords]), self.rpm_global)[0]
+                condition = change_judgement_grammar(" ".join(self.keywords_if_config[keywords]), self.rpm_global,
+                                                     define_flags=self.define_flags)[0]
         else:
             for subpackage in self.items["SubPackages"]:
                 if re.match(re.escape(sub_name) + "\s+%if", subpackage):
-                    condition = change_judgement_grammar(subpackage, self.rpm_global)[0]
+                    condition = change_judgement_grammar(subpackage, self.rpm_global, define_flags=self.define_flags)[0]
                     break
         if " -n " in value and not whole:
             value = value.split(os.linesep)[0].replace("-n %{name}-", "") + os.linesep + os.linesep.join(
@@ -1670,14 +1674,16 @@ class SpecParser(object):
                     continue
                 rpm_condition = check_rpm_condition(if_cond, self.rpm_global)
                 if if_cond and len(else_cond) == 0 and rpm_condition:
-                    use_flag_key = "defineFlags" + change_judgement_grammar(if_cond[0], self.rpm_global)[0]
+                    use_flag_key = "defineFlags" + change_judgement_grammar(if_cond[0], self.rpm_global,
+                                                                            define_flags=self.define_flags)[0]
                     remove_line.append(line_list.index(if_cond[0]))
                     back_count += 1
                     if i - back_count not in remove_line:
                         remove_line.append(i - back_count)
                 elif if_cond and else_cond and rpm_condition:
                     use_flag_key = "defineFlags" + change_judgement_grammar(
-                        get_reverse_judgement(if_cond[0], only=True), self.rpm_global)[0]
+                        get_reverse_judgement(if_cond[0], only=True), self.rpm_global,
+                        define_flags=self.define_flags)[0]
                     back_count += 1
                     if i - back_count not in remove_line:
                         remove_line.append(i - back_count)
@@ -1957,7 +1963,8 @@ class SpecParser(object):
                             else_part = "%else" + param_key.split("%else", 1)[1]
                             param_key = param_key.replace(else_part, get_reverse_judgement(else_part))
                             base_key = base_key.replace("%else", "").strip()
-                        params_item[base_key + change_judgement_grammar(param_key, self.rpm_global)[0]] = param_value
+                        params_item[base_key + change_judgement_grammar(
+                            param_key, self.rpm_global, define_flags=self.define_flags)[0]] = param_value
                 if params_key not in items:
                     items[params_key] = params_item
                 else:
