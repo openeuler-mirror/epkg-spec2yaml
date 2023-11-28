@@ -10,7 +10,7 @@ LIST_KEY_REPLACE = {"BuildRequires": "buildRequires", "Requires": "requires", "P
                     "Requires(postun)": "requiresPostUn", "Requires(pre)": "requiresPre",
                     "Requires(preun)": "requiresPreun", "Requires(pretrans)": "requiresPretrans",
                     "Requires(posttrans)": "requiresPosttrans", "Recommends": "recommends",
-                    "Suggests": "suggests"}
+                    "Suggests": "suggests", "ExclusiveArch": "exclusiveArch"}
 # must have keys for 'main' package
 MUSTHAVE = {'Release': '1'}
 
