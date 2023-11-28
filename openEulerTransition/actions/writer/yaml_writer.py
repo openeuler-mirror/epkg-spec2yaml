@@ -883,11 +883,13 @@ class SpecParser(object):
         :param number:
         :return:
         """
+        self.define_flags += collect_define_flags(self.macros)
         judgement = ""
         keywords = lower_first_word(keywords)
         if "%if" in value:
             value = remove_marginals_quotes(value)
-            judgement, add_define_flags = change_judgement_grammar(value, self.rpm_global, self.macros)
+            judgement, add_define_flags = change_judgement_grammar(value, self.rpm_global, self.macros,
+                                                                   define_flags=self.define_flags)
             self.add_define_flags_item(add_define_flags)
         num_dict = self.sources_num_dict if keywords == "source" else self.patches_num_dict
         count = 6 if keywords == "source" else 5
@@ -1054,7 +1056,7 @@ class SpecParser(object):
                             if subpackages_mode:
                                 items = add_string_to_dict(items, "rpmMacros", if_cond_part[0] + os.linesep)
                             else:
-                                self.macros += if_cond_part[0] + os.linesep
+                                self.macros += os.linesep.join(if_cond_part) + os.linesep
                             _if_cond_part += if_cond_part
                             if_cond_part.clear()
                         left_count, right_count = calculate_brackets(line)
@@ -1125,11 +1127,6 @@ class SpecParser(object):
                 if header_re.match(line):
                     state = ST_INLINE
                     keywords_type = "lines"
-                    temp_header = header_re.match(line).group(1)
-                    if not re.match("%" + temp_header + "\w+", line):
-                        header = cur_block = temp_header
-                    else:
-                        cur_block = header
                     header = cur_block = header_re.match(line).group(1)
                     if header in line and header not in OBS_LINES_KEYWORDS and header != "package" and len(line.split()) > 0:
                         while_next = False
@@ -1346,7 +1343,8 @@ class SpecParser(object):
                         single_add_judge = True
                         if line_suffix.strip().startswith("%else"):
                             line_suffix = get_reverse_judgement(line_suffix)
-                        judgement = change_judgement_grammar(line_suffix, self.rpm_global, self.macros)[0]
+                        judgement = change_judgement_grammar(line_suffix, self.rpm_global, self.macros,
+                                                             define_flags=self.define_flags)[0]
                         key = lower_first_word(key) + judgement
                         val = find_quotes_from_words(val)
                         if val.startswith("%"):
@@ -1573,15 +1571,15 @@ class SpecParser(object):
     def change_several_requires(self):
         for change_key, target_key in LIST_KEY_REPLACE.items():
             if change_key in self.items and isinstance(self.items[change_key], list):
-                self.items, add_define_flags = change_requires_struct(change_key, target_key, self.items,
-                                                                      global_dict=self.rpm_global)
+                self.items, add_define_flags = change_requires_struct(
+                    change_key, target_key, self.items, self.define_flags, global_dict=self.rpm_global)
                 self.add_define_flags_item(add_define_flags)
         if "SubPackages" in self.items:
             for sub_name, sub_pkg in self.items["SubPackages"].items():
                 for chang_sub_key, target_sub_key in LIST_KEY_REPLACE.items():
                     if chang_sub_key in sub_pkg and isinstance(sub_pkg[chang_sub_key], list):
-                        sub_pkg, add_define_flags = change_requires_struct(chang_sub_key, target_sub_key, sub_pkg,
-                                                                           global_dict=self.rpm_global)
+                        sub_pkg, add_define_flags = change_requires_struct(
+                            chang_sub_key, target_sub_key, sub_pkg, self.define_flags, global_dict=self.rpm_global)
                         self.items["SubPackages"][sub_name] = sub_pkg
                         self.add_define_flags_item(add_define_flags)
 

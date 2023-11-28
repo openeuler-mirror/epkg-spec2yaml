@@ -1,3 +1,4 @@
+import os
 import re
 from openEulerTransition.configure.spec_config import *
 from openEulerTransition.configure.yaml_config import *
@@ -666,7 +667,7 @@ def divide_several_requires(origin_list):
     return target_list
 
 
-def change_requires_struct(origin, target, items: dict, global_dict=None):
+def change_requires_struct(origin, target, items: dict, define_flags, global_dict=None):
     """改变依赖的结构"""
     if global_dict is None:
         global_dict = {}
@@ -681,7 +682,8 @@ def change_requires_struct(origin, target, items: dict, global_dict=None):
                 build_rq = build_rq.replace(else_part, get_reverse_judgement(else_part))
                 build_rq = remove_marginals_quotes(build_rq)
             value = build_rq.split("%if")[0].strip()
-            add_judgement, add_define_flags = change_judgement_grammar(build_rq.replace(value, ""), global_dict)
+            add_judgement, add_define_flags = change_judgement_grammar(build_rq.replace(value, ""), global_dict,
+                                                                       define_flags=define_flags)
             new_key = target + add_judgement
             if new_key in items:
                 items[new_key].append(value)
@@ -691,7 +693,7 @@ def change_requires_struct(origin, target, items: dict, global_dict=None):
         elif "%if" in build_rq:
             target_list.remove(build_rq)
             build_rq = remove_marginals_quotes(build_rq)
-            add_judgement, add_define_flags = change_judgement_grammar(build_rq, global_dict)
+            add_judgement, add_define_flags = change_judgement_grammar(build_rq, global_dict, define_flags=define_flags)
             new_key = target + add_judgement
             value = build_rq.split("%if")[0].strip()
             value = divide_several_requires([value])
@@ -957,3 +959,14 @@ def merge_rpm_macro_params(param1, param2):
         else:
             param1 += base_param2
     return param1
+
+
+def collect_define_flags(macros_text):
+    line_list = macros_text.split(os.linesep)
+    define_flags = []
+    for line in line_list:
+        if re.search("%(bcond_with)|(bcond_without) \s+", line) is not None:
+            if line.endswith("\\"):
+                continue
+            define_flags.append(line.split()[-1])
+    return define_flags
