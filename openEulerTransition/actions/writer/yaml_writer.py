@@ -1125,6 +1125,11 @@ class SpecParser(object):
                 if header_re.match(line):
                     state = ST_INLINE
                     keywords_type = "lines"
+                    temp_header = header_re.match(line).group(1)
+                    if not re.match("%" + temp_header + "\w+", line):
+                        header = cur_block = temp_header
+                    else:
+                        cur_block = header
                     header = cur_block = header_re.match(line).group(1)
                     if header in line and header not in OBS_LINES_KEYWORDS and header != "package" and len(line.split()) > 0:
                         while_next = False
