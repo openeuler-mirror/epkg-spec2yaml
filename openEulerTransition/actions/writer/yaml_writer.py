@@ -660,7 +660,8 @@ class SpecParser(object):
 
     def _do_include(self, **kwargs):
         items = kwargs.get("items")
-        items["include"].remove("%include")
+        if "%include" in items["include"]:
+            items["include"].remove("%include")
 
     def _do_prep(self, **kwargs):
         content = kwargs.get("content")
@@ -1281,6 +1282,9 @@ class SpecParser(object):
                     state = ST_INLINE
                     keywords_type = "lines"
                     header = cur_block = header_re.match(line).group(1)
+                    if header in line and header not in OBS_LINES_KEYWORDS and header != "package" and len(line.split()) > 0:
+                        while_next = False
+                        line = line.replace(header + " ", header + os.linesep)
                     if cur_block == "package":
                         # change model from MAIN into subpackages
                         subpackages_mode = True
