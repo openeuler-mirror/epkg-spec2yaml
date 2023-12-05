@@ -580,10 +580,10 @@ def get_line_suffix(if_cond_part, else_cond_part, else_status):
                     temp_else_cond_part.pop()
             else:
                 if len(temp_else_cond_part) > 0:
-                    _line_suffix = " " + temp_else_cond_part[-1] + _line_suffix
+                    _line_suffix += " " + temp_else_cond_part[-1]
                     temp_else_cond_part.pop()
                 if len(temp_if_cond_part) > 0:
-                    _line_suffix = " " + temp_if_cond_part[-1] + _line_suffix
+                    _line_suffix += " " + temp_if_cond_part[-1]
                     temp_if_cond_part.pop()
     else:
         _line_suffix = ""
