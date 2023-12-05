@@ -1282,7 +1282,7 @@ class SpecParser(object):
                     state = ST_INLINE
                     keywords_type = "lines"
                     header = cur_block = header_re.match(line).group(1)
-                    if header in line and header not in OBS_LINES_KEYWORDS and header != "package" and len(line.split()) > 0:
+                    if header == "include" and len(line.split()) > 0:
                         while_next = False
                         line = line.replace(header + " ", header + os.linesep)
                     if cur_block == "package":
