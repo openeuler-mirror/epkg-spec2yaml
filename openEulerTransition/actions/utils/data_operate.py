@@ -402,6 +402,8 @@ def divide_out_configure(content: str):
     configure_cmd_multiline = True
     configure_cmd_flags = ""
     compile_type = ""
+    param_condition = 0
+    last_condition = False
     for num, line in enumerate(line_list):
         if line.startswith("#") or line.startswith("%global") or line.startswith("%define"):
             if configure_cmd:
@@ -415,8 +417,17 @@ def divide_out_configure(content: str):
         elif line == "popd":
             configure_cmd_flags = ""
         if configure_cmd:
-            if line.strip().startswith("%if") or line.strip().startswith("%else") or line.strip().startswith("%endif"):
+            if line.strip().startswith("%if"):
+                param_condition += 1
                 configure += line + os.linesep
+            elif line.strip().startswith("%else"):
+                configure += line + os.linesep
+            elif line.strip().startswith("%endif"):
+                param_condition -= 1
+                configure += line + os.linesep
+                if param_condition == 0 and last_condition:
+                    configure_cmd = False
+                    continue
             elif line.endswith("\\"):
                 if not configure_cmd_multiline:
                     configure_cmd_multiline = True
@@ -433,9 +444,13 @@ def divide_out_configure(content: str):
                         key_name = f"{compile_type}_{str(configure_num - 1)}"
                     else:
                         key_name = compile_type
-                    configure_items[key_name] = configure.strip()
-                    configure = ""
-                configure_cmd = False
+                    if param_condition == 0:
+                        configure_items[key_name] = configure.strip()
+                        configure = ""
+                if param_condition == 0:
+                    configure_cmd = False
+                else:
+                    last_condition = True
                 continue
         if line.lstrip(".").startswith("/configure") or line.startswith("%configure"):
             compile_type = "configure"
