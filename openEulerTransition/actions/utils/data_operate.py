@@ -25,6 +25,13 @@ def lower_first_word(words: str):
         return words[0].lower() + words[1:]
 
 
+def higher_first_word(words: str):
+    if len(words) <= 1:
+        return words.upper()
+    else:
+        return words[0].upper() + words[1:]
+
+
 def clear_sub_extra_judge(sub_name, default_dict, target_items=None):
     """
     清理子包多余的判断语句
@@ -985,3 +992,23 @@ def collect_define_flags(macros_text):
                 continue
             define_flags.append(line.split()[-1])
     return define_flags
+
+
+def clear_sub_item_condition(condition, items: dict):
+    target = items.copy()
+    for name, value in items.items():
+        if condition not in name:
+            continue
+        if isinstance(value, str) or isinstance(value, list):
+            del target[name]
+            new_name = name.replace(condition, "").strip()
+            if " " not in new_name:
+                new_name = higher_first_word(new_name)
+            target[new_name] = value
+        elif isinstance(value, dict):
+            del target[name]
+            new_name = name.replace(condition, "").strip()
+            if " " not in new_name:
+                new_name = higher_first_word(new_name)
+            target[new_name] = clear_sub_item_condition(condition, value)
+    return target

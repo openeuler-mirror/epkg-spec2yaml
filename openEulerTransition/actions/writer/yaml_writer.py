@@ -1550,10 +1550,8 @@ class SpecParser(object):
                                 sub_member_name][member_key], sub_name=sub_member_name.split()[0].strip(),
                                                    whole=whole_name, items=target_data)
                             if type(sub_member_dict[member_key]) == str:
-                                # target_data["SubPackages"][sub_member_name][member_key] = shell_name
                                 del target_data["SubPackages"][sub_member_name][member_key]
                             elif type(sub_member_dict[member_key]) == list:
-                                # target_data["SubPackages"][sub_member_name][member_key] = [shell_name]
                                 del target_data["SubPackages"][sub_member_name][member_key]
                     if "FilesInput" in sub_member_dict:
                         del target_data["SubPackages"][sub_member_name]["FilesInput"]
@@ -1563,6 +1561,7 @@ class SpecParser(object):
                         del target_data["SubPackages"][sub_member_name]
                         add_judgement, add_define_flags = change_judgement_grammar(
                             sub_member_name, self.rpm_global, self.macros, self.define_flags)
+                        temp_sub_dict = clear_sub_item_condition(add_judgement, temp_sub_dict)
                         target_data["SubPackages"][keywords + add_judgement] = temp_sub_dict
                         self.add_define_flags_item(add_define_flags)
         self.items = target_data
