@@ -302,7 +302,7 @@ def add_string_to_dict(dict1, this_key, line, turn_line=True):
     return dict1
 
 
-def divide_rpm_global(macros_text, rpm_global_text):
+def divide_rpm_global(macros_text, rpm_global_text, condition=""):
     line_list = macros_text.split(os.linesep)
     if_flag = 0
     else_flag = 0
@@ -326,7 +326,7 @@ def divide_rpm_global(macros_text, rpm_global_text):
                     global_value = " ".join(line_list[2:])
                 else:
                     continue
-                if " " in global_value:
+                if " " in global_value and re.search("%ifn?arch\s+%\{\??" + global_key + "}", condition) is None:
                     continue
                 global_value = resolve_inner_quotes(global_value)
                 rpm_global_text[global_key] = "\"" + global_value + "\""
@@ -734,7 +734,7 @@ def change_judgement_grammar(line, global_dict, macros_txt="", define_flags=None
     if define_flags is None:
         define_flags = []
     tmp_conditions = line.split("%if")[1:]
-    macros_txt, global_dict = divide_rpm_global(macros_txt, global_dict)
+    macros_txt, global_dict = divide_rpm_global(macros_txt, global_dict, line)
     conditions = list(map(lambda x: "%if" + x.rstrip(), tmp_conditions))
     judgement = ""
     add_define_flags = []
