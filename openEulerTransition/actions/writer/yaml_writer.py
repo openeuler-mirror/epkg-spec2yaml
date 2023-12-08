@@ -602,6 +602,11 @@ class SpecParser(object):
                 wholename = True
             except IndexError:
                 raise SpecFormatError(subpkg)
+        elif len(ls) == 0:
+            this_files_input = filesinput.split(RPM_MACRO_PARAM_COMMENT)[-1].strip()
+            if this_files_input not in self.items["files"]:
+                self.items["files"] = self.items["files"].replace("%files", "%files " + this_files_input, 1)
+            return self.items
         else:
             subpkg = ls[0]
             if "%{name}" in subpkg:
