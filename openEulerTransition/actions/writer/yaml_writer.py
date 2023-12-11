@@ -107,7 +107,7 @@ class SpectacleDumper(object):
             for file_member_key, file_member_value in files_data.items():
                 file_member_value, param_text = strip_files_startswith(file_member_value)
                 if file_member_value != "":
-                    file_member_value = add_escape_character(file_member_value)
+                    # file_member_value = add_escape_character(file_member_value)
                     f_files.write(file_member_key + ": |" + os.linesep)
                     value_line_list = file_member_value.strip().split(os.linesep)
                     for line in value_line_list:
