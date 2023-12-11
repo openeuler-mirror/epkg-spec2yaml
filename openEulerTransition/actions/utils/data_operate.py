@@ -124,7 +124,6 @@ def resolve_inner_quotes(_line):
     :param _line:
     :return:
     """
-    # _line = remove_marginals_quotes(_line)
     if "\"" in _line and "\\\"" not in _line:
         _line = _line.replace("\"", "\\\"")
     return _line
@@ -328,7 +327,10 @@ def divide_rpm_global(macros_text, rpm_global_text, condition=""):
                     continue
                 if " " in global_value and re.search("%ifn?arch\s+%\{\??" + global_key + "}", condition) is None:
                     continue
-                global_value = resolve_inner_quotes(global_value)
+                need_continue = check_rpm_global_value(rpm_global_text, global_value)
+                if need_continue:
+                    continue
+                global_value = resolve_inner_quotes(remove_marginals_quotes(global_value))
                 rpm_global_text[global_key] = "\"" + global_value + "\""
                 remove_list.append(i)
         if line.startswith("%if"):
@@ -1012,3 +1014,16 @@ def clear_sub_item_condition(condition, items: dict):
                 new_name = higher_first_word(new_name)
             target[new_name] = clear_sub_item_condition(condition, value)
     return target
+
+
+def check_rpm_global_value(items, value):
+    if re.fullmatch("%\{\w+}", value):
+        tmp_key = value.replace("%{", "", 1).rstrip("}")
+        if tmp_key in items:
+            value = items.get(tmp_key)
+        else:
+            return True
+    if "%{" in value and ":" in value:
+        return True
+    return False
+

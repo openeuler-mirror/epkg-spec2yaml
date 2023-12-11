@@ -1870,6 +1870,9 @@ class SpecParser(object):
                 global_value = " ".join(line_list[2:])
                 if " " in global_value:
                     continue
+                need_continue = check_rpm_global_value(self.rpm_global, global_value)
+                if need_continue:
+                    continue
                 self.rpm_global[line_list[1]] = "\"" + resolve_inner_quotes(global_value) + "\""
                 remove_line_list.append(k)
             elif re.match("%global\s+\w+ [\s\S]+", macros_line) is not None:
