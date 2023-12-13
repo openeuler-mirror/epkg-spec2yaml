@@ -111,6 +111,8 @@ def remove_marginals_quotes(_line):
     :param _line:
     :return:
     """
+    if _line == "\"\"" or _line == "\'\'":
+        return _line
     if _line.startswith("\"") and _line.endswith("\""):
         _line = _line[1:-1]
     elif _line.startswith("\'") and _line.endswith("\'"):
