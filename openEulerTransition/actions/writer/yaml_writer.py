@@ -180,8 +180,6 @@ class SpectacleDumper(object):
                         for item in extra_val:
                             # fp.write(cur_indent + TAB + "%s\n" % item)
                             item = add_tab_in_lines(item)
-                            if os.linesep not in item.strip():
-                                item = item.replace('\"', '\\"')
                             fp.write(cur_indent + "%s\n" % item)
                         fp.write(os.linesep)
                 continue
