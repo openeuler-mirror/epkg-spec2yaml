@@ -1028,7 +1028,9 @@ class SpecParser(object):
                     items["rpmMacros"] += line + os.linesep
                 continue
             if re.match("(%define)|(%global)|(%bcond_with)|(%\{\!\?)|(%undefine)|(%\{)|(%\{expand:\s*%)", line) is not None and not hold_last_mode:
-                if header in SHELL_KEYWORDS + ["files"] and state == ST_INLINE:
+                if re.fullmatch("%\{\w+}/.*", line) and header == "files":
+                    pass
+                elif header in SHELL_KEYWORDS + ["files"] and state == ST_INLINE:
                     # shell lines or inline mode pass
                     macros_mode = False
                     pass
