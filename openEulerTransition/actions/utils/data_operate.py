@@ -1,4 +1,3 @@
-import os
 import re
 from openEulerTransition.configure.spec_config import *
 from openEulerTransition.configure.yaml_config import *
@@ -800,6 +799,7 @@ def change_judgement_grammar(line, global_dict, macros_txt="", define_flags=None
             judgement += change_to_when_or_rpmwhen(condition, global_dict)
     judgement = change_macros_usage(judgement, global_dict)
     judgement = merge_multi_judgement(judgement)
+    judgement = check_conditions_sequence(judgement)
     if "%if " in judgement:
         judgement = judgement.replace("%if ", "rpmWhen ")
     if not judgement.startswith(" ") and judgement != "":
@@ -1029,3 +1029,22 @@ def check_rpm_global_value(items, value):
         return True
     return False
 
+
+def check_conditions_sequence(line):
+    if "when" in line and "rpmWhen" in line:
+        line = line.strip()
+        rpm_when_list = line.split(" rpmWhen ")
+        rpm_when_list = list(map(lambda x: x if x.startswith("when ") or x.startswith("rpmWhen ") else "rpmWhen " + x,
+                                 rpm_when_list))
+        for rpm_when_condition in rpm_when_list:
+            if " when " not in rpm_when_condition:
+                rpm_when_list.remove(rpm_when_condition)
+                rpm_when_list.insert(0, rpm_when_condition)
+        for index, rpm_when_condition in enumerate(rpm_when_list[:-1]):
+            if " when " in rpm_when_condition:
+                rpm_when_condition, when_condition = rpm_when_condition.split(" when ", 1)
+                when_condition = "when " + when_condition
+                rpm_when_list.append(when_condition)
+                rpm_when_list[index] = rpm_when_condition
+        return " ".join(rpm_when_list)
+    return line
