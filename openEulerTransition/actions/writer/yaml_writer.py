@@ -1880,6 +1880,8 @@ class SpecParser(object):
                 global_value = " ".join(line_list[2:])
                 if " " in global_value:
                     continue
+                if self.macros.count(" " + line_list[1]) > 1:
+                    continue
                 self.rpm_global[line_list[1]] = "\"" + resolve_inner_quotes(global_value) + "\""
                 remove_line_list.append(k)
         remove_line_list.reverse()

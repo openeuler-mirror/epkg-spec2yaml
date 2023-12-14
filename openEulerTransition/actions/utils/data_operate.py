@@ -328,6 +328,8 @@ def divide_rpm_global(macros_text, rpm_global_text, condition=""):
                     continue
                 if " " in global_value and re.search("%ifn?arch\s+%\{\??" + global_key + "}", condition) is None:
                     continue
+                if macros_text.count(" " + global_key) > 1:
+                    continue
                 need_continue = check_rpm_global_value(rpm_global_text, global_value)
                 if need_continue:
                     continue
