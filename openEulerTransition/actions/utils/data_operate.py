@@ -654,17 +654,22 @@ def strip_files_startswith(text):
             text = os.linesep.join(file_lines[content_line_index:])
     else:
         text = ""
+    conditional_params = {}
     if content_line_index > 0:
         for line in file_lines[0:content_line_index]:
             if re.match("%files \S+ -f", line) is not None:
                 line = " ".join(line.split()[2:])
                 param_text += line + os.linesep
             if line.startswith("%files"):
-                target_line = remove_package_name(line)
-                if target_line != "%files":
-                    target_line = target_line.replace("%files", "", 1)
+                target_line = remove_package_name(line).replace("%files", "", 1)
+                if "%if" in line:
+                    if "%else" in line:
+                        line = reverse_judgement(line)
+                    condition, params = change_judgement_grammar(line, {})
+                    conditional_params["files" + condition] = target_line
+                elif target_line != "":
                     param_text += target_line + os.linesep
-    return text, param_text
+    return text, param_text, conditional_params
 
 
 def divide_several_requires(origin_list):

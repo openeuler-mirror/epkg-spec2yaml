@@ -1,3 +1,4 @@
+import os
 import sys
 import copy
 import yaml
@@ -105,7 +106,7 @@ class SpectacleDumper(object):
                         lua_runtime_file = add_context(function_name, function_text, f_runtime_phase, lua_runtime_file)
         if f_files and files_data:
             for file_member_key, file_member_value in files_data.items():
-                file_member_value, param_text = strip_files_startswith(file_member_value)
+                file_member_value, param_text, conditional_params = strip_files_startswith(file_member_value)
                 if file_member_value != "":
                     # file_member_value = add_escape_character(file_member_value)
                     f_files.write(file_member_key + ": |" + os.linesep)
@@ -118,7 +119,7 @@ class SpectacleDumper(object):
                     temp_param_list = param_text.split(os.linesep)
                     if len(temp_param_list) > 1 and temp_param_list[0] in temp_param_list[1]:
                         temp_param_list.pop(0)
-                    if len(temp_param_list) > 0:
+                    if len(temp_param_list) > 0 and conditional_params == {}:
                         if " " in file_member_key:
                             tmp_key, tmp_judge = file_member_key.strip().split(" ", 1)
                             f_files.write(tmp_key + ":rpm_macro_param " + tmp_judge + ": |" + os.linesep)
@@ -128,6 +129,11 @@ class SpectacleDumper(object):
                             if line != "":
                                 f_files.write(TAB + line + os.linesep)
                         f_files.write(os.linesep)
+                    elif conditional_params:
+                        for condition, conditional_param in conditional_params.items():
+                            f_files.write(
+                                file_member_key.split()[0] + ":rpm_macro_param " + condition + ": |" + os.linesep)
+                            f_files.write(TAB + conditional_param + os.linesep)
         new_define_yaml = True
         for key, value in data:
             if key == "version":
