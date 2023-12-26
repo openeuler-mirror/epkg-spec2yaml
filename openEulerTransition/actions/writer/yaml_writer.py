@@ -1640,7 +1640,7 @@ class SpecParser(object):
         if value.startswith("%" + keywords + os.linesep):  # 主包shell语句分解
             function_context = value.replace("%" + keywords + os.linesep, "", 1)
             self.shell_functions[keywords + condition] = function_context.strip()
-        elif (sub_name is not None) and value.startswith("%" + keywords + " " + original_sub_name + os.linesep):  # 子包shell语句分解
+        elif (sub_name is not None) and re.match("%" + keywords + "\s+" + original_sub_name + os.linesep, value):  # 子包shell语句分解
             function_context = value.lstrip("%" + original_sub_name + " " + keywords).strip()
             self.shell_functions[keywords + ":" + sub_name + condition] = function_context
         elif value.startswith("%" + keywords) and keywords in RARE_KEYWORDS:
