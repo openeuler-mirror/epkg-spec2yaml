@@ -328,11 +328,12 @@ def divide_rpm_global(macros_text, rpm_global_text, condition=""):
                     continue
                 if " " in global_value and re.search("%ifn?arch\s+%\{\??" + global_key + "}", condition) is None:
                     continue
-                if macros_text.count(" " + global_key) > 1:
+                repeat_macros = re.compile(r"%(global|define)\s+" + re.escape(global_key) + r"\s+") # 匹配重复定义的宏
+                if len(repeat_macros.findall(macros_text)) > 1:
                     continue
-                need_continue = check_rpm_global_value(rpm_global_text, global_value)
-                if need_continue:
-                    continue
+                # need_continue = check_rpm_global_value(rpm_global_text, global_value)
+                # if need_continue:
+                #     continue
                 global_value = resolve_inner_quotes(remove_marginals_quotes(global_value))
                 rpm_global_text[global_key] = "\"" + global_value + "\""
                 remove_list.append(i)
@@ -1026,6 +1027,10 @@ def clear_sub_item_condition(condition, items: dict):
 
 
 def check_rpm_global_value(items, value):
+    """
+    判断定义宏的值，是否为%{xxx}等merge工具无法解析的类型
+    :return: 判断结果，布尔值，若为%{xxx}形式则为True
+    """
     if re.fullmatch("%\{\w+}", value):
         tmp_key = value.replace("%{", "", 1).rstrip("}")
         if tmp_key in items:
