@@ -43,7 +43,7 @@ def configure_params_split(script: str, configure_cmd_flag: str=""):
                 continue
             if "#" in line:
                 line = line.split("#")[0]
-            if "--" in line and not re.fullmatch("%\{.*}", line.rstrip("\\").strip()):
+            if "--" in line and not re.fullmatch("%\{.*}", line.rstrip("\\").strip()) and not re.search("\".*--.*\"", line):
                 if re.search("( -with-| -without-| -enable-| -disable-)", line):
                     error_keywords_list = re.findall("( -with-| -without-| -enable-| -disable-)\S+", line)
                     for error_keywords in error_keywords_list:

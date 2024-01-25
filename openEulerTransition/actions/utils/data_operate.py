@@ -24,6 +24,13 @@ def lower_first_word(words: str):
         return words[0].lower() + words[1:]
 
 
+def higher_first_word(words: str):
+    if len(words) <= 1:
+        return words.upper()
+    else:
+        return words[0].upper() + words[1:]
+
+
 def clear_sub_extra_judge(sub_name, default_dict, target_items=None):
     """
     清理子包多余的判断语句
@@ -103,6 +110,8 @@ def remove_marginals_quotes(_line):
     :param _line:
     :return:
     """
+    if _line == "\"\"" or _line == "\'\'":
+        return _line
     if _line.startswith("\"") and _line.endswith("\""):
         _line = _line[1:-1]
     elif _line.startswith("\'") and _line.endswith("\'"):
@@ -116,7 +125,6 @@ def resolve_inner_quotes(_line):
     :param _line:
     :return:
     """
-    # _line = remove_marginals_quotes(_line)
     if "\"" in _line and "\\\"" not in _line:
         _line = _line.replace("\"", "\\\"")
     return _line
@@ -294,7 +302,7 @@ def add_string_to_dict(dict1, this_key, line, turn_line=True):
     return dict1
 
 
-def divide_rpm_global(macros_text, rpm_global_text):
+def divide_rpm_global(macros_text, rpm_global_text, condition=""):
     line_list = macros_text.split(os.linesep)
     if_flag = 0
     else_flag = 0
@@ -318,9 +326,15 @@ def divide_rpm_global(macros_text, rpm_global_text):
                     global_value = " ".join(line_list[2:])
                 else:
                     continue
-                if " " in global_value:
+                if " " in global_value and re.search("%ifn?arch\s+%\{\??" + global_key + "}", condition) is None:
                     continue
-                global_value = resolve_inner_quotes(global_value)
+                repeat_macros = re.compile(r"%(global|define)\s+" + re.escape(global_key) + r"\s+") # 匹配重复定义的宏
+                if len(repeat_macros.findall(macros_text)) > 1:
+                    continue
+                # need_continue = check_rpm_global_value(rpm_global_text, global_value)
+                # if need_continue:
+                #     continue
+                global_value = resolve_inner_quotes(remove_marginals_quotes(global_value))
                 rpm_global_text[global_key] = "\"" + global_value + "\""
                 remove_list.append(i)
         if line.startswith("%if"):
@@ -401,6 +415,8 @@ def divide_out_configure(content: str):
     configure_cmd_multiline = True
     configure_cmd_flags = ""
     compile_type = ""
+    param_condition = 0
+    last_condition = False
     for num, line in enumerate(line_list):
         if line.startswith("#") or line.startswith("%global") or line.startswith("%define"):
             if configure_cmd:
@@ -414,8 +430,17 @@ def divide_out_configure(content: str):
         elif line == "popd":
             configure_cmd_flags = ""
         if configure_cmd:
-            if line.strip().startswith("%if") or line.strip().startswith("%else") or line.strip().startswith("%endif"):
+            if line.strip().startswith("%if"):
+                param_condition += 1
                 configure += line + os.linesep
+            elif line.strip().startswith("%else"):
+                configure += line + os.linesep
+            elif line.strip().startswith("%endif"):
+                param_condition -= 1
+                configure += line + os.linesep
+                if param_condition == 0 and last_condition:
+                    configure_cmd = False
+                    continue
             elif line.endswith("\\"):
                 if not configure_cmd_multiline:
                     configure_cmd_multiline = True
@@ -432,9 +457,13 @@ def divide_out_configure(content: str):
                         key_name = f"{compile_type}_{str(configure_num - 1)}"
                     else:
                         key_name = compile_type
-                    configure_items[key_name] = configure.strip()
-                    configure = ""
-                configure_cmd = False
+                    if param_condition == 0:
+                        configure_items[key_name] = configure.strip()
+                        configure = ""
+                if param_condition == 0:
+                    configure_cmd = False
+                else:
+                    last_condition = True
                 continue
         if line.lstrip(".").startswith("/configure") or line.startswith("%configure"):
             compile_type = "configure"
@@ -557,10 +586,10 @@ def get_line_suffix(if_cond_part, else_cond_part, else_status):
         while len(temp_else_cond_part) > 0 or len(temp_if_cond_part) > 0:
             if len(temp_if_cond_part) > len(temp_else_cond_part):
                 if len(temp_if_cond_part) > 0:
-                    _line_suffix += " " + temp_if_cond_part[-1]
+                    _line_suffix = " " + temp_if_cond_part[-1] + _line_suffix
                     temp_if_cond_part.pop()
                 if len(temp_else_cond_part) > 0:
-                    _line_suffix += " " + temp_else_cond_part[-1]
+                    _line_suffix = " " + temp_else_cond_part[-1] + _line_suffix
                     temp_else_cond_part.pop()
             else:
                 if len(temp_else_cond_part) > 0:
@@ -626,17 +655,22 @@ def strip_files_startswith(text):
             text = os.linesep.join(file_lines[content_line_index:])
     else:
         text = ""
+    conditional_params = {}
     if content_line_index > 0:
         for line in file_lines[0:content_line_index]:
             if re.match("%files \S+ -f", line) is not None:
                 line = " ".join(line.split()[2:])
                 param_text += line + os.linesep
             if line.startswith("%files"):
-                target_line = remove_package_name(line)
-                if target_line != "%files":
-                    target_line = target_line.replace("%files", "", 1)
+                target_line = remove_package_name(line).replace("%files", "", 1)
+                if "%if" in line:
+                    if "%else" in line:
+                        line = reverse_judgement(line)
+                    condition, params = change_judgement_grammar(line, {})
+                    conditional_params["files" + condition] = target_line
+                elif target_line != "":
                     param_text += target_line + os.linesep
-    return text, param_text
+    return text, param_text, conditional_params
 
 
 def divide_several_requires(origin_list):
@@ -666,7 +700,7 @@ def divide_several_requires(origin_list):
     return target_list
 
 
-def change_requires_struct(origin, target, items: dict, global_dict=None, macros_text=""):
+def change_requires_struct(origin, target, items: dict, define_flags, global_dict=None):
     """改变依赖的结构"""
     if global_dict is None:
         global_dict = {}
@@ -681,7 +715,8 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
                 build_rq = build_rq.replace(else_part, get_reverse_judgement(else_part))
                 build_rq = remove_marginals_quotes(build_rq)
             value = build_rq.split("%if")[0].strip()
-            add_judgement, add_define_flags = change_judgement_grammar(build_rq.replace(value, ""), global_dict)
+            add_judgement, add_define_flags = change_judgement_grammar(build_rq.replace(value, ""), global_dict,
+                                                                       define_flags=define_flags)
             new_key = target + add_judgement
             if new_key in items:
                 items[new_key].append(value)
@@ -691,11 +726,10 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
         elif "%if" in build_rq:
             target_list.remove(build_rq)
             build_rq = remove_marginals_quotes(build_rq)
-            add_judgement, add_define_flags = change_judgement_grammar(build_rq, global_dict)
+            add_judgement, add_define_flags = change_judgement_grammar(build_rq, global_dict, define_flags=define_flags)
             new_key = target + add_judgement
             value = build_rq.split("%if")[0].strip()
             value = divide_several_requires([value])
-            # value = list(map(lambda x: change_macros_usage(x, global_dict), value))
             if new_key in items:
                 items[new_key] += value
             else:
@@ -703,14 +737,15 @@ def change_requires_struct(origin, target, items: dict, global_dict=None, macros
         else:
             pass
     target_list = divide_several_requires(target_list)
-    # target_list = list(map(lambda x: change_macros_usage(x, global_dict), target_list))
     items[origin] = target_list
     return items, add_define_flags
 
 
-def change_judgement_grammar(line, global_dict, macros_txt=""):
+def change_judgement_grammar(line, global_dict, macros_txt="", define_flags=None):
+    if define_flags is None:
+        define_flags = []
     tmp_conditions = line.split("%if")[1:]
-    macros_txt, global_dict = divide_rpm_global(macros_txt, global_dict)
+    macros_txt, global_dict = divide_rpm_global(macros_txt, global_dict, line)
     conditions = list(map(lambda x: "%if" + x.rstrip(), tmp_conditions))
     judgement = ""
     add_define_flags = []
@@ -722,6 +757,13 @@ def change_judgement_grammar(line, global_dict, macros_txt=""):
         # TODO(%if %{with ***}=>when )
         elif re.match("%if %\{with ", condition) or re.match("%if %\{without ", condition):
             with_parts, without_parts = get_if_with_parts(condition)
+            jump_out = False
+            for part in with_parts + without_parts:
+                if part not in define_flags:
+                    judgement += condition.replace("%if", "rpmWhen")
+                    jump_out = True
+            if jump_out:
+                continue
             judgement = "when"
             if len(with_parts):
                 judgement += " +" + " and +".join(with_parts)
@@ -765,6 +807,7 @@ def change_judgement_grammar(line, global_dict, macros_txt=""):
             judgement += change_to_when_or_rpmwhen(condition, global_dict)
     judgement = change_macros_usage(judgement, global_dict)
     judgement = merge_multi_judgement(judgement)
+    judgement = check_conditions_sequence(judgement)
     if "%if " in judgement:
         judgement = judgement.replace("%if ", "rpmWhen ")
     if not judgement.startswith(" ") and judgement != "":
@@ -940,3 +983,80 @@ def add_escape_character(content):
         for character in escape_characters:
             content = content.replace(character, character.replace("\\", "\\\\"))
     return content
+
+
+def merge_rpm_macro_params(param1, param2):
+    if RPM_MACRO_PARAM_COMMENT in param2:
+        base_param2 = " " + param2.split(RPM_MACRO_PARAM_COMMENT)[-1].strip()
+        if param1.endswith(os.linesep):
+            param1 = param1.rstrip() + base_param2 + os.linesep
+        else:
+            param1 += base_param2
+    return param1
+
+
+def collect_define_flags(macros_text):
+    line_list = macros_text.split(os.linesep)
+    define_flags = []
+    for line in line_list:
+        if re.search("%(bcond_with)|(bcond_without) \s+", line) is not None:
+            if line.endswith("\\"):
+                continue
+            define_flags.append(line.split()[-1])
+    return define_flags
+
+
+def clear_sub_item_condition(condition, items: dict):
+    target = items.copy()
+    for name, value in items.items():
+        if condition not in name:
+            continue
+        if isinstance(value, str) or isinstance(value, list):
+            del target[name]
+            new_name = name.replace(condition, "").strip()
+            if " " not in new_name:
+                new_name = higher_first_word(new_name)
+            target[new_name] = value
+        elif isinstance(value, dict):
+            del target[name]
+            new_name = name.replace(condition, "").strip()
+            if " " not in new_name:
+                new_name = higher_first_word(new_name)
+            target[new_name] = clear_sub_item_condition(condition, value)
+    return target
+
+
+def check_rpm_global_value(items, value):
+    """
+    判断定义宏的值，是否为%{xxx}等merge工具无法解析的类型
+    :return: 判断结果，布尔值，若为%{xxx}形式则为True
+    """
+    if re.fullmatch("%\{\w+}", value):
+        tmp_key = value.replace("%{", "", 1).rstrip("}")
+        if tmp_key in items:
+            value = items.get(tmp_key)
+        else:
+            return True
+    if "%{" in value and ":" in value:
+        return True
+    return False
+
+
+def check_conditions_sequence(line):
+    if "when" in line and "rpmWhen" in line:
+        line = line.strip()
+        rpm_when_list = line.split(" rpmWhen ")
+        rpm_when_list = list(map(lambda x: x if x.startswith("when ") or x.startswith("rpmWhen ") else "rpmWhen " + x,
+                                 rpm_when_list))
+        for rpm_when_condition in rpm_when_list:
+            if " when " not in rpm_when_condition:
+                rpm_when_list.remove(rpm_when_condition)
+                rpm_when_list.insert(0, rpm_when_condition)
+        for index, rpm_when_condition in enumerate(rpm_when_list[:-1]):
+            if " when " in rpm_when_condition:
+                rpm_when_condition, when_condition = rpm_when_condition.split(" when ", 1)
+                when_condition = "when " + when_condition
+                rpm_when_list.append(when_condition)
+                rpm_when_list[index] = rpm_when_condition
+        return " ".join(rpm_when_list)
+    return line
