@@ -632,10 +632,12 @@ class SpecParser(object):
                         return self.items["SubPackages"][sub_name]
         if "%if" not in subpkg:
             for member_values in subpkg_name_dict.values():
-                if member_values.startswith(subpkg + " %if"):
+                if member_values.startswith(subpkg + " %if") or member_values.startswith(
+                        subpkg.replace(f"{self.items['Name'][0]}-", "") + " %if"):
                     subpkg = member_values
         if subpkg_new and 'SubPackages' in self.items:
-            if ls[0] in subpkg_name_dict or ("-n" in ls and ls[ls.index('-n') + 1] in subpkg_name_dict):
+            if ls[0] in subpkg_name_dict or ("-n" in ls and ls[ls.index('-n') + 1] in subpkg_name_dict) or (
+                    "-n" in ls and ls[ls.index('-n') + 1].replace("%{name}-", "").replace("%name-", "") in subpkg_name_dict):
                 subpkg_new = False
 
         if subpkg_new and not create:

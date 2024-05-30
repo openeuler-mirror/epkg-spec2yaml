@@ -193,13 +193,14 @@ def add_make_flag(script):
     for line_index, line in enumerate(line_list):
         if line.startswith("pushd "):
             make_dir = re.findall("\w+", line)[-1]
+            make_num += 1
             continue
         if line == "popd" and make_dir != "":
             make_dir = ""
+            make_num = make_num - 1 if make_num > 0 else 0
             continue
         if line.startswith("make ") or line.startswith("%make_build "):
             if make_dir == "" and make_num == 0:
-                make_num += 1
                 make_func_name = ""
             elif make_dir == "" and make_num != 0:
                 make_func_name = "_" + str(make_num)
